@@ -9,16 +9,16 @@ interface PromotionsPageProps {
 
 export default async function PromotionsPage({ params }: PromotionsPageProps) {
   const { tenant } = await params;
-  const hotel = getHotelBySlug(tenant);
+  const hotel = await getHotelBySlug(tenant);
 
   if (!hotel || hotel.status !== 'active') {
     notFound();
   }
 
   // Track page view for promotions
-  trackAnalyticsEvent(hotel.id, 'page_view', '/promotions');
+  await trackAnalyticsEvent(hotel.id, 'page_view', '/promotions');
 
-  const promotions = getPromotions(hotel.id);
+  const promotions = await getPromotions(hotel.id);
 
   return (
     <div className="pt-8 bg-slate-50 dark:bg-slate-900/40">

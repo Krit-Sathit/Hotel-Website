@@ -9,16 +9,16 @@ interface RoomsPageProps {
 
 export default async function RoomsPage({ params }: RoomsPageProps) {
   const { tenant } = await params;
-  const hotel = getHotelBySlug(tenant);
+  const hotel = await getHotelBySlug(tenant);
 
   if (!hotel || hotel.status !== 'active') {
     notFound();
   }
 
   // Track page view for the rooms listing
-  trackAnalyticsEvent(hotel.id, 'page_view', '/rooms');
+  await trackAnalyticsEvent(hotel.id, 'page_view', '/rooms');
 
-  const rooms = getRooms(hotel.id);
+  const rooms = await getRooms(hotel.id);
 
   return (
     <div className="pt-8 bg-slate-50 dark:bg-slate-900/40">

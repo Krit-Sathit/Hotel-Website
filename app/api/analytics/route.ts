@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call our DAL to track the event in our database/mock store
-    trackAnalyticsEvent(hotelId, eventType, pagePath, roomId);
+    await trackAnalyticsEvent(hotelId, eventType, pagePath, roomId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

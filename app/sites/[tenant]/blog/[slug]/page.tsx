@@ -10,19 +10,19 @@ interface BlogPostDetailPageProps {
 
 export default async function BlogPostDetailPage({ params }: BlogPostDetailPageProps) {
   const { tenant, slug } = await params;
-  const hotel = getHotelBySlug(tenant);
+  const hotel = await getHotelBySlug(tenant);
 
   if (!hotel || hotel.status !== 'active') {
     notFound();
   }
 
-  const post = getBlogPostBySlug(hotel.id, slug);
+  const post = await getBlogPostBySlug(hotel.id, slug);
   if (!post) {
     notFound();
   }
 
   // Track blog post view analytics on the server
-  trackAnalyticsEvent(hotel.id, 'page_view', `/blog/${slug}`);
+  await trackAnalyticsEvent(hotel.id, 'page_view', `/blog/${slug}`);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

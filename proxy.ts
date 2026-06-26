@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { getHotelByDomain } from './lib/db/mock-data';
 
 // Next.js 16 Proxy Convention
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const hostname = request.headers.get('host') || '';
 
@@ -30,7 +30,7 @@ export function proxy(request: NextRequest) {
 
   if (!isMainDomain) {
     // Dynamically resolve hotel mapping based on custom domain or subdomain
-    const hotel = getHotelByDomain(hostname);
+    const hotel = await getHotelByDomain(hostname);
     if (hotel && hotel.status === 'active') {
       tenantSlug = hotel.slug;
     }

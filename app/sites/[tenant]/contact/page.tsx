@@ -10,14 +10,14 @@ interface ContactPageProps {
 
 export default async function ContactPage({ params }: ContactPageProps) {
   const { tenant } = await params;
-  const hotel = getHotelBySlug(tenant);
+  const hotel = await getHotelBySlug(tenant);
 
   if (!hotel || hotel.status !== 'active') {
     notFound();
   }
 
   // Track page view for contact
-  trackAnalyticsEvent(hotel.id, 'page_view', '/contact');
+  await trackAnalyticsEvent(hotel.id, 'page_view', '/contact');
 
   return (
     <div className="flex flex-col w-full">

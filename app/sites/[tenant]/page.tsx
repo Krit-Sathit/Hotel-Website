@@ -28,21 +28,23 @@ interface TenantPageProps {
 
 export default async function TenantPage({ params }: TenantPageProps) {
   const { tenant } = await params;
-  const hotel = getHotelBySlug(tenant);
+  const hotel = await getHotelBySlug(tenant);
 
   if (!hotel || hotel.status !== 'active') {
     notFound();
   }
 
   // Log a privacy-compliant page view event on the server side on load
-  trackAnalyticsEvent(hotel.id, 'page_view', '/');
+  await trackAnalyticsEvent(hotel.id, 'page_view', '/');
 
   // Fetch all content concurrently
-  const slides = getHeroSlides(hotel.id);
-  const dbSections = getHomepageSections(hotel.id);
-  const rooms = getRooms(hotel.id);
-  const promotions = getPromotions(hotel.id);
-  const gallery = getGalleryPhotos(hotel.id);
+  const [slides, dbSections, rooms, promotions, gallery] = await Promise.all([
+    getHeroSlides(hotel.id),
+    getHomepageSections(hotel.id),
+    getRooms(hotel.id),
+    getPromotions(hotel.id),
+    getGalleryPhotos(hotel.id)
+  ]);
 
   // Helper to extract content for a specific section type
   const getSectionContent = (type: string) => {

@@ -13,7 +13,7 @@ interface TenantLayoutProps {
 
 export default async function TenantLayout({ children, params }: TenantLayoutProps) {
   const { tenant } = await params;
-  const hotel = getHotelBySlug(tenant);
+  const hotel = await getHotelBySlug(tenant);
 
   // If the hotel is not registered or suspended, return a 404
   if (!hotel || hotel.status !== 'active') {

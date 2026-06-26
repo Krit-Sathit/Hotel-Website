@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getHotelBySlug, getHeroSlides, getRooms, getDb } from '@/lib/db/mock-data';
+import { getHotelBySlug, getHeroSlides, getRooms, getAllPromotions } from '@/lib/db/mock-data';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,17 +10,16 @@ export async function GET(request: NextRequest) {
       activeHotelId = '11111111-1111-1111-1111-111111111111'; // Default Hotel A
     }
 
-    const hotel = getHotelBySlug(activeHotelId);
+    const hotel = await getHotelBySlug(activeHotelId);
     if (!hotel) {
       return NextResponse.json({ error: 'Hotel not found' }, { status: 404 });
     }
 
-    const slides = getHeroSlides(hotel.id);
-    const rooms = getRooms(hotel.id);
+    const slides = await getHeroSlides(hotel.id);
+    const rooms = await getRooms(hotel.id);
     
     // Fetch all promotions for this hotel (both active and inactive)
-    const db = getDb();
-    const promotions = db.promotions.filter(p => p.hotel_id === hotel.id);
+    const promotions = await getAllPromotions(hotel.id);
 
     return NextResponse.json({
       hotel,
@@ -33,3 +32,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 550 });
   }
 }
+

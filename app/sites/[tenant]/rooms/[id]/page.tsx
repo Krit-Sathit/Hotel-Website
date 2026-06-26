@@ -11,19 +11,19 @@ interface RoomDetailPageProps {
 
 export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
   const { tenant, id } = await params;
-  const hotel = getHotelBySlug(tenant);
+  const hotel = await getHotelBySlug(tenant);
 
   if (!hotel || hotel.status !== 'active') {
     notFound();
   }
 
-  const room = getRoomById(id);
+  const room = await getRoomById(id);
   if (!room || room.hotel_id !== hotel.id) {
     notFound();
   }
 
   // Track room-specific page view analytics on the server
-  trackAnalyticsEvent(hotel.id, 'page_view', `/rooms/${id}`, id);
+  await trackAnalyticsEvent(hotel.id, 'page_view', `/rooms/${id}`, id);
 
   return (
     <div className="bg-slate-50 dark:bg-slate-900/20 text-slate-800 dark:text-slate-200 py-12 px-6">

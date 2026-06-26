@@ -13,13 +13,13 @@ export default async function DashboardPage() {
     activeHotelId = '11111111-1111-1111-1111-111111111111'; // Hotel A ID
   }
 
-  const hotel = getHotelBySlug(activeHotelId);
+  const hotel = await getHotelBySlug(activeHotelId);
   if (!hotel) {
     redirect('/auth/login');
   }
 
   // Fetch compiled analytics for the active hotel
-  const analytics = getAnalyticsOverview(hotel.id);
+  const analytics = await getAnalyticsOverview(hotel.id);
 
   // Helper to draw clean SVG charts dynamically
   const getMaxChartValue = (chartData: Array<{ value: number }>) => {

@@ -9,16 +9,16 @@ interface GalleryPageProps {
 
 export default async function GalleryPage({ params }: GalleryPageProps) {
   const { tenant } = await params;
-  const hotel = getHotelBySlug(tenant);
+  const hotel = await getHotelBySlug(tenant);
 
   if (!hotel || hotel.status !== 'active') {
     notFound();
   }
 
   // Track page view for gallery
-  trackAnalyticsEvent(hotel.id, 'page_view', '/gallery');
+  await trackAnalyticsEvent(hotel.id, 'page_view', '/gallery');
 
-  const photos = getGalleryPhotos(hotel.id);
+  const photos = await getGalleryPhotos(hotel.id);
 
   return (
     <div className="pt-8">

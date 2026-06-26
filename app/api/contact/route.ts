@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save message to our database/mock store
-    const savedMessage = saveContactMessage(hotelId, { name, email, phone, message });
+    const savedMessage = await saveContactMessage(hotelId, { name, email, phone, message });
 
     return NextResponse.json({ success: true, message: savedMessage });
   } catch (error) {

@@ -1,5 +1,33 @@
 import fs from 'fs';
 import path from 'path';
+import {
+  isSupabaseConfigured,
+  getSupabaseHotelBySlug,
+  getSupabaseHotelByDomain,
+  getSupabaseAllHotels,
+  getSupabaseHeroSlides,
+  getSupabaseHomepageSections,
+  getSupabaseRooms,
+  getSupabaseRoomById,
+  getSupabasePromotions,
+  getSupabaseGalleryPhotos,
+  getSupabaseBlogPosts,
+  getSupabaseBlogPostBySlug,
+  getSupabaseContactMessages,
+  saveSupabaseContactMessage,
+  updateSupabaseHotelGeneralSettings,
+  updateSupabaseHotelTheme,
+  updateSupabaseHomepageLayout,
+  trackSupabaseAnalyticsEvent,
+  getSupabaseAnalyticsOverview,
+  registerSupabaseNewHotel,
+  getSupabaseAllPromotions,
+  saveSupabaseHeroSlides,
+  saveSupabaseRoom,
+  deleteSupabaseRoom,
+  saveSupabasePromotion,
+  deleteSupabasePromotion
+} from './supabase-client';
 
 // Define TS Interfaces for our database schema
 export interface HotelTheme {
@@ -527,84 +555,116 @@ export function saveDb(state: DatabaseState): void {
 // DATA ACCESS LAYER (DAL) METHODS
 // -----------------------------------------------------------------------------
 
-export function getHotelBySlug(slug: string): Hotel | null {
+export async function getHotelBySlug(slug: string): Promise<Hotel | null> {
+  if (isSupabaseConfigured) {
+    return getSupabaseHotelBySlug(slug);
+  }
   const db = getDb();
   return db.hotels.find(h => h.slug.toLowerCase() === slug.toLowerCase() || h.id === slug) || null;
 }
 
-export function getHotelByDomain(domain: string): Hotel | null {
+export async function getHotelByDomain(domain: string): Promise<Hotel | null> {
+  if (isSupabaseConfigured) {
+    return getSupabaseHotelByDomain(domain);
+  }
   const db = getDb();
-  // Strip subdomains/ports if needed
   const normalized = domain.toLowerCase().split(':')[0];
-  
-  // Match custom domain, or fall back to subdomain check
   let hotel = db.hotels.find(h => h.custom_domain && h.custom_domain.toLowerCase() === normalized);
   if (!hotel) {
-    // If domain matches slug.localhost or slug.flowstay.com
     const firstPart = normalized.split('.')[0];
     hotel = db.hotels.find(h => h.slug.toLowerCase() === firstPart);
   }
   return hotel || null;
 }
 
-export function getHeroSlides(hotelId: string): HeroSlide[] {
+export async function getHeroSlides(hotelId: string): Promise<HeroSlide[]> {
+  if (isSupabaseConfigured) {
+    return getSupabaseHeroSlides(hotelId);
+  }
   const db = getDb();
   return db.hero_slides
     .filter(s => s.hotel_id === hotelId)
     .sort((a, b) => a.sort_order - b.sort_order);
 }
 
-export function getHomepageSections(hotelId: string): HomepageSection[] {
+export async function getHomepageSections(hotelId: string): Promise<HomepageSection[]> {
+  if (isSupabaseConfigured) {
+    return getSupabaseHomepageSections(hotelId);
+  }
   const db = getDb();
   return db.homepage_sections
     .filter(s => s.hotel_id === hotelId)
     .sort((a, b) => a.sort_order - b.sort_order);
 }
 
-export function getRooms(hotelId: string): Room[] {
+export async function getRooms(hotelId: string): Promise<Room[]> {
+  if (isSupabaseConfigured) {
+    return getSupabaseRooms(hotelId);
+  }
   const db = getDb();
   return db.rooms
     .filter(r => r.hotel_id === hotelId)
     .sort((a, b) => a.sort_order - b.sort_order);
 }
 
-export function getRoomById(id: string): Room | null {
+export async function getRoomById(id: string): Promise<Room | null> {
+  if (isSupabaseConfigured) {
+    return getSupabaseRoomById(id);
+  }
   const db = getDb();
   return db.rooms.find(r => r.id === id) || null;
 }
 
-export function getPromotions(hotelId: string): Promotion[] {
+export async function getPromotions(hotelId: string): Promise<Promotion[]> {
+  if (isSupabaseConfigured) {
+    return getSupabasePromotions(hotelId);
+  }
   const db = getDb();
   return db.promotions.filter(p => p.hotel_id === hotelId && p.is_active);
 }
 
-export function getGalleryPhotos(hotelId: string): GalleryPhoto[] {
+export async function getGalleryPhotos(hotelId: string): Promise<GalleryPhoto[]> {
+  if (isSupabaseConfigured) {
+    return getSupabaseGalleryPhotos(hotelId);
+  }
   const db = getDb();
   return db.gallery_photos
     .filter(g => g.hotel_id === hotelId)
     .sort((a, b) => a.sort_order - b.sort_order);
 }
 
-export function getBlogPosts(hotelId: string): BlogPost[] {
+export async function getBlogPosts(hotelId: string): Promise<BlogPost[]> {
+  if (isSupabaseConfigured) {
+    return getSupabaseBlogPosts(hotelId);
+  }
   const db = getDb();
   return db.blog_posts
     .filter(b => b.hotel_id === hotelId)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
-export function getBlogPostBySlug(hotelId: string, slug: string): BlogPost | null {
+export async function getBlogPostBySlug(hotelId: string, slug: string): Promise<BlogPost | null> {
+  if (isSupabaseConfigured) {
+    return getSupabaseBlogPostBySlug(hotelId, slug);
+  }
   const db = getDb();
   return db.blog_posts.find(b => b.hotel_id === hotelId && b.slug === slug) || null;
 }
 
-export function getContactMessages(hotelId: string): ContactMessage[] {
+export async function getContactMessages(hotelId: string): Promise<ContactMessage[]> {
+  if (isSupabaseConfigured) {
+    return getSupabaseContactMessages(hotelId);
+  }
   const db = getDb();
   return db.contact_messages
     .filter(m => m.hotel_id === hotelId)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
-export function saveContactMessage(hotelId: string, data: Omit<ContactMessage, 'id' | 'hotel_id' | 'created_at'>): ContactMessage {
+export async function saveContactMessage(hotelId: string, data: Omit<ContactMessage, 'id' | 'hotel_id' | 'created_at'>): Promise<ContactMessage> {
+  if (isSupabaseConfigured) {
+    return saveSupabaseContactMessage(hotelId, data);
+  }
   const db = getDb();
   const newMessage: ContactMessage = {
     id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -617,7 +677,11 @@ export function saveContactMessage(hotelId: string, data: Omit<ContactMessage, '
   return newMessage;
 }
 
-export function updateHotelTheme(hotelId: string, theme: Partial<HotelTheme>): HotelTheme {
+export async function updateHotelTheme(hotelId: string, theme: Partial<HotelTheme>): Promise<HotelTheme> {
+  if (isSupabaseConfigured) {
+    const updated = await updateSupabaseHotelTheme(hotelId, theme);
+    if (updated) return updated;
+  }
   const db = getDb();
   const hotelIndex = db.hotels.findIndex(h => h.id === hotelId);
   if (hotelIndex === -1) throw new Error('Hotel not found');
@@ -630,7 +694,11 @@ export function updateHotelTheme(hotelId: string, theme: Partial<HotelTheme>): H
   return db.hotels[hotelIndex].theme;
 }
 
-export function updateHotelGeneralSettings(hotelId: string, data: Partial<Omit<Hotel, 'id' | 'theme' | 'homepage_layout' | 'slug'>>): Hotel {
+export async function updateHotelGeneralSettings(hotelId: string, data: Partial<Omit<Hotel, 'id' | 'theme' | 'homepage_layout' | 'slug'>>): Promise<Hotel> {
+  if (isSupabaseConfigured) {
+    const updated = await updateSupabaseHotelGeneralSettings(hotelId, data);
+    if (updated) return updated;
+  }
   const db = getDb();
   const hotelIndex = db.hotels.findIndex(h => h.id === hotelId);
   if (hotelIndex === -1) throw new Error('Hotel not found');
@@ -643,7 +711,10 @@ export function updateHotelGeneralSettings(hotelId: string, data: Partial<Omit<H
   return db.hotels[hotelIndex];
 }
 
-export function trackAnalyticsEvent(hotelId: string, event_type: AnalyticsEvent['event_type'], page_path: string, room_id?: string): void {
+export async function trackAnalyticsEvent(hotelId: string, event_type: AnalyticsEvent['event_type'], page_path: string, room_id?: string): Promise<void> {
+  if (isSupabaseConfigured) {
+    return trackSupabaseAnalyticsEvent(hotelId, event_type, page_path, room_id);
+  }
   const db = getDb();
   const newEvent: AnalyticsEvent = {
     id: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -657,7 +728,10 @@ export function trackAnalyticsEvent(hotelId: string, event_type: AnalyticsEvent[
   saveDb(db);
 }
 
-export function getAnalyticsOverview(hotelId: string) {
+export async function getAnalyticsOverview(hotelId: string) {
+  if (isSupabaseConfigured) {
+    return getSupabaseAnalyticsOverview(hotelId);
+  }
   const db = getDb();
   const events = db.analytics_events.filter(e => e.hotel_id === hotelId);
   
@@ -715,7 +789,195 @@ export function getAnalyticsOverview(hotelId: string) {
   };
 }
 
-export function getAllHotels(): Hotel[] {
+export async function getAllHotels(): Promise<Hotel[]> {
+  if (isSupabaseConfigured) {
+    return getSupabaseAllHotels();
+  }
   const db = getDb();
   return db.hotels;
 }
+
+// -----------------------------------------------------------------------------
+// NEW MUTATION HELPER FUNCTIONS FOR DUAL-DATABASE SYNC
+// -----------------------------------------------------------------------------
+
+export async function getAllPromotions(hotelId: string): Promise<Promotion[]> {
+  if (isSupabaseConfigured) {
+    return getSupabaseAllPromotions(hotelId);
+  }
+  const db = getDb();
+  return db.promotions.filter(p => p.hotel_id === hotelId);
+}
+
+export async function saveHeroSlides(hotelId: string, slides: HeroSlide[]): Promise<void> {
+  if (isSupabaseConfigured) {
+    return saveSupabaseHeroSlides(hotelId, slides);
+  }
+  const db = getDb();
+  db.hero_slides = [
+    ...db.hero_slides.filter(s => s.hotel_id !== hotelId),
+    ...slides
+  ];
+  saveDb(db);
+}
+
+export async function saveRoom(hotelId: string, roomData: any): Promise<Room> {
+  if (isSupabaseConfigured) {
+    return saveSupabaseRoom(hotelId, roomData);
+  }
+  const db = getDb();
+  const existingIndex = db.rooms.findIndex(r => r.id === roomData.id);
+  const room = {
+    ...roomData,
+    hotel_id: hotelId,
+    sort_order: roomData.sort_order || 0
+  };
+  if (existingIndex !== -1) {
+    db.rooms[existingIndex] = room;
+  } else {
+    if (!room.id) {
+      room.id = `room-${Date.now()}`;
+    }
+    db.rooms.push(room);
+  }
+  saveDb(db);
+  return room;
+}
+
+export async function deleteRoom(roomId: string): Promise<void> {
+  if (isSupabaseConfigured) {
+    return deleteSupabaseRoom(roomId);
+  }
+  const db = getDb();
+  db.rooms = db.rooms.filter(r => r.id !== roomId);
+  saveDb(db);
+}
+
+export async function savePromotion(hotelId: string, promoData: any): Promise<Promotion> {
+  if (isSupabaseConfigured) {
+    return saveSupabasePromotion(hotelId, promoData);
+  }
+  const db = getDb();
+  const existingIndex = db.promotions.findIndex(p => p.id === promoData.id);
+  const promo = {
+    ...promoData,
+    hotel_id: hotelId
+  };
+  if (existingIndex !== -1) {
+    db.promotions[existingIndex] = promo;
+  } else {
+    if (!promo.id) {
+      promo.id = `promo-${Date.now()}`;
+    }
+    db.promotions.push(promo);
+  }
+  saveDb(db);
+  return promo;
+}
+
+export async function deletePromotion(promoId: string): Promise<void> {
+  if (isSupabaseConfigured) {
+    return deleteSupabasePromotion(promoId);
+  }
+  const db = getDb();
+  db.promotions = db.promotions.filter(p => p.id !== promoId);
+  saveDb(db);
+}
+
+export async function updateHomepageLayout(hotelId: string, layout: string[]): Promise<void> {
+  if (isSupabaseConfigured) {
+    await updateSupabaseHomepageLayout(hotelId, layout);
+    return;
+  }
+  const db = getDb();
+  const idx = db.hotels.findIndex(h => h.id === hotelId);
+  if (idx === -1) throw new Error('Hotel not found');
+  db.hotels[idx].homepage_layout = layout;
+  saveDb(db);
+}
+
+export async function registerNewHotel(hotelName: string, slug: string, email: string): Promise<string> {
+  if (isSupabaseConfigured) {
+    return registerSupabaseNewHotel(hotelName, slug, email);
+  }
+  const db = getDb();
+  if (db.hotels.some(h => h.slug.toLowerCase() === slug.toLowerCase())) {
+    throw new Error('This subdomain slug is already registered. Please choose another.');
+  }
+  const newHotelId = `hotel-${Date.now()}`;
+  const newHotelObj = {
+    id: newHotelId,
+    name: hotelName,
+    slug: slug || 'new-hotel',
+    custom_domain: null,
+    status: 'active' as const,
+    logo_url: null,
+    favicon_url: null,
+    email: email,
+    phone: '+1 (555) 000-0000',
+    address: '123 Paradise Boulevard',
+    google_map_url: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d100000!2d0!3d0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTPCsDAwJzAwLjAiTiAwwrAwMCcwMC4wIkU!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus',
+    social_links: { facebook: '', instagram: '', whatsapp: '', twitter: '' },
+    theme: {
+      primary_color: '#0f172a',
+      secondary_color: '#475569',
+      accent_color: '#c5a880',
+      background_color: '#ffffff',
+      text_color: '#0f172a',
+      button_style: 'rounded' as const,
+      border_radius: '8px',
+      font_family: 'Inter',
+      dark_mode: false,
+      header_layout: 'minimal' as const,
+      footer_layout: 'simple' as const,
+      animation_style: 'fade' as const
+    },
+    homepage_layout: ['hero', 'about', 'rooms', 'contact']
+  };
+  db.hotels.push(newHotelObj);
+  db.hero_slides.push({
+    id: `slide-${Date.now()}`,
+    hotel_id: newHotelId,
+    image_url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=80',
+    headline: `Welcome to ${hotelName}`,
+    subheadline: 'Bespoke Experience',
+    button_text: 'Book Stay',
+    button_link: '#booking',
+    overlay_color: '#000000',
+    overlay_opacity: 0.4,
+    sort_order: 0
+  });
+  db.rooms.push({
+    id: `room-${Date.now()}`,
+    hotel_id: newHotelId,
+    name: 'Deluxe Ocean Room',
+    description: 'A spacious and beautifully designed suite featuring high-end fixtures and direct ocean views.',
+    gallery: ['https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=80'],
+    amenities: ['Free Wi-Fi', 'Air Conditioning', 'Ocean View'],
+    max_guests: 2,
+    room_size: 40,
+    bed_type: 'King Bed',
+    price: 450,
+    sort_order: 0
+  });
+  db.homepage_sections.push({
+    id: `sec-${Date.now()}`,
+    hotel_id: newHotelId,
+    section_type: 'about',
+    content: {
+      title: `A New Vision of Hospitality`,
+      subtitle: `Welcome to ${hotelName}`,
+      description: `We invite you to experience a new standard of personalized service and refined luxury. Nestled in a prime destination, our hotel offers an unforgettable escape tailored to your comfort.`,
+      badge: 'Bespoke Retreat',
+      features: [
+        { title: 'Personalized Service', desc: 'Our team anticipates your every requirement.' },
+        { title: 'Curated Gastronomy', desc: 'Exceptional dining options crafted by our culinary team.' }
+      ]
+    },
+    is_enabled: true,
+    sort_order: 1
+  });
+  saveDb(db);
+  return newHotelId;
+}
+

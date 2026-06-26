@@ -31,13 +31,13 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     activeHotelId = '11111111-1111-1111-1111-111111111111'; // Hotel A ID
   }
 
-  const hotel = getHotelBySlug(activeHotelId);
+  const hotel = await getHotelBySlug(activeHotelId);
   if (!hotel) {
     // Fallback if not found
     redirect('/auth/login');
   }
 
-  const hotelsList = getAllHotels().map(h => ({ id: h.id, name: h.name }));
+  const hotelsList = (await getAllHotels()).map(h => ({ id: h.id, name: h.name }));
 
   // Sidebar navigation menu items
   const menuItems = [
