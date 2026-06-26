@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getHotelByDomainEdge } from './lib/db/edge-lookup';
 
-// Next.js 16 Proxy Convention
-export async function proxy(request: NextRequest) {
+// Next.js 16 Proxy Convention (Default export is highly compatible on Vercel)
+export default async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const hostname = request.headers.get('host') || '';
 
