@@ -1,4 +1,4 @@
-import { 
+import type { 
   Hotel, 
   HeroSlide, 
   HomepageSection, 

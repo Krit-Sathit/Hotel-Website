@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getHotelByDomain } from './lib/db/mock-data';
+import { getHotelByDomainEdge } from './lib/db/edge-lookup';
 
 // Next.js 16 Proxy Convention
 export async function proxy(request: NextRequest) {
@@ -23,14 +23,23 @@ export async function proxy(request: NextRequest) {
 
   // Define main platform domain names (including local port)
   const mainDomains = ['localhost:3000', 'flowstay.com', 'www.flowstay.com'];
-  const normalizedHost = hostname.toLowerCase();
-  const isMainDomain = mainDomains.includes(normalizedHost);
+  const normalizedHost = hostname.toLowerCase().split(':')[0];
+  const hostParts = normalizedHost.split('.');
+  
+  let isMainDomain = mainDomains.includes(normalizedHost);
+
+  // Dynamically recognize any Vercel deployment root domains as the main platform domain
+  if (normalizedHost.endsWith('vercel.app')) {
+    if (hostParts.length === 3) {
+      isMainDomain = true;
+    }
+  }
 
   let tenantSlug: string | null = null;
 
   if (!isMainDomain) {
-    // Dynamically resolve hotel mapping based on custom domain or subdomain
-    const hotel = await getHotelByDomain(hostname);
+    // Dynamically resolve hotel mapping based on custom domain or subdomain (Edge-safe)
+    const hotel = await getHotelByDomainEdge(hostname);
     if (hotel && hotel.status === 'active') {
       tenantSlug = hotel.slug;
     }
