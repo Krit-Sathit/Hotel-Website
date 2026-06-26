@@ -1,26 +1,206 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafafa;
+  --foreground: #0f172a;
+  
+  /* Tenant theme variable defaults (for main platform and fallbacks) */
+  --primary-color: #0f172a;
+  --secondary-color: #475569;
+  --accent-color: #c5a880;
+  --background-color: #fafafa;
+  --text-color: #0f172a;
+  --border-radius: 6px;
+  --font-family: 'Inter', sans-serif;
 }
 
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  
+  /* Dynamic custom theme properties mapped to Tailwind utility classes */
+  --color-primary: var(--primary-color);
+  --color-secondary: var(--secondary-color);
+  --color-accent: var(--accent-color);
+  --color-hotel-bg: var(--background-color);
+  --color-hotel-text: var(--text-color);
+  --radius-hotel: var(--border-radius);
+  --font-hotel: var(--font-family);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Custom micro-animations and scroll behaviors */
+html {
+  scroll-behavior: smooth;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Smooth glassmorphism helper */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ==========================================================================
+   DASHBOARD LIGHT MODE OVERRIDES
+   ========================================================================== */
+.dashboard-light-override {
+  background-color: #f8fafc !important;
+  color: #334155 !important;
+
+  /* Overrides for background elements */
+  .bg-slate-950,
+  .bg-slate-955,
+  .bg-slate-950\/40,
+  .bg-slate-950\/65,
+  .bg-slate-950\/50,
+  .bg-slate-900\/50 {
+    background-color: #f8fafc !important;
+  }
+  
+  .bg-slate-900,
+  .bg-slate-900\/40 {
+    background-color: #ffffff !important;
+  }
+
+  .bg-slate-850,
+  .bg-slate-800,
+  .bg-slate-800\/60,
+  .bg-slate-800\/40,
+  .bg-slate-800\/50,
+  .bg-slate-750 {
+    background-color: #f1f5f9 !important;
+  }
+
+  /* Overrides for border elements */
+  .border-slate-800,
+  .border-slate-800\/60,
+  .border-slate-800\/50,
+  .border-slate-800\/30,
+  .border-slate-805,
+  .border-slate-805\/80,
+  .border-slate-850,
+  .border-slate-700,
+  .border-slate-700\/60,
+  .border-slate-700\/50,
+  .border-slate-750,
+  .border-slate-755 {
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Overrides for text colors */
+  .text-white,
+  .text-slate-100 {
+    color: #0f172a !important;
+  }
+
+  .text-slate-200,
+  .text-slate-250 {
+    color: #1e293b !important;
+  }
+
+  .text-slate-300,
+  .text-slate-350 {
+    color: #334155 !important;
+  }
+
+  .text-slate-400,
+  .text-slate-405,
+  .text-slate-450 {
+    color: #64748b !important;
+  }
+
+  .text-slate-550,
+  .text-slate-500 {
+    color: #475569 !important;
+  }
+
+  /* Focus and interactive overrides */
+  .focus-within\:border-accent:focus-within {
+    border-color: var(--accent-color) !important;
+  }
+
+  input, textarea, select {
+    color: #0f172a !important;
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    &::placeholder {
+      color: #94a3b8 !important;
+    }
+  }
+
+  /* Badges and tags */
+  .bg-slate-850, .bg-slate-800 {
+    background-color: #f1f5f9 !important;
+    color: #475569 !important;
+  }
+
+  /* Chart grid line overrides */
+  .stroke-slate-800,
+  .stroke-slate-800\/50 {
+    stroke: #e2e8f0 !important;
+  }
+
+  /* Secondary button hover state */
+  .hover\:bg-slate-800:hover,
+  .hover\:bg-slate-750:hover {
+    background-color: #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  .hover\:text-white:hover {
+    color: #0f172a !important;
+  }
+
+  /* Modal background and wrapper overrides */
+  .fixed.inset-0.bg-black\/60 {
+    background-color: rgba(15, 23, 42, 0.4) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  /* Sidebar item hover border */
+  .hover\:border-slate-850:hover {
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Top Visited Pages index number */
+  .font-mono.text-slate-500 {
+    color: #94a3b8 !important;
+  }
 }
