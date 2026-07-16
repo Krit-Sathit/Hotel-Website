@@ -17,6 +17,7 @@ import {
   saveMediaItem,
   updateMediaItemCategory,
   deleteMediaItem,
+  saveMediaOrder,
   Hotel, 
   HotelTheme,
   Room,
@@ -240,6 +241,16 @@ export async function deleteMediaItemAction(mediaId: string) {
     return { success: true };
   } catch (error: any) {
     console.error('deleteMediaItemAction error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function saveMediaOrderAction(ids: string[]) {
+  try {
+    await saveMediaOrder(ids);
+    return { success: true };
+  } catch (error: any) {
+    console.error('saveMediaOrderAction error:', error);
     return { success: false, error: error.message };
   }
 }

@@ -19,7 +19,8 @@ import {
   getMediaItemsAction, 
   saveMediaItemAction, 
   updateMediaItemCategoryAction, 
-  deleteMediaItemAction 
+  deleteMediaItemAction,
+  saveMediaOrderAction
 } from '@/lib/db/actions';
 
 interface MediaFile {
@@ -332,6 +333,42 @@ export default function MediaLibraryPage() {
     }
   };
 
+  // Drag and Drop reordering state
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+    const reordered = [...files];
+    const [draggedItem] = reordered.splice(draggedIndex, 1);
+    reordered.splice(targetIndex, 0, draggedItem);
+
+    setFiles(reordered);
+    setDraggedIndex(null);
+
+    // Save new sort order in the database
+    try {
+      const ids = reordered.map(item => item.id);
+      await saveMediaOrderAction(ids);
+    } catch (err) {
+      console.error('Failed to save media order:', err);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
   // Filter logic
   const filteredFiles = files.filter(file => {
     const matchesSearch = (file.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -529,11 +566,22 @@ export default function MediaLibraryPage() {
                 <div
                   key={file.id}
                   onClick={() => setSelectedFile(file)}
-                  className={`group relative aspect-square bg-slate-950 rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${
+                  draggable={true}
+                  onDragStart={(e) => {
+                    const idx = files.findIndex(f => f.id === file.id);
+                    handleDragStart(e, idx);
+                  }}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => {
+                    const idx = files.findIndex(f => f.id === file.id);
+                    handleDrop(e, idx);
+                  }}
+                  onDragEnd={handleDragEnd}
+                  className={`group relative aspect-square bg-slate-950 rounded-xl overflow-hidden cursor-move border-2 transition-all ${
                     selectedFile?.id === file.id
                       ? 'border-accent shadow-lg'
                       : 'border-slate-850 hover:border-slate-700'
-                  }`}
+                  } ${draggedIndex === files.findIndex(f => f.id === file.id) ? 'opacity-40 scale-95 border-dashed border-accent' : ''}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 

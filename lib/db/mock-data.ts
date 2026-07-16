@@ -168,6 +168,7 @@ export interface MediaItem {
   mime_type: string;
   alt_text?: string;
   folder: string;
+  sort_order?: number;
   created_at: string;
 }
 
@@ -1033,6 +1034,12 @@ export async function getMediaItems(hotelId: string): Promise<any[]> {
   const list = db.media_library || [];
   return list
     .filter((item: any) => item.hotel_id === hotelId)
+    .sort((a: any, b: any) => {
+      const aOrder = a.sort_order !== undefined ? a.sort_order : 999999;
+      const bOrder = b.sort_order !== undefined ? b.sort_order : 999999;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    })
     .map((item: any) => ({
       id: item.id,
       name: item.file_name || item.name,
@@ -1062,6 +1069,14 @@ export async function saveMediaItem(hotelId: string, data: any): Promise<any> {
     sizeInBytes = data.sizeInBytes;
   }
 
+  // Shift all existing sort_orders up by 1 to make space for the new image at order 0
+  db.media_library = db.media_library.map((item: any) => {
+    if (item.hotel_id === hotelId && item.sort_order !== undefined) {
+      return { ...item, sort_order: item.sort_order + 1 };
+    }
+    return item;
+  });
+
   const newItem: MediaItem = {
     id: `media-${Date.now()}`,
     hotel_id: hotelId,
@@ -1071,6 +1086,7 @@ export async function saveMediaItem(hotelId: string, data: any): Promise<any> {
     mime_type: 'image/webp',
     folder: data.category || 'General',
     alt_text: data.altText || '',
+    sort_order: 0,
     created_at: new Date().toISOString()
   };
   db.media_library.push(newItem);
@@ -1104,6 +1120,19 @@ export async function deleteMediaItem(mediaId: string): Promise<void> {
   const db = getDb();
   if (!db.media_library) return;
   db.media_library = db.media_library.filter((item: MediaItem) => item.id !== mediaId);
+  saveDb(db);
+}
+
+export async function saveMediaOrder(ids: string[]): Promise<void> {
+  const db = getDb();
+  if (!db.media_library) return;
+  db.media_library = db.media_library.map((item: any) => {
+    const idx = ids.indexOf(item.id);
+    if (idx !== -1) {
+      return { ...item, sort_order: idx };
+    }
+    return item;
+  });
   saveDb(db);
 }
 
