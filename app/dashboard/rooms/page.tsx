@@ -5,6 +5,63 @@ import { Plus, Edit, Trash2, Hotel as HotelIcon, Save, X, BedDouble, Users, Maxi
 import { saveRoomAction, deleteRoomAction } from '@/lib/db/actions';
 import type { Room } from '@/lib/db/mock-data';
 
+async function compressImageToWebP(file: File, maxWidth = 1200, quality = 0.8): Promise<File> {
+  if (!file.type.startsWith('image/')) return file;
+  
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(file);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                const webpFile = new File([blob], `${nameWithoutExt}.webp`, {
+                  type: 'image/webp'
+                });
+                resolve(webpFile);
+              } else {
+                resolve(file);
+              }
+            },
+            'image/webp',
+            quality
+          );
+        } catch (err) {
+          console.error('Image compression error, falling back to original:', err);
+          resolve(file);
+        }
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+}
+
 export default function RoomsManagerPage() {
   const [hotelId, setHotelId] = useState('');
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -382,8 +439,9 @@ export default function RoomsManagerPage() {
                           const file = e.target.files?.[0];
                           if (!file) return;
                           try {
+                            const processedFile = await compressImageToWebP(file);
                             const formData = new FormData();
-                            formData.append('file', file);
+                            formData.append('file', processedFile);
                             const res = await fetch('/api/admin/media/upload', {
                               method: 'POST',
                               body: formData

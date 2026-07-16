@@ -28,6 +28,63 @@ interface MediaFile {
   dateAdded: string;
 }
 
+async function compressImageToWebP(file: File, maxWidth = 1200, quality = 0.8): Promise<File> {
+  if (!file.type.startsWith('image/')) return file;
+  
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(file);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                const webpFile = new File([blob], `${nameWithoutExt}.webp`, {
+                  type: 'image/webp'
+                });
+                resolve(webpFile);
+              } else {
+                resolve(file);
+              }
+            },
+            'image/webp',
+            quality
+          );
+        } catch (err) {
+          console.error('Image compression error, falling back to original:', err);
+          resolve(file);
+        }
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+}
+
 export default function MediaLibraryPage() {
   const [hotelName, setHotelName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -138,8 +195,9 @@ export default function MediaLibraryPage() {
     setUploadMessage(null);
 
     try {
+      const processedFile = await compressImageToWebP(file);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', processedFile);
 
       const res = await fetch('/api/admin/media/upload', {
         method: 'POST',
@@ -154,18 +212,18 @@ export default function MediaLibraryPage() {
 
       const newFile: MediaFile = {
         id: `media-${Date.now()}`,
-        name: file.name,
+        name: processedFile.name,
         url: data.url,
         category: uploadFolder,
-        size: `${Math.round(file.size / 1024)} KB`,
+        size: `${Math.round(processedFile.size / 1024)} KB`,
         dimensions: 'Dynamic',
-        altText: uploadAlt || file.name.split('.')[0],
+        altText: uploadAlt || processedFile.name.split('.')[0],
         dateAdded: new Date().toISOString().split('T')[0]
       };
 
       setFiles([newFile, ...files]);
       setUploadAlt('');
-      setUploadMessage('Image successfully uploaded and added to your central library!');
+      setUploadMessage('Image successfully WebP compressed, resized, and added to library!');
       setTimeout(() => setUploadMessage(null), 4000);
     } catch (err: any) {
       console.error(err);

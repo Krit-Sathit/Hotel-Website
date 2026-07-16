@@ -17576,6 +17576,20 @@
       "event_type": "page_view",
       "page_path": "/",
       "created_at": "2026-07-16T13:17:45.225Z"
+    },
+    {
+      "id": "evt-1784208220866-hxm15581s",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T13:23:40.866Z"
+    },
+    {
+      "id": "evt-1784208232198-5hb46jywc",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T13:23:52.198Z"
     }
   ]
 }
