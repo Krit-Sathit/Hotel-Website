@@ -52,7 +52,7 @@ export default function HeroSlider({ slides, hotelId }: HeroSliderProps) {
         <div
           key={slide.id}
           className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
-            index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+            index === currentIndex ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
           }`}
         >
           {/* Background Image / Video */}

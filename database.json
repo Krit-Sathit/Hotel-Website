@@ -173,6 +173,18 @@
       "overlay_color": "#000000",
       "overlay_opacity": 0.4,
       "sort_order": 0
+    },
+    {
+      "id": "slide-1784206393535",
+      "hotel_id": "hotel-1784206393534",
+      "image_url": "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1600&q=80",
+      "headline": "Brand New Experience",
+      "subheadline": "Luxury Redefined",
+      "button_text": "Book Now",
+      "button_link": "#booking",
+      "overlay_color": "#000000",
+      "overlay_opacity": 0.4,
+      "sort_order": 1
     }
   ],
   "homepage_sections": [
@@ -366,7 +378,9 @@
       "name": "Grand Deluxe Twin Room",
       "description": "Grand Deluxe Twin Room",
       "gallery": [
-        "/uploads/1784209977538-image-162.webp"
+        "/uploads/1784209977538-image-162.webp",
+        "/uploads/1784209977386-image-158.webp",
+        "/uploads/1784209977446-image-159.webp"
       ],
       "amenities": [
         "Free Wi-Fi",
@@ -386,7 +400,9 @@
       "name": "Grand Deluxe Double Room",
       "description": "Grand Deluxe Double Room",
       "gallery": [
-        "/uploads/1784210026586-image-155.webp"
+        "/uploads/1784210026586-image-155.webp",
+        "/uploads/1784210026465-image-149.webp",
+        "/uploads/1784210026522-image-150.webp"
       ],
       "amenities": [
         "Free Wi-Fi",
@@ -397,6 +413,48 @@
       "bed_type": "King Bed",
       "price": 4000,
       "sort_order": 3,
+      "hotel_id": "hotel-1784206393534"
+    },
+    {
+      "id": "room-1784213614405",
+      "name": "Grand Deluxe Triple Room",
+      "description": "Grand Deluxe Twin Room",
+      "gallery": [
+        "/uploads/1784210123578-image-134.webp",
+        "/uploads/1784210123636-image-136.webp",
+        "/uploads/1784210123691-image-138.webp"
+      ],
+      "amenities": [
+        "Free Wi-Fi",
+        "Air Conditioning"
+      ],
+      "max_guests": 3,
+      "room_size": 55,
+      "bed_type": "King Bed",
+      "price": 5000,
+      "sort_order": 4,
+      "hotel_id": "hotel-1784206393534"
+    },
+    {
+      "id": "room-1784213985101",
+      "name": "Deluxe Pool Access",
+      "description": "Deluxe Pool Access",
+      "gallery": [
+        "/uploads/1784213883145-image-117.webp",
+        "/uploads/1784213883231-image-128.webp",
+        "/uploads/1784213883198-image-120.webp",
+        "/uploads/1784213883176-image-118.webp",
+        "/uploads/1784213883172-image-122.webp"
+      ],
+      "amenities": [
+        "Free Wi-Fi",
+        "Air Conditioning"
+      ],
+      "max_guests": 2,
+      "room_size": 50,
+      "bed_type": "King Bed",
+      "price": 6000,
+      "sort_order": 5,
       "hotel_id": "hotel-1784206393534"
     }
   ],
@@ -542,7 +600,7 @@
       "folder": "Exterior",
       "alt_text": "image-24",
       "created_at": "2026-07-16T13:48:51.206Z",
-      "sort_order": 18
+      "sort_order": 33
     },
     {
       "id": "media-1784209834828",
@@ -554,7 +612,7 @@
       "folder": "General",
       "alt_text": "image-6",
       "created_at": "2026-07-16T13:50:34.829Z",
-      "sort_order": 17
+      "sort_order": 27
     },
     {
       "id": "media-1784209834968",
@@ -566,7 +624,7 @@
       "folder": "General",
       "alt_text": "image-7",
       "created_at": "2026-07-16T13:50:34.968Z",
-      "sort_order": 16
+      "sort_order": 26
     },
     {
       "id": "media-1784209896326",
@@ -578,7 +636,7 @@
       "folder": "General",
       "alt_text": "image-60",
       "created_at": "2026-07-16T13:51:36.326Z",
-      "sort_order": 15
+      "sort_order": 32
     },
     {
       "id": "media-1784209896428",
@@ -590,7 +648,7 @@
       "folder": "General",
       "alt_text": "image-74",
       "created_at": "2026-07-16T13:51:36.428Z",
-      "sort_order": 14
+      "sort_order": 31
     },
     {
       "id": "media-1784209896516",
@@ -602,7 +660,7 @@
       "folder": "General",
       "alt_text": "image-76",
       "created_at": "2026-07-16T13:51:36.516Z",
-      "sort_order": 13
+      "sort_order": 30
     },
     {
       "id": "media-1784209896611",
@@ -614,7 +672,7 @@
       "folder": "General",
       "alt_text": "image-62",
       "created_at": "2026-07-16T13:51:36.611Z",
-      "sort_order": 12
+      "sort_order": 29
     },
     {
       "id": "media-1784209896707",
@@ -626,7 +684,7 @@
       "folder": "General",
       "alt_text": "image-66",
       "created_at": "2026-07-16T13:51:36.707Z",
-      "sort_order": 11
+      "sort_order": 28
     },
     {
       "id": "media-1784209977417",
@@ -638,7 +696,7 @@
       "folder": "Rooms",
       "alt_text": "image-158",
       "created_at": "2026-07-16T13:52:57.417Z",
-      "sort_order": 6
+      "sort_order": 14
     },
     {
       "id": "media-1784209977521",
@@ -650,7 +708,7 @@
       "folder": "Rooms",
       "alt_text": "image-159",
       "created_at": "2026-07-16T13:52:57.521Z",
-      "sort_order": 7
+      "sort_order": 15
     },
     {
       "id": "media-1784209977619",
@@ -662,7 +720,7 @@
       "folder": "Rooms",
       "alt_text": "image-162",
       "created_at": "2026-07-16T13:52:57.619Z",
-      "sort_order": 5
+      "sort_order": 13
     },
     {
       "id": "media-1784210026496",
@@ -686,7 +744,7 @@
       "folder": "Rooms",
       "alt_text": "image-150",
       "created_at": "2026-07-16T13:53:46.608Z",
-      "sort_order": 4
+      "sort_order": 12
     },
     {
       "id": "media-1784210026662",
@@ -710,7 +768,7 @@
       "folder": "Rooms",
       "alt_text": "image-134",
       "created_at": "2026-07-16T13:55:23.609Z",
-      "sort_order": 8
+      "sort_order": 16
     },
     {
       "id": "media-1784210123720",
@@ -722,7 +780,7 @@
       "folder": "Rooms",
       "alt_text": "image-136",
       "created_at": "2026-07-16T13:55:23.720Z",
-      "sort_order": 9
+      "sort_order": 17
     },
     {
       "id": "media-1784210123759",
@@ -734,7 +792,187 @@
       "folder": "Rooms",
       "alt_text": "image-138",
       "created_at": "2026-07-16T13:55:23.759Z",
-      "sort_order": 10
+      "sort_order": 18
+    },
+    {
+      "id": "media-1784213883280",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-117.webp",
+      "file_path": "/uploads/1784213883145-image-117.webp",
+      "file_size": 99328,
+      "mime_type": "image/webp",
+      "folder": "Rooms",
+      "alt_text": "image-117",
+      "sort_order": 19,
+      "created_at": "2026-07-16T14:58:03.280Z"
+    },
+    {
+      "id": "media-1784213883401",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-122.webp",
+      "file_path": "/uploads/1784213883172-image-122.webp",
+      "file_size": 101376,
+      "mime_type": "image/webp",
+      "folder": "Rooms",
+      "alt_text": "image-122",
+      "sort_order": 21,
+      "created_at": "2026-07-16T14:58:03.401Z"
+    },
+    {
+      "id": "media-1784213883509",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-118.webp",
+      "file_path": "/uploads/1784213883176-image-118.webp",
+      "file_size": 74752,
+      "mime_type": "image/webp",
+      "folder": "Rooms",
+      "alt_text": "image-118",
+      "sort_order": 20,
+      "created_at": "2026-07-16T14:58:03.509Z"
+    },
+    {
+      "id": "media-1784213883643",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-120.webp",
+      "file_path": "/uploads/1784213883198-image-120.webp",
+      "file_size": 65536,
+      "mime_type": "image/webp",
+      "folder": "Rooms",
+      "alt_text": "image-120",
+      "sort_order": 22,
+      "created_at": "2026-07-16T14:58:03.643Z"
+    },
+    {
+      "id": "media-1784213883743",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-123.webp",
+      "file_path": "/uploads/1784213883217-image-123.webp",
+      "file_size": 49152,
+      "mime_type": "image/webp",
+      "folder": "General",
+      "alt_text": "image-123",
+      "sort_order": 25,
+      "created_at": "2026-07-16T14:58:03.743Z"
+    },
+    {
+      "id": "media-1784213883781",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-128.webp",
+      "file_path": "/uploads/1784213883231-image-128.webp",
+      "file_size": 81920,
+      "mime_type": "image/webp",
+      "folder": "Rooms",
+      "alt_text": "image-128",
+      "sort_order": 23,
+      "created_at": "2026-07-16T14:58:03.781Z"
+    },
+    {
+      "id": "media-1784213883858",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-57.webp",
+      "file_path": "/uploads/1784213883249-image-57.webp",
+      "file_size": 139264,
+      "mime_type": "image/webp",
+      "folder": "General",
+      "alt_text": "image-57",
+      "sort_order": 24,
+      "created_at": "2026-07-16T14:58:03.858Z"
+    },
+    {
+      "id": "media-1784214434591",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-165.webp",
+      "file_path": "/uploads/1784214434465-image-165.webp",
+      "file_size": 49152,
+      "mime_type": "image/webp",
+      "folder": "General",
+      "alt_text": "image-165",
+      "sort_order": 10,
+      "created_at": "2026-07-16T15:07:14.591Z"
+    },
+    {
+      "id": "media-1784214434699",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-167.webp",
+      "file_path": "/uploads/1784214434480-image-167.webp",
+      "file_size": 54272,
+      "mime_type": "image/webp",
+      "folder": "General",
+      "alt_text": "image-167",
+      "sort_order": 9,
+      "created_at": "2026-07-16T15:07:14.699Z"
+    },
+    {
+      "id": "media-1784214434794",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-168.webp",
+      "file_path": "/uploads/1784214434497-image-168.webp",
+      "file_size": 59392,
+      "mime_type": "image/webp",
+      "folder": "General",
+      "alt_text": "image-168",
+      "sort_order": 11,
+      "created_at": "2026-07-16T15:07:14.794Z"
+    },
+    {
+      "id": "media-1784214434901",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-174.webp",
+      "file_path": "/uploads/1784214434512-image-174.webp",
+      "file_size": 70656,
+      "mime_type": "image/webp",
+      "folder": "General",
+      "alt_text": "image-174",
+      "sort_order": 7,
+      "created_at": "2026-07-16T15:07:14.901Z"
+    },
+    {
+      "id": "media-1784214435023",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-172.webp",
+      "file_path": "/uploads/1784214434525-image-172.webp",
+      "file_size": 63488,
+      "mime_type": "image/webp",
+      "folder": "General",
+      "alt_text": "image-172",
+      "sort_order": 4,
+      "created_at": "2026-07-16T15:07:15.023Z"
+    },
+    {
+      "id": "media-1784214435064",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-175.webp",
+      "file_path": "/uploads/1784214434546-image-175.webp",
+      "file_size": 71680,
+      "mime_type": "image/webp",
+      "folder": "General",
+      "alt_text": "image-175",
+      "sort_order": 8,
+      "created_at": "2026-07-16T15:07:15.064Z"
+    },
+    {
+      "id": "media-1784214435141",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-176.webp",
+      "file_path": "/uploads/1784214434566-image-176.webp",
+      "file_size": 46080,
+      "mime_type": "image/webp",
+      "folder": "General",
+      "alt_text": "image-176",
+      "sort_order": 5,
+      "created_at": "2026-07-16T15:07:15.141Z"
+    },
+    {
+      "id": "media-1784214435239",
+      "hotel_id": "hotel-1784206393534",
+      "file_name": "image-177.webp",
+      "file_path": "/uploads/1784214434619-image-177.webp",
+      "file_size": 38912,
+      "mime_type": "image/webp",
+      "folder": "Rooms",
+      "alt_text": "image-177",
+      "sort_order": 6,
+      "created_at": "2026-07-16T15:07:15.239Z"
     }
   ],
   "analytics_events": [
@@ -22261,6 +22499,83 @@
       "event_type": "page_view",
       "page_path": "/gallery",
       "created_at": "2026-07-16T14:44:09.677Z"
+    },
+    {
+      "id": "evt-1784213723048-g8v3hwm8y",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:55:23.048Z"
+    },
+    {
+      "id": "evt-1784213726588-1tgyaqvne",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:55:26.588Z"
+    },
+    {
+      "id": "evt-1784214254698-3d9c4ofu4",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T15:04:14.698Z"
+    },
+    {
+      "id": "evt-1784214779083-xhvmnsek4",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T15:12:59.083Z"
+    },
+    {
+      "id": "evt-1784214796097-wkxm9qvlz",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T15:13:16.097Z"
+    },
+    {
+      "id": "evt-1784214838278-7azxh6oo8",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T15:13:58.278Z"
+    },
+    {
+      "id": "evt-1784214852168-noolosd6o",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T15:14:12.168Z"
+    },
+    {
+      "id": "evt-1784214871224-atga8pgjk",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T15:14:31.224Z"
+    },
+    {
+      "id": "evt-1784214944063-jzzkidfb9",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T15:15:44.063Z"
+    },
+    {
+      "id": "evt-1784215401579-ywyeahef5",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T15:23:21.579Z"
+    },
+    {
+      "id": "evt-1784215402599-xq3adys83",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T15:23:22.599Z"
     }
   ]
 }
