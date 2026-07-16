@@ -245,6 +245,25 @@ export default function MediaLibraryPage() {
     setSelectedFile(null);
   };
 
+  const handleCategoryChange = (fileId: string, newCategory: string) => {
+    setFiles(prevFiles => {
+      const updated = prevFiles.map(file => {
+        if (file.id === fileId) {
+          return { ...file, category: newCategory };
+        }
+        return file;
+      });
+      
+      // Update selectedFile state so details panel updates immediately
+      const found = updated.find(f => f.id === fileId);
+      if (found) {
+        setSelectedFile(found);
+      }
+      
+      return updated;
+    });
+  };
+
   // Filter logic
   const filteredFiles = files.filter(file => {
     const matchesSearch = file.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -521,6 +540,18 @@ export default function MediaLibraryPage() {
                       <span className="text-[9px] text-slate-500 font-bold uppercase block">Date Uploaded</span>
                       <span className="font-bold text-slate-250 font-mono">{selectedFile.dateAdded}</span>
                     </div>
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-slate-500 font-bold uppercase block">Folder / Category</span>
+                    <select
+                      value={selectedFile.category}
+                      onChange={(e) => handleCategoryChange(selectedFile.id, e.target.value)}
+                      className="mt-1 w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-accent cursor-pointer"
+                    >
+                      {folders.filter(f => f !== 'All').map(f => (
+                        <option key={f} value={f}>{f}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <span className="text-[9px] text-slate-500 font-bold uppercase block">Alt Text (Search Index)</span>
