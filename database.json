@@ -17590,6 +17590,34 @@
       "event_type": "page_view",
       "page_path": "/",
       "created_at": "2026-07-16T13:23:52.198Z"
+    },
+    {
+      "id": "evt-1784208439837-5itavot7b",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T13:27:19.837Z"
+    },
+    {
+      "id": "evt-1784208439987-y7c6iqzqj",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T13:27:19.987Z"
+    },
+    {
+      "id": "evt-1784208514308-ac9l9jgo7",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T13:28:34.308Z"
+    },
+    {
+      "id": "evt-1784208514416-851odbtpy",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T13:28:34.416Z"
     }
   ]
 }

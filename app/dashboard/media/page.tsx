@@ -188,48 +188,54 @@ export default function MediaLibraryPage() {
   };
 
   const handleRealUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
 
+    const filesArray = Array.from(fileList);
     setIsUploading(true);
     setUploadMessage(null);
 
     try {
-      const processedFile = await compressImageToWebP(file);
-      const formData = new FormData();
-      formData.append('file', processedFile);
+      const uploadPromises = filesArray.map(async (file, index) => {
+        const processedFile = await compressImageToWebP(file);
+        const formData = new FormData();
+        formData.append('file', processedFile);
 
-      const res = await fetch('/api/admin/media/upload', {
-        method: 'POST',
-        body: formData,
+        const res = await fetch('/api/admin/media/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Upload failed for ${file.name}`);
+        }
+
+        const data = await res.json();
+
+        return {
+          id: `media-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+          name: processedFile.name,
+          url: data.url,
+          category: uploadFolder,
+          size: `${Math.round(processedFile.size / 1024)} KB`,
+          dimensions: 'Dynamic',
+          altText: uploadAlt || processedFile.name.split('.')[0],
+          dateAdded: new Date().toISOString().split('T')[0]
+        };
       });
 
-      if (!res.ok) {
-        throw new Error('Upload failed');
-      }
+      const newUploadedFiles = await Promise.all(uploadPromises);
 
-      const data = await res.json();
-
-      const newFile: MediaFile = {
-        id: `media-${Date.now()}`,
-        name: processedFile.name,
-        url: data.url,
-        category: uploadFolder,
-        size: `${Math.round(processedFile.size / 1024)} KB`,
-        dimensions: 'Dynamic',
-        altText: uploadAlt || processedFile.name.split('.')[0],
-        dateAdded: new Date().toISOString().split('T')[0]
-      };
-
-      setFiles([newFile, ...files]);
+      setFiles((prevFiles) => [...newUploadedFiles, ...prevFiles]);
       setUploadAlt('');
-      setUploadMessage('Image successfully WebP compressed, resized, and added to library!');
+      setUploadMessage(`Successfully WebP compressed and uploaded ${newUploadedFiles.length} image(s) to library!`);
       setTimeout(() => setUploadMessage(null), 4000);
     } catch (err: any) {
       console.error(err);
-      alert('Failed to upload file. Please make sure the server is running and the file size is under 10MB.');
+      alert('Failed to upload some files. Please make sure the server is running and the files are under 10MB.');
     } finally {
       setIsUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -340,7 +346,7 @@ export default function MediaLibraryPage() {
                   <>
                     <Upload className="w-8 h-8 text-slate-500 group-hover:text-accent transition-colors" />
                     <div>
-                      <p className="text-xs font-bold text-slate-350 group-hover:text-slate-200 transition-colors">Click to upload image (or drag & drop file)</p>
+                      <p className="text-xs font-bold text-slate-350 group-hover:text-slate-200 transition-colors">Click to upload images (or drag & drop files)</p>
                       <p className="text-[9px] text-slate-500 mt-1">Supports PNG, JPG, JPEG, WEBP, GIF - Max 10MB</p>
                     </div>
                     <input
@@ -349,6 +355,7 @@ export default function MediaLibraryPage() {
                       onChange={handleRealUpload}
                       accept="image/*"
                       disabled={isUploading}
+                      multiple
                     />
                   </>
                 )}
