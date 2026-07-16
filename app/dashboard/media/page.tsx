@@ -15,7 +15,12 @@ import {
   FileText,
   Loader2
 } from 'lucide-react';
-import { getHotelBySlug } from '@/lib/db/mock-data';
+import { 
+  getMediaItemsAction, 
+  saveMediaItemAction, 
+  updateMediaItemCategoryAction, 
+  deleteMediaItemAction 
+} from '@/lib/db/actions';
 
 interface MediaFile {
   id: string;
@@ -86,6 +91,7 @@ async function compressImageToWebP(file: File, maxWidth = 1200, quality = 0.8): 
 }
 
 export default function MediaLibraryPage() {
+  const [hotelId, setHotelId] = useState('');
   const [hotelName, setHotelName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFolder, setActiveFolder] = useState('All');
@@ -111,25 +117,49 @@ export default function MediaLibraryPage() {
         const hotel = data.hotel;
         if (hotel) {
           setHotelName(hotel.name);
+          setHotelId(hotel.id);
           
-          // Seed files based on hotel's default room & gallery assets
-          const seedFiles: MediaFile[] = [];
-          
-          if (hotel.slug === 'hotel-a') {
-            seedFiles.push(
-              { id: 'm1', name: 'ocean-suite-bed.webp', url: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=80', category: 'Rooms', size: '124 KB', dimensions: '1920x1080', altText: 'Oceanfront King Suite master bed and pillows', dateAdded: '2026-06-10' },
-              { id: 'm2', name: 'villa-terrace-view.webp', url: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80', category: 'Rooms', size: '248 KB', dimensions: '1920x1080', altText: 'Private plunge pool terrace overlooking beach', dateAdded: '2026-06-11' },
-              { id: 'm3', name: 'resort-pool-sunset.webp', url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80', category: 'Exterior', size: '312 KB', dimensions: '1920x1200', altText: 'Malibu sunset reflected in infinity pool', dateAdded: '2026-06-12' },
-              { id: 'm4', name: 'spa-massage-table.webp', url: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=800&q=80', category: 'Spa', size: '89 KB', dimensions: '1200x800', altText: 'Therapeutic massage bed with warm stones', dateAdded: '2026-06-13' },
-              { id: 'm5', name: 'seafood-gastronomy.webp', url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80', category: 'Dining', size: '185 KB', dimensions: '1200x900', altText: 'Michelin oysters and fine white wine plating', dateAdded: '2026-06-14' }
-            );
+          // Load media items from database
+          const dbResult = await getMediaItemsAction(hotel.id);
+          if (dbResult.success && dbResult.items && dbResult.items.length > 0) {
+            setFiles(dbResult.items);
           } else {
-            seedFiles.push(
-              { id: 'm6', name: 'soho-loft-interior.webp', url: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80', category: 'Rooms', size: '142 KB', dimensions: '1600x1200', altText: 'Minimalist industrial Soho suite master bedroom', dateAdded: '2026-06-15' },
-              { id: 'm7', name: 'lounge-cocktails.webp', url: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?auto=format&fit=crop&w=800&q=80', category: 'Dining', size: '118 KB', dimensions: '1200x800', altText: 'Craft cocktails served on industrial zinc bar top', dateAdded: '2026-06-16' }
-            );
+            // Seed files based on hotel's default room & gallery assets
+            const seedFiles = [];
+            if (hotel.slug === 'hotel-a') {
+              seedFiles.push(
+                { name: 'ocean-suite-bed.webp', url: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=80', category: 'Rooms', size: '124 KB', altText: 'Oceanfront King Suite master bed and pillows' },
+                { name: 'villa-terrace-view.webp', url: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80', category: 'Rooms', size: '248 KB', altText: 'Private plunge pool terrace overlooking beach' },
+                { name: 'resort-pool-sunset.webp', url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80', category: 'Exterior', size: '312 KB', altText: 'Malibu sunset reflected in infinity pool' },
+                { name: 'spa-massage-table.webp', url: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=800&q=80', category: 'Spa', size: '89 KB', altText: 'Therapeutic massage bed with warm stones' },
+                { name: 'seafood-gastronomy.webp', url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80', category: 'Dining', size: '185 KB', altText: 'Michelin oysters and fine white wine plating' }
+              );
+            } else {
+              seedFiles.push(
+                { name: 'soho-loft-interior.webp', url: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80', category: 'Rooms', size: '142 KB', altText: 'Minimalist industrial Soho suite master bedroom' },
+                { name: 'lounge-cocktails.webp', url: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?auto=format&fit=crop&w=800&q=80', category: 'Dining', size: '118 KB', altText: 'Craft cocktails served on industrial zinc bar top' }
+              );
+            }
+
+            // Save seeds to database
+            const savedItems = [];
+            for (const seed of seedFiles) {
+              const saveRes = await saveMediaItemAction(hotel.id, seed);
+              if (saveRes.success && saveRes.item) {
+                savedItems.push({
+                  id: saveRes.item.id,
+                  name: saveRes.item.name,
+                  url: saveRes.item.url,
+                  category: saveRes.item.category,
+                  size: saveRes.item.size,
+                  dimensions: 'Dynamic',
+                  altText: saveRes.item.alt_text || '',
+                  dateAdded: saveRes.item.created_at ? saveRes.item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
+                });
+              }
+            }
+            setFiles(savedItems);
           }
-          setFiles(seedFiles);
         }
       } catch (err) {
         console.error('Failed to load media details via API:', err);
@@ -145,16 +175,14 @@ export default function MediaLibraryPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleSimulateUpload = (e: React.FormEvent) => {
+  const handleSimulateUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadUrl.trim()) return;
 
     setIsUploading(true);
     setUploadMessage(null);
 
-    // Simulate luxury image compression and WebP conversion (takes 2 seconds)
-    setTimeout(() => {
-      // Parse file name from URL or generate a clean slug
+    try {
       let fileName = 'custom-upload.webp';
       try {
         const urlObj = new URL(uploadUrl);
@@ -167,24 +195,37 @@ export default function MediaLibraryPage() {
         fileName = `upload-${Date.now().toString().slice(-4)}.webp`;
       }
 
-      const newFile: MediaFile = {
-        id: `media-${Date.now()}`,
+      const saveRes = await saveMediaItemAction(hotelId, {
         name: fileName,
         url: uploadUrl,
         category: uploadFolder,
-        size: `${Math.floor(80 + Math.random() * 150)} KB`, // Simulate 60% compression savings
-        dimensions: '1920x1080',
-        altText: uploadAlt || 'Resort custom upload asset',
-        dateAdded: new Date().toISOString().split('T')[0]
-      };
+        size: `${Math.floor(80 + Math.random() * 150)} KB`,
+        altText: uploadAlt || 'Resort custom upload asset'
+      });
 
-      setFiles([newFile, ...files]);
+      if (saveRes.success && saveRes.item) {
+        const item = saveRes.item;
+        const newFile: MediaFile = {
+          id: item.id,
+          name: item.name,
+          url: item.url,
+          category: item.category,
+          size: item.size,
+          dimensions: 'Dynamic',
+          altText: item.alt_text || '',
+          dateAdded: item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
+        };
+        setFiles([newFile, ...files]);
+        setUploadUrl('');
+        setUploadAlt('');
+        setUploadMessage('Image successfully saved to library database!');
+        setTimeout(() => setUploadMessage(null), 4000);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
       setIsUploading(false);
-      setUploadUrl('');
-      setUploadAlt('');
-      setUploadMessage('Image successfully compressed to WebP and added to your central library!');
-      setTimeout(() => setUploadMessage(null), 4000);
-    }, 2000);
+    }
   };
 
   const handleRealUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -212,15 +253,29 @@ export default function MediaLibraryPage() {
 
         const data = await res.json();
 
-        return {
-          id: `media-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+        // Save item to database
+        const saveRes = await saveMediaItemAction(hotelId, {
           name: processedFile.name,
           url: data.url,
           category: uploadFolder,
           size: `${Math.round(processedFile.size / 1024)} KB`,
+          altText: uploadAlt || processedFile.name.split('.')[0]
+        });
+
+        if (!saveRes.success || !saveRes.item) {
+          throw new Error(`Failed to save database reference for ${file.name}`);
+        }
+
+        const item = saveRes.item;
+        return {
+          id: item.id,
+          name: item.name,
+          url: item.url,
+          category: item.category,
+          size: item.size,
           dimensions: 'Dynamic',
-          altText: uploadAlt || processedFile.name.split('.')[0],
-          dateAdded: new Date().toISOString().split('T')[0]
+          altText: item.alt_text || '',
+          dateAdded: item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
         };
       });
 
@@ -228,7 +283,7 @@ export default function MediaLibraryPage() {
 
       setFiles((prevFiles) => [...newUploadedFiles, ...prevFiles]);
       setUploadAlt('');
-      setUploadMessage(`Successfully WebP compressed and uploaded ${newUploadedFiles.length} image(s) to library!`);
+      setUploadMessage(`Successfully WebP compressed and saved ${newUploadedFiles.length} image(s) to database!`);
       setTimeout(() => setUploadMessage(null), 4000);
     } catch (err: any) {
       console.error(err);
@@ -239,29 +294,42 @@ export default function MediaLibraryPage() {
     }
   };
 
-  const handleDeleteFile = (id: string) => {
+  const handleDeleteFile = async (id: string) => {
     if (!confirm('Are you sure you want to delete this asset from your media library? Any pages referencing this URL will show a broken image.')) return;
-    setFiles(files.filter(f => f.id !== id));
-    setSelectedFile(null);
+    try {
+      const res = await deleteMediaItemAction(id);
+      if (res.success) {
+        setFiles(files.filter(f => f.id !== id));
+        setSelectedFile(null);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleCategoryChange = (fileId: string, newCategory: string) => {
-    setFiles(prevFiles => {
-      const updated = prevFiles.map(file => {
-        if (file.id === fileId) {
-          return { ...file, category: newCategory };
-        }
-        return file;
-      });
-      
-      // Update selectedFile state so details panel updates immediately
-      const found = updated.find(f => f.id === fileId);
-      if (found) {
-        setSelectedFile(found);
+  const handleCategoryChange = async (fileId: string, newCategory: string) => {
+    try {
+      const res = await updateMediaItemCategoryAction(fileId, newCategory);
+      if (res.success) {
+        setFiles(prevFiles => {
+          const updated = prevFiles.map(file => {
+            if (file.id === fileId) {
+              return { ...file, category: newCategory };
+            }
+            return file;
+          });
+          
+          const found = updated.find(f => f.id === fileId);
+          if (found) {
+            setSelectedFile(found);
+          }
+          
+          return updated;
+        });
       }
-      
-      return updated;
-    });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // Filter logic

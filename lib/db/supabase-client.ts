@@ -567,3 +567,56 @@ export async function uploadSupabaseFile(
   return `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
 }
 
+export async function getSupabaseMediaItems(hotelId: string): Promise<any[]> {
+  try {
+    const items = await supabaseFetch(`/media_library?hotel_id=eq.${hotelId}&order=created_at.desc&select=*`);
+    return (items || []).map((item: any) => ({
+      id: item.id,
+      name: item.file_name,
+      url: item.file_path,
+      category: item.folder,
+      size: `${Math.round(item.file_size / 1024)} KB`,
+      dimensions: 'Dynamic',
+      altText: item.alt_text || '',
+      dateAdded: item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
+    }));
+  } catch (e) {
+    console.error('getSupabaseMediaItems error:', e);
+    return [];
+  }
+}
+
+export async function saveSupabaseMediaItem(hotelId: string, data: any): Promise<any> {
+  const payload = {
+    hotel_id: hotelId,
+    file_name: data.name,
+    file_path: data.url,
+    file_size: data.sizeInBytes || 102400,
+    mime_type: 'image/webp',
+    alt_text: data.altText || '',
+    folder: data.category || 'General',
+    created_at: new Date().toISOString()
+  };
+  const res = await supabaseFetch('/media_library', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+  if (!res || res.length === 0) {
+    throw new Error('Failed to save media item to Supabase.');
+  }
+  return res[0];
+}
+
+export async function updateSupabaseMediaItemCategory(mediaId: string, category: string): Promise<void> {
+  await supabaseFetch(`/media_library?id=eq.${mediaId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ folder: category })
+  });
+}
+
+export async function deleteSupabaseMediaItem(mediaId: string): Promise<void> {
+  await supabaseFetch(`/media_library?id=eq.${mediaId}`, {
+    method: 'DELETE'
+  });
+}
+

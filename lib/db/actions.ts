@@ -13,6 +13,10 @@ import {
   registerNewHotel,
   deleteHotel,
   getAllHotels,
+  getMediaItems,
+  saveMediaItem,
+  updateMediaItemCategory,
+  deleteMediaItem,
   Hotel, 
   HotelTheme,
   Room,
@@ -196,5 +200,49 @@ export async function getAllHotelsAction() {
     return { success: false, error: error.message, hotels: [] };
   }
 }
+
+// -----------------------------------------------------------------------------
+// 9. MEDIA LIBRARY ACTIONS
+// -----------------------------------------------------------------------------
+export async function getMediaItemsAction(hotelId: string) {
+  try {
+    const items = await getMediaItems(hotelId);
+    return { success: true, items };
+  } catch (error: any) {
+    console.error('getMediaItemsAction error:', error);
+    return { success: false, error: error.message, items: [] };
+  }
+}
+
+export async function saveMediaItemAction(hotelId: string, data: any) {
+  try {
+    const item = await saveMediaItem(hotelId, data);
+    return { success: true, item };
+  } catch (error: any) {
+    console.error('saveMediaItemAction error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateMediaItemCategoryAction(mediaId: string, category: string) {
+  try {
+    await updateMediaItemCategory(mediaId, category);
+    return { success: true };
+  } catch (error: any) {
+    console.error('updateMediaItemCategoryAction error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteMediaItemAction(mediaId: string) {
+  try {
+    await deleteMediaItem(mediaId);
+    return { success: true };
+  } catch (error: any) {
+    console.error('deleteMediaItemAction error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 
 

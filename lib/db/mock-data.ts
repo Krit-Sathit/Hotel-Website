@@ -27,7 +27,11 @@ import {
   deleteSupabaseRoom,
   saveSupabasePromotion,
   deleteSupabasePromotion,
-  deleteSupabaseHotel
+  deleteSupabaseHotel,
+  getSupabaseMediaItems,
+  saveSupabaseMediaItem,
+  updateSupabaseMediaItemCategory,
+  deleteSupabaseMediaItem
 } from './supabase-client';
 
 // Define TS Interfaces for our database schema
@@ -995,7 +999,86 @@ export async function deleteHotel(hotelId: string): Promise<void> {
   db.gallery_photos = db.gallery_photos.filter(g => g.hotel_id !== hotelId);
   db.blog_posts = db.blog_posts.filter(b => b.hotel_id !== hotelId);
   db.contact_messages = db.contact_messages.filter(m => m.hotel_id !== hotelId);
+  db.media_library = (db.media_library || []).filter((m: any) => m.hotel_id !== hotelId);
   db.analytics_events = db.analytics_events.filter(e => e.hotel_id !== hotelId);
+  saveDb(db);
+}
+
+export async function getMediaItems(hotelId: string): Promise<any[]> {
+  if (isSupabaseConfigured) {
+    return getSupabaseMediaItems(hotelId);
+  }
+  const db = getDb();
+  const list = db.media_library || [];
+  return list
+    .filter((item: MediaItem) => item.hotel_id === hotelId)
+    .map((item: MediaItem) => ({
+      id: item.id,
+      name: item.file_name,
+      url: item.file_path,
+      category: item.folder,
+      size: `${Math.round(item.file_size / 1024)} KB`,
+      dimensions: 'Dynamic',
+      altText: item.alt_text || '',
+      dateAdded: item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
+    }));
+}
+
+export async function saveMediaItem(hotelId: string, data: any): Promise<any> {
+  if (isSupabaseConfigured) {
+    return saveSupabaseMediaItem(hotelId, data);
+  }
+  const db = getDb();
+  if (!db.media_library) db.media_library = [];
+  
+  let sizeInBytes = 102400;
+  if (typeof data.size === 'string') {
+    const num = parseInt(data.size.replace(/[^0-9]/g, ''));
+    if (!isNaN(num)) {
+      sizeInBytes = num * 1024;
+    }
+  } else if (typeof data.sizeInBytes === 'number') {
+    sizeInBytes = data.sizeInBytes;
+  }
+
+  const newItem: MediaItem = {
+    id: `media-${Date.now()}`,
+    hotel_id: hotelId,
+    file_name: data.name,
+    file_path: data.url,
+    file_size: sizeInBytes,
+    mime_type: 'image/webp',
+    folder: data.category || 'General',
+    alt_text: data.altText || '',
+    created_at: new Date().toISOString()
+  };
+  db.media_library.push(newItem);
+  saveDb(db);
+  return newItem;
+}
+
+export async function updateMediaItemCategory(mediaId: string, category: string): Promise<void> {
+  if (isSupabaseConfigured) {
+    return updateSupabaseMediaItemCategory(mediaId, category);
+  }
+  const db = getDb();
+  if (!db.media_library) return;
+  db.media_library = db.media_library.map((item: MediaItem) => {
+    if (item.id === mediaId) {
+      return { ...item, folder: category };
+    }
+    return item;
+  });
+  saveDb(db);
+}
+
+export async function deleteMediaItem(mediaId: string): Promise<void> {
+  if (isSupabaseConfigured) {
+    return deleteSupabaseMediaItem(mediaId);
+  }
+  const db = getDb();
+  if (!db.media_library) return;
+  db.media_library = db.media_library.filter((item: MediaItem) => item.id !== mediaId);
   saveDb(db);
 }
 
