@@ -1,6 +1,6 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { getHotelBySlug, getGalleryPhotos, trackAnalyticsEvent } from '@/lib/db/mock-data';
+import { getHotelBySlug, getGalleryPhotos, getRooms, trackAnalyticsEvent } from '@/lib/db/mock-data';
 import GallerySection from '@/components/sections/gallery-section';
 
 interface GalleryPageProps {
@@ -19,10 +19,11 @@ export default async function GalleryPage({ params }: GalleryPageProps) {
   await trackAnalyticsEvent(hotel.id, 'page_view', '/gallery');
 
   const photos = await getGalleryPhotos(hotel.id);
+  const rooms = await getRooms(hotel.id);
 
   return (
     <div className="pt-8">
-      <GallerySection photos={photos} showFilters={true} />
+      <GallerySection photos={photos} rooms={rooms} showFilters={true} />
     </div>
   );
 }
