@@ -13,6 +13,7 @@ import {
   registerNewHotel,
   deleteHotel,
   getAllHotels,
+  getRooms,
   getMediaItems,
   saveMediaItem,
   updateMediaItemCategory,
@@ -251,6 +252,38 @@ export async function saveMediaOrderAction(ids: string[]) {
     return { success: true };
   } catch (error: any) {
     console.error('saveMediaOrderAction error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function associatePhotoWithRoomAction(hotelId: string, photoUrl: string, roomId: string | null) {
+  try {
+    const roomsList = await getRooms(hotelId);
+    
+    for (const room of roomsList) {
+      let changed = false;
+      const gallery = room.gallery || [];
+      
+      if (roomId && room.id === roomId) {
+        if (!gallery.includes(photoUrl)) {
+          room.gallery = [...gallery, photoUrl];
+          changed = true;
+        }
+      } else {
+        if (gallery.includes(photoUrl)) {
+          room.gallery = gallery.filter(url => url !== photoUrl);
+          changed = true;
+        }
+      }
+      
+      if (changed) {
+        await saveRoom(hotelId, room);
+      }
+    }
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error('associatePhotoWithRoomAction error:', error);
     return { success: false, error: error.message };
   }
 }

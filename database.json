@@ -21491,6 +21491,776 @@
       "event_type": "page_view",
       "page_path": "/",
       "created_at": "2026-07-16T14:34:09.475Z"
+    },
+    {
+      "id": "evt-1784212949945-7oeu0in8q",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:29.945Z"
+    },
+    {
+      "id": "evt-1784212950089-hc8q60sbd",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:30.089Z"
+    },
+    {
+      "id": "evt-1784212950435-86xxmar6z",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:30.435Z"
+    },
+    {
+      "id": "evt-1784212950699-k4lvc98f3",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:30.699Z"
+    },
+    {
+      "id": "evt-1784212951071-eyhwb71eq",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:31.071Z"
+    },
+    {
+      "id": "evt-1784212951157-bnr9bbhpp",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:31.157Z"
+    },
+    {
+      "id": "evt-1784212951242-k8fsq0y7q",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:31.242Z"
+    },
+    {
+      "id": "evt-1784212951341-njw1oicx4",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:31.341Z"
+    },
+    {
+      "id": "evt-1784212951461-w1aryw5sr",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:31.461Z"
+    },
+    {
+      "id": "evt-1784212951610-f59igqlts",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:31.610Z"
+    },
+    {
+      "id": "evt-1784212951727-ztgg4mmee",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:31.727Z"
+    },
+    {
+      "id": "evt-1784212951870-6jkdha13f",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:31.870Z"
+    },
+    {
+      "id": "evt-1784212952025-x81axdu4e",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:32.025Z"
+    },
+    {
+      "id": "evt-1784212952550-0jcy8zg98",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:32.550Z"
+    },
+    {
+      "id": "evt-1784212952742-515ictni3",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:32.742Z"
+    },
+    {
+      "id": "evt-1784212953068-iabf7h6dx",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:33.068Z"
+    },
+    {
+      "id": "evt-1784212953235-uaap7lkux",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:33.235Z"
+    },
+    {
+      "id": "evt-1784212953383-bzdyz0ea8",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:33.383Z"
+    },
+    {
+      "id": "evt-1784212953606-bt0b0dx99",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:33.606Z"
+    },
+    {
+      "id": "evt-1784212953785-vqy4gjywd",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:33.785Z"
+    },
+    {
+      "id": "evt-1784212953905-wa77aeycs",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:33.905Z"
+    },
+    {
+      "id": "evt-1784212954242-wo49r0irz",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:34.242Z"
+    },
+    {
+      "id": "evt-1784212954402-gf7ka6yna",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:34.402Z"
+    },
+    {
+      "id": "evt-1784212954514-oaf87fnnt",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:34.514Z"
+    },
+    {
+      "id": "evt-1784212954636-aend5dswb",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:34.636Z"
+    },
+    {
+      "id": "evt-1784212954836-ipiy6ux3j",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:34.836Z"
+    },
+    {
+      "id": "evt-1784212954985-pcfdf02lr",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:34.985Z"
+    },
+    {
+      "id": "evt-1784212955086-lby2nqfao",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:35.086Z"
+    },
+    {
+      "id": "evt-1784212955289-uikcssttl",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:35.289Z"
+    },
+    {
+      "id": "evt-1784212955417-2wv9yk7al",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:35.417Z"
+    },
+    {
+      "id": "evt-1784212955590-dukmik5md",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:35.590Z"
+    },
+    {
+      "id": "evt-1784212955734-sb7mre1ff",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:35.734Z"
+    },
+    {
+      "id": "evt-1784212962857-qeckd57ml",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:42.857Z"
+    },
+    {
+      "id": "evt-1784212962993-fcuwjxpwd",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:42.994Z"
+    },
+    {
+      "id": "evt-1784212965331-hmfuvtp5f",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:45.331Z"
+    },
+    {
+      "id": "evt-1784212965516-zm2mbn5u2",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:45.516Z"
+    },
+    {
+      "id": "evt-1784212965982-k7i9mpbnr",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:45.982Z"
+    },
+    {
+      "id": "evt-1784212966105-48s208rji",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:46.106Z"
+    },
+    {
+      "id": "evt-1784212966217-v7lkuuj0y",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:46.217Z"
+    },
+    {
+      "id": "evt-1784212966324-uw9e8qcdp",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:46.324Z"
+    },
+    {
+      "id": "evt-1784212966471-p1yld29gq",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:46.471Z"
+    },
+    {
+      "id": "evt-1784212966551-4jqgsl19x",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:46.551Z"
+    },
+    {
+      "id": "evt-1784212966632-bt4bretha",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:46.632Z"
+    },
+    {
+      "id": "evt-1784212966718-p7jrc9ih9",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:46.718Z"
+    },
+    {
+      "id": "evt-1784212966862-pas7s7kqh",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:46.862Z"
+    },
+    {
+      "id": "evt-1784212967130-457qc1uvn",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:47.130Z"
+    },
+    {
+      "id": "evt-1784212967256-dzs6r5bwd",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:47.256Z"
+    },
+    {
+      "id": "evt-1784212967754-yy10000xk",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:47.754Z"
+    },
+    {
+      "id": "evt-1784212967870-683awkng4",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:47.870Z"
+    },
+    {
+      "id": "evt-1784212967958-f3vu5sak3",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:47.958Z"
+    },
+    {
+      "id": "evt-1784212968070-s5arh9lfo",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:48.070Z"
+    },
+    {
+      "id": "evt-1784212968175-sdv7rx08j",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:48.175Z"
+    },
+    {
+      "id": "evt-1784212968362-o2s8qj3qz",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:48.362Z"
+    },
+    {
+      "id": "evt-1784212968488-i4ao994he",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:48.488Z"
+    },
+    {
+      "id": "evt-1784212968612-sf2vuazij",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:48.612Z"
+    },
+    {
+      "id": "evt-1784212968727-bvuc0hb3q",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:48.727Z"
+    },
+    {
+      "id": "evt-1784212968849-kx9do4vqj",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:48.849Z"
+    },
+    {
+      "id": "evt-1784212969067-vobggmdxk",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:49.067Z"
+    },
+    {
+      "id": "evt-1784212969670-r4lwvm3mk",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:49.670Z"
+    },
+    {
+      "id": "evt-1784212969756-oti3de07t",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:49.757Z"
+    },
+    {
+      "id": "evt-1784212969841-ytvh4nn99",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:49.841Z"
+    },
+    {
+      "id": "evt-1784212970005-uys78d1n1",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:50.005Z"
+    },
+    {
+      "id": "evt-1784212970134-drl8h4vl2",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:50.134Z"
+    },
+    {
+      "id": "evt-1784212970347-pn68fqy73",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:50.347Z"
+    },
+    {
+      "id": "evt-1784212970495-onwu6iejq",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:50.495Z"
+    },
+    {
+      "id": "evt-1784212970703-r946alrfb",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:50.703Z"
+    },
+    {
+      "id": "evt-1784212971207-4xyzt2edr",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:51.207Z"
+    },
+    {
+      "id": "evt-1784212971329-csdvwhxis",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:51.329Z"
+    },
+    {
+      "id": "evt-1784212971439-5vv6cpmt3",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:51.439Z"
+    },
+    {
+      "id": "evt-1784212971546-69xnxhu6x",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:51.546Z"
+    },
+    {
+      "id": "evt-1784212971733-yhi4xg2rc",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:51.733Z"
+    },
+    {
+      "id": "evt-1784212971823-ijws6a9yu",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:51.823Z"
+    },
+    {
+      "id": "evt-1784212971910-iophazoic",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:51.910Z"
+    },
+    {
+      "id": "evt-1784212972096-hq7fkukca",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:52.096Z"
+    },
+    {
+      "id": "evt-1784212972204-7i2bity0s",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:52.205Z"
+    },
+    {
+      "id": "evt-1784212972614-5bueiec6r",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:52.614Z"
+    },
+    {
+      "id": "evt-1784212972800-3jrvz961d",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:52.800Z"
+    },
+    {
+      "id": "evt-1784212972995-n9hgp1ta8",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:52.995Z"
+    },
+    {
+      "id": "evt-1784212973173-m7lmfb3pq",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:53.173Z"
+    },
+    {
+      "id": "evt-1784212973260-v7vzllmqg",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:53.260Z"
+    },
+    {
+      "id": "evt-1784212973350-bf77oeluq",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:53.350Z"
+    },
+    {
+      "id": "evt-1784212973537-b8j09dtwv",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:53.537Z"
+    },
+    {
+      "id": "evt-1784212973666-a84ldblvq",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:53.666Z"
+    },
+    {
+      "id": "evt-1784212973772-kgnjwmjzm",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:53.772Z"
+    },
+    {
+      "id": "evt-1784212973871-oucmzb6yr",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:53.871Z"
+    },
+    {
+      "id": "evt-1784212974050-2xm3tkb9m",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:54.050Z"
+    },
+    {
+      "id": "evt-1784212974141-iu7j6mbo6",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:54.141Z"
+    },
+    {
+      "id": "evt-1784212974241-afe9hxzi7",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:54.241Z"
+    },
+    {
+      "id": "evt-1784212974462-5ex0hxhvd",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:54.462Z"
+    },
+    {
+      "id": "evt-1784212974636-g3ha2e3f7",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:54.636Z"
+    },
+    {
+      "id": "evt-1784212974831-2xyx5dpkl",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:54.831Z"
+    },
+    {
+      "id": "evt-1784212974968-hicqtrib2",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:54.968Z"
+    },
+    {
+      "id": "evt-1784212975107-35tuooxwn",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:55.107Z"
+    },
+    {
+      "id": "evt-1784212975211-x056r5p7u",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:55.211Z"
+    },
+    {
+      "id": "evt-1784212975361-69qgciyw6",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:55.361Z"
+    },
+    {
+      "id": "evt-1784212975521-vkrp2tes8",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:55.521Z"
+    },
+    {
+      "id": "evt-1784212977039-yr870f6y9",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:42:57.039Z"
+    },
+    {
+      "id": "evt-1784212977180-zi4onvgg8",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:42:57.180Z"
+    },
+    {
+      "id": "evt-1784212994031-35gyyyn6g",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:43:14.031Z"
+    },
+    {
+      "id": "evt-1784212994180-5xw949h19",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:43:14.180Z"
+    },
+    {
+      "id": "evt-1784213012228-ttqtcaecm",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:43:32.228Z"
+    },
+    {
+      "id": "evt-1784213012384-1c80ljsif",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:43:32.384Z"
+    },
+    {
+      "id": "evt-1784213012646-xkda5aquh",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:43:32.646Z"
+    },
+    {
+      "id": "evt-1784213012872-qey3ar7ux",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:43:32.872Z"
+    },
+    {
+      "id": "evt-1784213013172-kixh9o028",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:43:33.172Z"
+    },
+    {
+      "id": "evt-1784213013266-93g5xai9n",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:43:33.266Z"
+    },
+    {
+      "id": "evt-1784213013433-4qkxbxw2r",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:43:33.433Z"
+    },
+    {
+      "id": "evt-1784213013578-97sd0btzg",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:43:33.578Z"
+    },
+    {
+      "id": "evt-1784213049513-d5ebc21d8",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T14:44:09.513Z"
+    },
+    {
+      "id": "evt-1784213049677-2gh4lh35n",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T14:44:09.677Z"
     }
   ]
 }

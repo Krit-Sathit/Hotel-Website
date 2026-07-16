@@ -20,7 +20,8 @@ import {
   saveMediaItemAction, 
   updateMediaItemCategoryAction, 
   deleteMediaItemAction,
-  saveMediaOrderAction
+  saveMediaOrderAction,
+  associatePhotoWithRoomAction
 } from '@/lib/db/actions';
 
 interface MediaFile {
@@ -108,6 +109,7 @@ export default function MediaLibraryPage() {
 
   // Seed default library files
   const [files, setFiles] = useState<MediaFile[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
 
   useEffect(() => {
     const getActiveMedia = async () => {
@@ -119,6 +121,7 @@ export default function MediaLibraryPage() {
         if (hotel) {
           setHotelName(hotel.name);
           setHotelId(hotel.id);
+          setRooms(data.rooms || []);
           
           // Load media items from database
           const dbResult = await getMediaItemsAction(hotel.id);
@@ -367,6 +370,21 @@ export default function MediaLibraryPage() {
 
   const handleDragEnd = () => {
     setDraggedIndex(null);
+  };
+
+  const handleRoomTypeAssociationChange = async (fileUrl: string, roomId: string) => {
+    try {
+      const res = await associatePhotoWithRoomAction(hotelId, fileUrl, roomId || null);
+      if (res.success) {
+        const dataRes = await fetch('/api/admin/data');
+        if (dataRes.ok) {
+          const data = await dataRes.json();
+          setRooms(data.rooms || []);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to change room association:', err);
+    }
   };
 
   // Filter logic
@@ -669,6 +687,46 @@ export default function MediaLibraryPage() {
                       ))}
                     </select>
                   </div>
+                  {selectedFile.category === 'Rooms' && (() => {
+                    const selectedFileRoomId = (() => {
+                      if (!rooms) return '';
+                      const matchingRoom = rooms.find(room => 
+                        room.gallery && room.gallery.some((url: string) => {
+                          if (!url || !selectedFile.url) return false;
+                          const cleanUrl = (u: string) => {
+                            try {
+                              const parsed = new URL(u);
+                              return parsed.pathname;
+                            } catch {
+                              return u;
+                            }
+                          };
+                          const pathA = cleanUrl(url);
+                          const pathB = cleanUrl(selectedFile.url);
+                          if (pathA === pathB) return true;
+                          const fileA = pathA.substring(pathA.lastIndexOf('/') + 1);
+                          const fileB = pathB.substring(pathB.lastIndexOf('/') + 1);
+                          return fileA && fileB && fileA === fileB;
+                        })
+                      );
+                      return matchingRoom ? matchingRoom.id : '';
+                    })();
+                    return (
+                      <div>
+                        <span className="text-[9px] text-slate-500 font-bold uppercase block">Associated Room Type</span>
+                        <select
+                          value={selectedFileRoomId}
+                          onChange={(e) => handleRoomTypeAssociationChange(selectedFile.url, e.target.value)}
+                          className="mt-1 w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-accent cursor-pointer"
+                        >
+                          <option value="">-- General / No Room Type --</option>
+                          {rooms.map(room => (
+                            <option key={room.id} value={room.id}>{room.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })()}
                   <div>
                     <span className="text-[9px] text-slate-500 font-bold uppercase block">Alt Text (Search Index)</span>
                     <span className="font-semibold text-slate-350 leading-relaxed text-[11px] block mt-0.5 italic">
