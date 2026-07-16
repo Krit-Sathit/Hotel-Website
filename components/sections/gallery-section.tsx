@@ -14,6 +14,23 @@ export default function GallerySection({ photos, limit, showFilters = true }: Ga
   const [activeCategory, setActiveCategory] = useState('All');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
+  // Helper to determine if alt text is a user-entered description vs auto-generated filename
+  const isValidAltText = (text?: string) => {
+    if (!text) return false;
+    const lower = text.toLowerCase();
+    if (
+      lower.startsWith('image-') || 
+      lower.startsWith('upload-') || 
+      lower.includes('.webp') || 
+      lower.includes('.jpg') || 
+      lower.includes('.png') ||
+      lower.includes('.jpeg')
+    ) {
+      return false;
+    }
+    return true;
+  };
+
   // Extract unique categories from photos
   const categories = ['All', ...Array.from(new Set(photos.map(p => p.category)))];
 
@@ -109,7 +126,7 @@ export default function GallerySection({ photos, limit, showFilters = true }: Ga
                 </div>
                 <div className="absolute bottom-4 left-4 text-left">
                   <span className="text-[9px] tracking-widest font-bold uppercase text-accent/90">{photo.category}</span>
-                  {photo.alt_text && <p className="text-xs text-white/90 font-medium">{photo.alt_text}</p>}
+                  {isValidAltText(photo.alt_text) && <p className="text-xs text-white/90 font-medium">{photo.alt_text}</p>}
                 </div>
               </div>
             </div>
@@ -155,8 +172,10 @@ export default function GallerySection({ photos, limit, showFilters = true }: Ga
                 <span className="text-accent/90 font-bold uppercase tracking-widest text-[10px] mr-2">
                   [{filteredPhotos[lightboxIndex].category}]
                 </span>
-                {filteredPhotos[lightboxIndex].alt_text || 'Resort View'} 
-                <span className="text-white/40 ml-2">
+                {isValidAltText(filteredPhotos[lightboxIndex].alt_text) && (
+                  <span className="mr-2">{filteredPhotos[lightboxIndex].alt_text}</span>
+                )}
+                <span className="text-white/40">
                   ({lightboxIndex + 1} of {filteredPhotos.length})
                 </span>
               </div>
