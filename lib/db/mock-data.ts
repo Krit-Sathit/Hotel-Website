@@ -630,12 +630,33 @@ export async function getPromotions(hotelId: string): Promise<Promotion[]> {
 
 export async function getGalleryPhotos(hotelId: string): Promise<GalleryPhoto[]> {
   if (isSupabaseConfigured) {
-    return getSupabaseGalleryPhotos(hotelId);
+    try {
+      const items = await getSupabaseMediaItems(hotelId);
+      return items.map((item, index) => ({
+        id: item.id,
+        hotel_id: hotelId,
+        image_url: item.url,
+        category: item.category,
+        alt_text: item.altText,
+        sort_order: index
+      }));
+    } catch (e) {
+      console.error('getGalleryPhotos Edge error:', e);
+      return [];
+    }
   }
   const db = getDb();
-  return db.gallery_photos
-    .filter(g => g.hotel_id === hotelId)
-    .sort((a, b) => a.sort_order - b.sort_order);
+  const list = db.media_library || [];
+  return list
+    .filter((item: any) => item.hotel_id === hotelId)
+    .map((item: any, index: number) => ({
+      id: item.id,
+      hotel_id: hotelId,
+      image_url: item.file_path || item.url,
+      category: item.folder || item.category,
+      alt_text: item.alt_text,
+      sort_order: index
+    }));
 }
 
 export async function getBlogPosts(hotelId: string): Promise<BlogPost[]> {
