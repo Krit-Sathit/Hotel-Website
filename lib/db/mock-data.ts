@@ -633,7 +633,13 @@ export async function getGalleryPhotos(hotelId: string): Promise<GalleryPhoto[]>
   if (isSupabaseConfigured) {
     try {
       const items = await getSupabaseMediaItems(hotelId);
-      return items.map((item, index) => ({
+      const sortedItems = [...items].sort((a, b) => {
+        const aOrder = a.sort_order !== undefined ? a.sort_order : 999999;
+        const bOrder = b.sort_order !== undefined ? b.sort_order : 999999;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return new Date(b.dateAdded || 0).getTime() - new Date(a.dateAdded || 0).getTime();
+      });
+      return sortedItems.map((item, index) => ({
         id: item.id,
         hotel_id: hotelId,
         image_url: item.url,
@@ -650,6 +656,12 @@ export async function getGalleryPhotos(hotelId: string): Promise<GalleryPhoto[]>
   const list = db.media_library || [];
   return list
     .filter((item: any) => item.hotel_id === hotelId)
+    .sort((a: any, b: any) => {
+      const aOrder = a.sort_order !== undefined ? a.sort_order : 999999;
+      const bOrder = b.sort_order !== undefined ? b.sort_order : 999999;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    })
     .map((item: any, index: number) => ({
       id: item.id,
       hotel_id: hotelId,
