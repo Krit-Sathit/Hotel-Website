@@ -51,11 +51,7 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
               <h1 className="text-3xl md:text-5xl font-light tracking-wide text-primary font-hotel capitalize">
                 {room.name}
               </h1>
-              {room.price && (
-                <p className="text-sm tracking-widest font-semibold uppercase text-accent">
-                  From ${room.price} / Night
-                </p>
-              )}
+              {/* Price text removed per user request */}
               <div className="w-16 h-[1px] bg-accent/60" />
             </div>
 

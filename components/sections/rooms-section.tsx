@@ -43,12 +43,7 @@ export default function RoomsSection({ rooms }: RoomsSectionProps) {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-750"
                 />
                 
-                {/* Floating price tag */}
-                {room.price && (
-                  <div className="absolute top-4 right-4 bg-primary/90 text-white/90 text-[11px] tracking-widest font-semibold uppercase px-4 py-2 backdrop-blur-sm shadow-md rounded-hotel border border-white/10">
-                    From ${room.price} / Night
-                  </div>
-                )}
+                {/* Price tag removed per user request */}
               </div>
 
               {/* Room Body Details */}

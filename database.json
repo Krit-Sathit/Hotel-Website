@@ -165,7 +165,7 @@
     {
       "id": "slide-1784206393534",
       "hotel_id": "hotel-1784206393534",
-      "image_url": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=80",
+      "image_url": "/uploads/1784209730938-image-15.webp",
       "headline": "Welcome to The Par Phuket",
       "subheadline": "Bespoke Experience",
       "button_text": "Book Stay",
@@ -177,7 +177,7 @@
     {
       "id": "slide-1784206393535",
       "hotel_id": "hotel-1784206393534",
-      "image_url": "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1600&q=80",
+      "image_url": "/uploads/1784210026586-image-155.webp",
       "headline": "Brand New Experience",
       "subheadline": "Luxury Redefined",
       "button_text": "Book Now",
@@ -185,6 +185,18 @@
       "overlay_color": "#000000",
       "overlay_opacity": 0.4,
       "sort_order": 1
+    },
+    {
+      "id": "slide-1784216164635",
+      "hotel_id": "hotel-1784206393534",
+      "image_url": "/uploads/1784214434525-image-172.webp",
+      "headline": "Brand New Experience",
+      "subheadline": "Luxury Redefined",
+      "button_text": "Book Now",
+      "button_link": "#booking",
+      "overlay_color": "#000000",
+      "overlay_opacity": 0.4,
+      "sort_order": 2
     }
   ],
   "homepage_sections": [
@@ -455,6 +467,31 @@
       "bed_type": "King Bed",
       "price": 6000,
       "sort_order": 5,
+      "hotel_id": "hotel-1784206393534"
+    },
+    {
+      "id": "room-1784215718366",
+      "name": "Junior Suite Room",
+      "description": "Junior Suite Room",
+      "gallery": [
+        "/uploads/1784214434525-image-172.webp",
+        "/uploads/1784214434566-image-176.webp",
+        "/uploads/1784214434619-image-177.webp",
+        "/uploads/1784214434512-image-174.webp",
+        "/uploads/1784214434546-image-175.webp",
+        "/uploads/1784214434480-image-167.webp",
+        "/uploads/1784214434465-image-165.webp",
+        "/uploads/1784214434497-image-168.webp"
+      ],
+      "amenities": [
+        "Free Wi-Fi",
+        "Air Conditioning"
+      ],
+      "max_guests": 2,
+      "room_size": 55,
+      "bed_type": "King Bed",
+      "price": 7000,
+      "sort_order": 6,
       "hotel_id": "hotel-1784206393534"
     }
   ],
@@ -885,9 +922,9 @@
       "file_path": "/uploads/1784214434465-image-165.webp",
       "file_size": 49152,
       "mime_type": "image/webp",
-      "folder": "General",
+      "folder": "Rooms",
       "alt_text": "image-165",
-      "sort_order": 10,
+      "sort_order": 9,
       "created_at": "2026-07-16T15:07:14.591Z"
     },
     {
@@ -897,9 +934,9 @@
       "file_path": "/uploads/1784214434480-image-167.webp",
       "file_size": 54272,
       "mime_type": "image/webp",
-      "folder": "General",
+      "folder": "Rooms",
       "alt_text": "image-167",
-      "sort_order": 9,
+      "sort_order": 8,
       "created_at": "2026-07-16T15:07:14.699Z"
     },
     {
@@ -909,9 +946,9 @@
       "file_path": "/uploads/1784214434497-image-168.webp",
       "file_size": 59392,
       "mime_type": "image/webp",
-      "folder": "General",
+      "folder": "Rooms",
       "alt_text": "image-168",
-      "sort_order": 11,
+      "sort_order": 10,
       "created_at": "2026-07-16T15:07:14.794Z"
     },
     {
@@ -921,9 +958,9 @@
       "file_path": "/uploads/1784214434512-image-174.webp",
       "file_size": 70656,
       "mime_type": "image/webp",
-      "folder": "General",
+      "folder": "Rooms",
       "alt_text": "image-174",
-      "sort_order": 7,
+      "sort_order": 6,
       "created_at": "2026-07-16T15:07:14.901Z"
     },
     {
@@ -933,7 +970,7 @@
       "file_path": "/uploads/1784214434525-image-172.webp",
       "file_size": 63488,
       "mime_type": "image/webp",
-      "folder": "General",
+      "folder": "Rooms",
       "alt_text": "image-172",
       "sort_order": 4,
       "created_at": "2026-07-16T15:07:15.023Z"
@@ -945,9 +982,9 @@
       "file_path": "/uploads/1784214434546-image-175.webp",
       "file_size": 71680,
       "mime_type": "image/webp",
-      "folder": "General",
+      "folder": "Rooms",
       "alt_text": "image-175",
-      "sort_order": 8,
+      "sort_order": 7,
       "created_at": "2026-07-16T15:07:15.064Z"
     },
     {
@@ -957,7 +994,7 @@
       "file_path": "/uploads/1784214434566-image-176.webp",
       "file_size": 46080,
       "mime_type": "image/webp",
-      "folder": "General",
+      "folder": "Rooms",
       "alt_text": "image-176",
       "sort_order": 5,
       "created_at": "2026-07-16T15:07:15.141Z"
@@ -971,7 +1008,7 @@
       "mime_type": "image/webp",
       "folder": "Rooms",
       "alt_text": "image-177",
-      "sort_order": 6,
+      "sort_order": 11,
       "created_at": "2026-07-16T15:07:15.239Z"
     }
   ],
@@ -22576,6 +22613,132 @@
       "event_type": "page_view",
       "page_path": "/",
       "created_at": "2026-07-16T15:23:22.599Z"
+    },
+    {
+      "id": "evt-1784215510514-wakya0yz5",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T15:25:10.514Z"
+    },
+    {
+      "id": "evt-1784215543829-yekq2672j",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T15:25:43.829Z"
+    },
+    {
+      "id": "evt-1784215943682-usg0556p4",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T15:32:23.682Z"
+    },
+    {
+      "id": "evt-1784215954807-t84ubfnyw",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T15:32:34.807Z"
+    },
+    {
+      "id": "evt-1784216040380-f02cj0oxg",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T15:34:00.380Z"
+    },
+    {
+      "id": "evt-1784216215014-3tk1f37wx",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T15:36:55.014Z"
+    },
+    {
+      "id": "evt-1784217430090-nzd7j035s",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/rooms",
+      "created_at": "2026-07-16T15:57:10.090Z"
+    },
+    {
+      "id": "evt-1784217556787-icsgzxewv",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T15:59:16.787Z"
+    },
+    {
+      "id": "evt-1784217733638-cjo2wt35a",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T16:02:13.638Z"
+    },
+    {
+      "id": "evt-1784217733959-y30gtbvpq",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/rooms",
+      "created_at": "2026-07-16T16:02:13.959Z"
+    },
+    {
+      "id": "evt-1784217734326-xsb1lvfia",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T16:02:14.326Z"
+    },
+    {
+      "id": "evt-1784217734488-frqikdd3h",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/rooms",
+      "created_at": "2026-07-16T16:02:14.488Z"
+    },
+    {
+      "id": "evt-1784217734645-almizpepn",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T16:02:14.645Z"
+    },
+    {
+      "id": "evt-1784217734794-0ujba7zou",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T16:02:14.794Z"
+    },
+    {
+      "id": "evt-1784217735003-sh5fzxo3k",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/rooms",
+      "created_at": "2026-07-16T16:02:15.003Z"
+    },
+    {
+      "id": "evt-1784217735208-b84207id7",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/rooms",
+      "created_at": "2026-07-16T16:02:15.208Z"
+    },
+    {
+      "id": "evt-1784217772088-hak27j001",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T16:02:52.088Z"
+    },
+    {
+      "id": "evt-1784217773130-h1f1wrh9n",
+      "hotel_id": "hotel-1784206393534",
+      "event_type": "page_view",
+      "page_path": "/gallery",
+      "created_at": "2026-07-16T16:02:53.130Z"
     }
   ]
 }
