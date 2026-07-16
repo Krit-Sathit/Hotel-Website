@@ -1011,14 +1011,14 @@ export async function getMediaItems(hotelId: string): Promise<any[]> {
   const db = getDb();
   const list = db.media_library || [];
   return list
-    .filter((item: MediaItem) => item.hotel_id === hotelId)
-    .map((item: MediaItem) => ({
+    .filter((item: any) => item.hotel_id === hotelId)
+    .map((item: any) => ({
       id: item.id,
-      name: item.file_name,
-      url: item.file_path,
-      category: item.folder,
-      size: `${Math.round(item.file_size / 1024)} KB`,
-      dimensions: 'Dynamic',
+      name: item.file_name || item.name,
+      url: item.file_path || item.url,
+      category: item.folder || item.category,
+      size: item.file_size ? `${Math.round(item.file_size / 1024)} KB` : (item.size || '100 KB'),
+      dimensions: item.dimensions || 'Dynamic',
       altText: item.alt_text || '',
       dateAdded: item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
     }));
@@ -1063,9 +1063,13 @@ export async function updateMediaItemCategory(mediaId: string, category: string)
   }
   const db = getDb();
   if (!db.media_library) return;
-  db.media_library = db.media_library.map((item: MediaItem) => {
+  db.media_library = db.media_library.map((item: any) => {
     if (item.id === mediaId) {
-      return { ...item, folder: category };
+      if ('folder' in item) {
+        return { ...item, folder: category };
+      } else {
+        return { ...item, category: category };
+      }
     }
     return item;
   });

@@ -334,9 +334,9 @@ export default function MediaLibraryPage() {
 
   // Filter logic
   const filteredFiles = files.filter(file => {
-    const matchesSearch = file.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          file.altText.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFolder = activeFolder === 'All' || file.category.toLowerCase() === activeFolder.toLowerCase();
+    const matchesSearch = (file.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (file.altText || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFolder = activeFolder === 'All' || (file.category || '').toLowerCase() === activeFolder.toLowerCase();
     return matchesSearch && matchesFolder;
   });
 
