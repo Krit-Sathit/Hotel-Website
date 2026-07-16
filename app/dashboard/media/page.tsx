@@ -35,12 +35,12 @@ export default function MediaLibraryPage() {
   const [selectedFile, setSelectedFile] = useState<MediaFile | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Upload simulator states
   const [uploadUrl, setUploadUrl] = useState('');
   const [uploadAlt, setUploadAlt] = useState('');
   const [uploadFolder, setUploadFolder] = useState('General');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
+  const [uploadMethod, setUploadMethod] = useState<'upload' | 'paste'>('upload');
 
   // Seed default library files
   const [files, setFiles] = useState<MediaFile[]>([]);
@@ -130,6 +130,51 @@ export default function MediaLibraryPage() {
     }, 2000);
   };
 
+  const handleRealUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/admin/media/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await res.json();
+
+      const newFile: MediaFile = {
+        id: `media-${Date.now()}`,
+        name: file.name,
+        url: data.url,
+        category: uploadFolder,
+        size: `${Math.round(file.size / 1024)} KB`,
+        dimensions: 'Dynamic',
+        altText: uploadAlt || file.name.split('.')[0],
+        dateAdded: new Date().toISOString().split('T')[0]
+      };
+
+      setFiles([newFile, ...files]);
+      setUploadAlt('');
+      setUploadMessage('Image successfully uploaded and added to your central library!');
+      setTimeout(() => setUploadMessage(null), 4000);
+    } catch (err: any) {
+      console.error(err);
+      alert('Failed to upload file. Please make sure the server is running and the file size is under 10MB.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleDeleteFile = (id: string) => {
     if (!confirm('Are you sure you want to delete this asset from your media library? Any pages referencing this URL will show a broken image.')) return;
     setFiles(files.filter(f => f.id !== id));
@@ -159,12 +204,36 @@ export default function MediaLibraryPage() {
         </p>
       </div>
 
-      {/* UPLOAD SIMULATOR CARD */}
+      {/* UPLOAD PANEL CARD */}
       <div className="bg-slate-900 border border-slate-800/60 p-6 rounded-xl space-y-4">
-        <h3 className="text-xs font-bold text-slate-250 uppercase tracking-widest flex items-center gap-2">
-          <Upload className="w-4 h-4 text-accent" />
-          Central Asset Uploader & WebP Compressor
-        </h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/60 pb-3">
+          <h3 className="text-xs font-bold text-slate-200 uppercase tracking-widest flex items-center gap-2">
+            <Upload className="w-4 h-4 text-accent" />
+            Central Asset Manager & Uploader
+          </h3>
+          <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-850 self-start">
+            <button
+              onClick={() => setUploadMethod('upload')}
+              className={`px-3 py-1.5 rounded text-[10px] font-bold tracking-wider uppercase transition-all ${
+                uploadMethod === 'upload'
+                  ? 'bg-accent text-primary'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Upload Local File
+            </button>
+            <button
+              onClick={() => setUploadMethod('paste')}
+              className={`px-3 py-1.5 rounded text-[10px] font-bold tracking-wider uppercase transition-all ${
+                uploadMethod === 'paste'
+                  ? 'bg-accent text-primary'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Paste Image URL
+            </button>
+          </div>
+        </div>
         
         {uploadMessage && (
           <div className="p-3 bg-green-500/10 border border-green-500/25 text-green-400 text-xs rounded-lg animate-fade-in flex items-center gap-2">
@@ -173,70 +242,94 @@ export default function MediaLibraryPage() {
           </div>
         )}
 
-        <form onSubmit={handleSimulateUpload} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-          {/* Image URL Paste */}
-          <div className="md:col-span-5 space-y-1.5">
-            <label className="text-[9px] text-slate-450 uppercase font-bold tracking-wider">Paste External Image URL</label>
-            <input
-              type="url"
-              value={uploadUrl}
-              onChange={(e) => setUploadUrl(e.target.value)}
-              placeholder="https://images.unsplash.com/... or any image link"
-              className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-slate-200 outline-none focus:border-accent"
-              required
-              disabled={isUploading}
-            />
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+          <div className="md:col-span-4 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[9px] text-slate-450 uppercase font-bold tracking-wider">Alt Text (SEO Searchable)</label>
+              <input
+                type="text"
+                value={uploadAlt}
+                onChange={(e) => setUploadAlt(e.target.value)}
+                placeholder="e.g. Deluxe Suite Bedroom"
+                className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-slate-200 outline-none focus:border-accent"
+                disabled={isUploading}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[9px] text-slate-450 uppercase font-bold tracking-wider">Destination Folder</label>
+              <select
+                value={uploadFolder}
+                onChange={(e) => setUploadFolder(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-slate-200 outline-none focus:border-accent cursor-pointer"
+                disabled={isUploading}
+              >
+                {folders.filter(f => f !== 'All').map(f => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Alt Text */}
-          <div className="md:col-span-3 space-y-1.5">
-            <label className="text-[9px] text-slate-450 uppercase font-bold tracking-wider">Alt Text (SEO Searchable)</label>
-            <input
-              type="text"
-              value={uploadAlt}
-              onChange={(e) => setUploadAlt(e.target.value)}
-              placeholder="e.g. Master suite balcony"
-              className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-slate-200 outline-none focus:border-accent"
-              disabled={isUploading}
-            />
+          <div className="md:col-span-8 h-full flex flex-col justify-end">
+            {uploadMethod === 'upload' ? (
+              <div className="border-2 border-dashed border-slate-800 hover:border-accent/40 bg-slate-950/20 rounded-xl p-8 text-center cursor-pointer transition-all hover:bg-slate-950/40 flex flex-col items-center justify-center space-y-3 relative group min-h-[142px]">
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-8 h-8 text-accent animate-spin" />
+                    <p className="text-xs font-bold text-slate-400">Uploading and saving asset...</p>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-8 h-8 text-slate-500 group-hover:text-accent transition-colors" />
+                    <div>
+                      <p className="text-xs font-bold text-slate-350 group-hover:text-slate-200 transition-colors">Click to upload image (or drag & drop file)</p>
+                      <p className="text-[9px] text-slate-500 mt-1">Supports PNG, JPG, JPEG, WEBP, GIF - Max 10MB</p>
+                    </div>
+                    <input
+                      type="file"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={handleRealUpload}
+                      accept="image/*"
+                      disabled={isUploading}
+                    />
+                  </>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleSimulateUpload} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[9px] text-slate-450 uppercase font-bold tracking-wider">Paste External Image URL</label>
+                  <input
+                    type="url"
+                    value={uploadUrl}
+                    onChange={(e) => setUploadUrl(e.target.value)}
+                    placeholder="https://images.unsplash.com/... or any image link"
+                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-slate-200 outline-none focus:border-accent"
+                    required
+                    disabled={isUploading}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isUploading || !uploadUrl.trim()}
+                  className="w-full bg-accent hover:opacity-90 text-primary font-bold text-xs uppercase tracking-wider py-2.5 rounded shadow flex items-center justify-center gap-2 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Compressing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-3.5 h-3.5" />
+                      Add to Library
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
           </div>
-
-          {/* Folder Category */}
-          <div className="md:col-span-2 space-y-1.5">
-            <label className="text-[9px] text-slate-450 uppercase font-bold tracking-wider">Destination Folder</label>
-            <select
-              value={uploadFolder}
-              onChange={(e) => setUploadFolder(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-slate-200 outline-none focus:border-accent cursor-pointer"
-              disabled={isUploading}
-            >
-              {folders.filter(f => f !== 'All').map(f => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Submit Button */}
-          <div className="md:col-span-2">
-            <button
-              type="submit"
-              disabled={isUploading || !uploadUrl.trim()}
-              className="w-full bg-accent hover:opacity-90 text-primary font-bold text-xs uppercase tracking-wider py-2.5 rounded shadow flex items-center justify-center gap-2 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Compressing...
-                </>
-              ) : (
-                <>
-                  <Upload className="w-3.5 h-3.5" />
-                  Upload WebP
-                </>
-              )}
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
 
       {/* CORE LIBRARY LAYOUT GRID */}

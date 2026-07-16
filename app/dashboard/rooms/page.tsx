@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Hotel as HotelIcon, Save, X, BedDouble, Users, Maximize2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Hotel as HotelIcon, Save, X, BedDouble, Users, Maximize2, CheckCircle, AlertCircle, Upload } from 'lucide-react';
 import { saveRoomAction, deleteRoomAction } from '@/lib/db/actions';
 import type { Room } from '@/lib/db/mock-data';
 
@@ -369,7 +369,37 @@ export default function RoomsManagerPage() {
 
                 {/* Gallery Primary Image */}
                 <div className="space-y-1">
-                  <label className="text-[9px] text-slate-450 uppercase font-bold tracking-wider">Featured Image URL</label>
+                  <div className="flex justify-between items-center">
+                    <label className="text-[9px] text-slate-450 uppercase font-bold tracking-wider">Featured Image URL</label>
+                    <span className="text-[9px] text-accent hover:underline cursor-pointer flex items-center gap-1 relative">
+                      <Upload className="w-3 h-3" />
+                      Upload File
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            const res = await fetch('/api/admin/media/upload', {
+                              method: 'POST',
+                              body: formData
+                            });
+                            if (!res.ok) throw new Error('Upload failed');
+                            const data = await res.json();
+                            const gallery = [...(editingRoom.gallery || [])];
+                            gallery[0] = data.url;
+                            handleFieldChange('gallery', gallery);
+                          } catch (err: any) {
+                            alert('Failed to upload file.');
+                          }
+                        }}
+                      />
+                    </span>
+                  </div>
                   <input
                     type="text"
                     value={editingRoom.gallery?.[0] || ''}

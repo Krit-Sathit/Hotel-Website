@@ -536,3 +536,34 @@ export async function deleteSupabaseHotel(hotelId: string): Promise<void> {
   });
 }
 
+export async function uploadSupabaseFile(
+  bucketName: string, 
+  filePath: string, 
+  fileBuffer: Buffer, 
+  mimeType: string
+): Promise<string> {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured.');
+  }
+  
+  const url = `${supabaseUrl}/storage/v1/object/${bucketName}/${filePath}`;
+  
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'apikey': supabaseAnonKey!,
+      'Authorization': `Bearer ${supabaseAnonKey}`,
+      'Content-Type': mimeType
+    },
+    body: new Uint8Array(fileBuffer)
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error(`[Supabase Storage Upload Error] ${filePath}:`, errorText);
+    throw new Error(`Supabase Storage Upload Error: ${res.statusText} - ${errorText}`);
+  }
+
+  return `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
+}
+
