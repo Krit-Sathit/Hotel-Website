@@ -123,6 +123,45 @@
         "rooms",
         "contact"
       ]
+    },
+    {
+      "id": "hotel-1784206393534",
+      "name": "The Par Phuket",
+      "slug": "the-par-phuket",
+      "custom_domain": null,
+      "status": "active",
+      "logo_url": null,
+      "favicon_url": null,
+      "email": "theparpremium@gmail.com",
+      "phone": "+1 (555) 000-0000",
+      "address": "123 Paradise Boulevard",
+      "google_map_url": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d100000!2d0!3d0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTPCsDAwJzAwLjAiTiAwwrAwMCcwMC4wIkU!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus",
+      "social_links": {
+        "facebook": "",
+        "instagram": "",
+        "whatsapp": "",
+        "twitter": ""
+      },
+      "theme": {
+        "primary_color": "#0f172a",
+        "secondary_color": "#475569",
+        "accent_color": "#c5a880",
+        "background_color": "#ffffff",
+        "text_color": "#0f172a",
+        "button_style": "rounded",
+        "border_radius": "8px",
+        "font_family": "Inter",
+        "dark_mode": false,
+        "header_layout": "minimal",
+        "footer_layout": "simple",
+        "animation_style": "fade"
+      },
+      "homepage_layout": [
+        "hero",
+        "about",
+        "rooms",
+        "contact"
+      ]
     }
   ],
   "hero_slides": [
@@ -167,6 +206,18 @@
       "hotel_id": "hotel-1782442776201",
       "image_url": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=80",
       "headline": "Welcome to Thp Par Phuket",
+      "subheadline": "Bespoke Experience",
+      "button_text": "Book Stay",
+      "button_link": "#booking",
+      "overlay_color": "#000000",
+      "overlay_opacity": 0.4,
+      "sort_order": 0
+    },
+    {
+      "id": "slide-1784206393534",
+      "hotel_id": "hotel-1784206393534",
+      "image_url": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=80",
+      "headline": "Welcome to The Par Phuket",
       "subheadline": "Bespoke Experience",
       "button_text": "Book Stay",
       "button_link": "#booking",
@@ -237,6 +288,29 @@
       "content": {
         "title": "A New Vision of Hospitality",
         "subtitle": "Welcome to Thp Par Phuket",
+        "description": "We invite you to experience a new standard of personalized service and refined luxury. Nestled in a prime destination, our hotel offers an unforgettable escape tailored to your comfort.",
+        "badge": "Bespoke Retreat",
+        "features": [
+          {
+            "title": "Personalized Service",
+            "desc": "Our team anticipates your every requirement."
+          },
+          {
+            "title": "Curated Gastronomy",
+            "desc": "Exceptional dining options crafted by our culinary team."
+          }
+        ]
+      },
+      "is_enabled": true,
+      "sort_order": 1
+    },
+    {
+      "id": "sec-1784206393534",
+      "hotel_id": "hotel-1784206393534",
+      "section_type": "about",
+      "content": {
+        "title": "A New Vision of Hospitality",
+        "subtitle": "Welcome to The Par Phuket",
         "description": "We invite you to experience a new standard of personalized service and refined luxury. Nestled in a prime destination, our hotel offers an unforgettable escape tailored to your comfort.",
         "badge": "Bespoke Retreat",
         "features": [
@@ -327,6 +401,25 @@
     {
       "id": "room-1782442776201",
       "hotel_id": "hotel-1782442776201",
+      "name": "Deluxe Ocean Room",
+      "description": "A spacious and beautifully designed suite featuring high-end fixtures and direct ocean views.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=80"
+      ],
+      "amenities": [
+        "Free Wi-Fi",
+        "Air Conditioning",
+        "Ocean View"
+      ],
+      "max_guests": 2,
+      "room_size": 40,
+      "bed_type": "King Bed",
+      "price": 450,
+      "sort_order": 0
+    },
+    {
+      "id": "room-1784206393534",
+      "hotel_id": "hotel-1784206393534",
       "name": "Deluxe Ocean Room",
       "description": "A spacious and beautifully designed suite featuring high-end fixtures and direct ocean views.",
       "gallery": [
@@ -15263,6 +15356,622 @@
       "event_type": "page_view",
       "page_path": "/",
       "created_at": "2026-06-26T04:38:30.490Z"
+    },
+    {
+      "id": "evt-1784206227742-s6ivlk3fy",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:50:27.742Z"
+    },
+    {
+      "id": "evt-1784206284380-yb250kz9c",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:51:24.380Z"
+    },
+    {
+      "id": "evt-1784206628401-57bldafvw",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:08.401Z"
+    },
+    {
+      "id": "evt-1784206628715-q4kpzorpq",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:08.715Z"
+    },
+    {
+      "id": "evt-1784206629894-szmekgu8t",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:09.894Z"
+    },
+    {
+      "id": "evt-1784206630018-encgai5xs",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:10.018Z"
+    },
+    {
+      "id": "evt-1784206630346-xwkv829a5",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:10.346Z"
+    },
+    {
+      "id": "evt-1784206630453-nx9dromnr",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:10.453Z"
+    },
+    {
+      "id": "evt-1784206630564-vb3dlxts4",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:10.564Z"
+    },
+    {
+      "id": "evt-1784206630678-lngqjusjk",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:10.678Z"
+    },
+    {
+      "id": "evt-1784206630771-ez1vkzqmd",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:10.771Z"
+    },
+    {
+      "id": "evt-1784206630861-f6vwiurpx",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:10.861Z"
+    },
+    {
+      "id": "evt-1784206630982-62t9vpis2",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:10.982Z"
+    },
+    {
+      "id": "evt-1784206631076-b2oj66obn",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:11.076Z"
+    },
+    {
+      "id": "evt-1784206631648-cm69xcwgx",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:11.648Z"
+    },
+    {
+      "id": "evt-1784206631758-dprp1sanr",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:11.758Z"
+    },
+    {
+      "id": "evt-1784206632074-r50pj56zd",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:12.074Z"
+    },
+    {
+      "id": "evt-1784206632244-t86nalt0f",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:12.244Z"
+    },
+    {
+      "id": "evt-1784206632693-9mnodm7ky",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:12.693Z"
+    },
+    {
+      "id": "evt-1784206632798-9lb1b1cno",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:12.798Z"
+    },
+    {
+      "id": "evt-1784206632901-lgrsi2vy1",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:12.901Z"
+    },
+    {
+      "id": "evt-1784206633011-zzss4udxf",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:13.011Z"
+    },
+    {
+      "id": "evt-1784206633115-iepfh55xb",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:13.115Z"
+    },
+    {
+      "id": "evt-1784206633227-0bnmjd0os",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:13.228Z"
+    },
+    {
+      "id": "evt-1784206633362-nlqcb2wvm",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:13.362Z"
+    },
+    {
+      "id": "evt-1784206633469-wglz8rvs3",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:13.469Z"
+    },
+    {
+      "id": "evt-1784206633957-nmamvqc1p",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:13.957Z"
+    },
+    {
+      "id": "evt-1784206634063-3dla03jzx",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:14.063Z"
+    },
+    {
+      "id": "evt-1784206663837-77zh771cj",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:43.837Z"
+    },
+    {
+      "id": "evt-1784206665857-2xekbshf3",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:45.857Z"
+    },
+    {
+      "id": "evt-1784206666111-r1e40khha",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:46.111Z"
+    },
+    {
+      "id": "evt-1784206666584-4r6x06bz3",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:46.584Z"
+    },
+    {
+      "id": "evt-1784206666809-6fpgh6t72",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:46.809Z"
+    },
+    {
+      "id": "evt-1784206668333-2frn45t96",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:48.333Z"
+    },
+    {
+      "id": "evt-1784206668776-jm004gs1n",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:48.777Z"
+    },
+    {
+      "id": "evt-1784206668985-4zmb3lkr6",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:48.985Z"
+    },
+    {
+      "id": "evt-1784206669396-swwdzplrj",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:49.396Z"
+    },
+    {
+      "id": "evt-1784206669513-k64agqxtr",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:49.513Z"
+    },
+    {
+      "id": "evt-1784206669608-xc0btp2ff",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:49.608Z"
+    },
+    {
+      "id": "evt-1784206671319-et7ccxgbt",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:51.319Z"
+    },
+    {
+      "id": "evt-1784206671696-qlvzw6lkn",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:51.696Z"
+    },
+    {
+      "id": "evt-1784206671957-tdgf47tqj",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:51.957Z"
+    },
+    {
+      "id": "evt-1784206672452-xvz9lnr30",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:52.452Z"
+    },
+    {
+      "id": "evt-1784206672552-5kv6m8rzf",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:52.552Z"
+    },
+    {
+      "id": "evt-1784206672650-mriw7ragl",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:52.650Z"
+    },
+    {
+      "id": "evt-1784206673014-4sofxrsrh",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:53.014Z"
+    },
+    {
+      "id": "evt-1784206673355-iyjrped9c",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:53.355Z"
+    },
+    {
+      "id": "evt-1784206673680-iu56os4tj",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:53.680Z"
+    },
+    {
+      "id": "evt-1784206674065-1lnn320z8",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:54.065Z"
+    },
+    {
+      "id": "evt-1784206674187-eqy52yqcn",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:54.187Z"
+    },
+    {
+      "id": "evt-1784206674280-40yz7i53l",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:54.280Z"
+    },
+    {
+      "id": "evt-1784206674624-yc0qmk4b4",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:54.624Z"
+    },
+    {
+      "id": "evt-1784206674944-3fsec0r64",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:54.944Z"
+    },
+    {
+      "id": "evt-1784206675302-fdlrda2hw",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:55.302Z"
+    },
+    {
+      "id": "evt-1784206675652-iyc9kzo36",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:55.652Z"
+    },
+    {
+      "id": "evt-1784206675752-81slkcnff",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:55.752Z"
+    },
+    {
+      "id": "evt-1784206675848-p5rneaoal",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:55.848Z"
+    },
+    {
+      "id": "evt-1784206676295-m3fhpybgg",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:56.295Z"
+    },
+    {
+      "id": "evt-1784206676571-lowttmokg",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:56.571Z"
+    },
+    {
+      "id": "evt-1784206676785-tskermst1",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:57:56.785Z"
+    },
+    {
+      "id": "evt-1784206687759-1wrznz42s",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:07.759Z"
+    },
+    {
+      "id": "evt-1784206688267-s240ktpgj",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:08.267Z"
+    },
+    {
+      "id": "evt-1784206688499-i5ya5ql8a",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:08.499Z"
+    },
+    {
+      "id": "evt-1784206688597-ghxr7s53a",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:08.597Z"
+    },
+    {
+      "id": "evt-1784206688692-pu5uhx3kh",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:08.692Z"
+    },
+    {
+      "id": "evt-1784206688790-7e8j5pqim",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:08.790Z"
+    },
+    {
+      "id": "evt-1784206689356-8q7cmn7pu",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:09.356Z"
+    },
+    {
+      "id": "evt-1784206689766-0qju80pvw",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:09.766Z"
+    },
+    {
+      "id": "evt-1784206689985-6ejilvjmz",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:09.985Z"
+    },
+    {
+      "id": "evt-1784206690083-gpbvgd94j",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:10.083Z"
+    },
+    {
+      "id": "evt-1784206690236-cuzod80va",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:10.236Z"
+    },
+    {
+      "id": "evt-1784206690341-dbiy0z0q0",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:10.341Z"
+    },
+    {
+      "id": "evt-1784206690916-1ldp33jek",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:10.916Z"
+    },
+    {
+      "id": "evt-1784206691158-78h787g22",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:11.158Z"
+    },
+    {
+      "id": "evt-1784206691362-s4w55tv99",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:11.362Z"
+    },
+    {
+      "id": "evt-1784206691462-eu2lkz4zg",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:11.462Z"
+    },
+    {
+      "id": "evt-1784206691589-9c40vqg8a",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:11.589Z"
+    },
+    {
+      "id": "evt-1784206691687-0khes0mvw",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:11.687Z"
+    },
+    {
+      "id": "evt-1784206691871-jvdxgk9gp",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:11.871Z"
+    },
+    {
+      "id": "evt-1784206692093-vbep175z4",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:12.093Z"
+    },
+    {
+      "id": "evt-1784206692244-zy6jh5wle",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:12.244Z"
+    },
+    {
+      "id": "evt-1784206692347-274fhqu48",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:12.347Z"
+    },
+    {
+      "id": "evt-1784206692489-uzjkgfgav",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:12.489Z"
+    },
+    {
+      "id": "evt-1784206692638-twlwwy6wu",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:12.638Z"
+    },
+    {
+      "id": "evt-1784206692808-lui4rq2sc",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:12.808Z"
+    },
+    {
+      "id": "evt-1784206692944-zrg3u54ky",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:12.944Z"
+    },
+    {
+      "id": "evt-1784206693087-b3vextl20",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:13.087Z"
+    },
+    {
+      "id": "evt-1784206735004-t78lap8lf",
+      "hotel_id": "11111111-1111-1111-1111-111111111111",
+      "event_type": "page_view",
+      "page_path": "/",
+      "created_at": "2026-07-16T12:58:55.004Z"
     }
   ]
 }

@@ -11,6 +11,8 @@ import {
   savePromotion,
   deletePromotion,
   registerNewHotel,
+  deleteHotel,
+  getAllHotels,
   Hotel, 
   HotelTheme,
   Room,
@@ -170,3 +172,29 @@ export async function registerNewHotelAction(
     return { success: false, error: error.message };
   }
 }
+
+// -----------------------------------------------------------------------------
+// 8. DELETE HOTEL ACTION
+// -----------------------------------------------------------------------------
+export async function deleteHotelAction(hotelId: string) {
+  try {
+    await deleteHotel(hotelId);
+    revalidatePath('/', 'layout');
+    return { success: true };
+  } catch (error: any) {
+    console.error('deleteHotelAction error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getAllHotelsAction() {
+  try {
+    const hotels = await getAllHotels();
+    return { success: true, hotels: hotels.map(h => ({ id: h.id, name: h.name })) };
+  } catch (error: any) {
+    console.error('getAllHotelsAction error:', error);
+    return { success: false, error: error.message, hotels: [] };
+  }
+}
+
+

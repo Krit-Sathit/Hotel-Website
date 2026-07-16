@@ -26,7 +26,8 @@ import {
   saveSupabaseRoom,
   deleteSupabaseRoom,
   saveSupabasePromotion,
-  deleteSupabasePromotion
+  deleteSupabasePromotion,
+  deleteSupabaseHotel
 } from './supabase-client';
 
 // Define TS Interfaces for our database schema
@@ -980,4 +981,22 @@ export async function registerNewHotel(hotelName: string, slug: string, email: s
   saveDb(db);
   return newHotelId;
 }
+
+export async function deleteHotel(hotelId: string): Promise<void> {
+  if (isSupabaseConfigured) {
+    return deleteSupabaseHotel(hotelId);
+  }
+  const db = getDb();
+  db.hotels = db.hotels.filter(h => h.id !== hotelId);
+  db.hero_slides = db.hero_slides.filter(s => s.hotel_id !== hotelId);
+  db.homepage_sections = db.homepage_sections.filter(s => s.hotel_id !== hotelId);
+  db.rooms = db.rooms.filter(r => r.hotel_id !== hotelId);
+  db.promotions = db.promotions.filter(p => p.hotel_id !== hotelId);
+  db.gallery_photos = db.gallery_photos.filter(g => g.hotel_id !== hotelId);
+  db.blog_posts = db.blog_posts.filter(b => b.hotel_id !== hotelId);
+  db.contact_messages = db.contact_messages.filter(m => m.hotel_id !== hotelId);
+  db.analytics_events = db.analytics_events.filter(e => e.hotel_id !== hotelId);
+  saveDb(db);
+}
+
 

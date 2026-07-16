@@ -530,3 +530,9 @@ export async function saveSupabaseContactMessage(hotelId: string, data: any): Pr
   return res[0] as ContactMessage;
 }
 
+export async function deleteSupabaseHotel(hotelId: string): Promise<void> {
+  await supabaseFetch(`/hotels?id=eq.${hotelId}`, {
+    method: 'DELETE'
+  });
+}
+

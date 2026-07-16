@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Save, HelpCircle, AlertCircle, CheckCircle } from 'lucide-react';
-import { saveGeneralSettingsAction } from '@/lib/db/actions';
+import { Save, HelpCircle, AlertCircle, CheckCircle, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
+import { saveGeneralSettingsAction, deleteHotelAction, getAllHotelsAction } from '@/lib/db/actions';
+import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [hotelId, setHotelId] = useState('');
   const [formData, setFormData] = useState({
     name: '',
@@ -22,6 +24,58 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // States for Danger Zone delete hotel
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDeleteHotel = async () => {
+    if (deleteConfirmName !== formData.name) {
+      setDeleteError('Hotel name does not match.');
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      // 1. Fetch other hotels first to decide fallback
+      const hotelsResult = await getAllHotelsAction();
+      let nextHotelId = '';
+
+      if (hotelsResult.success && hotelsResult.hotels) {
+        const remaining = hotelsResult.hotels.filter((h: any) => h.id !== hotelId);
+        if (remaining.length > 0) {
+          nextHotelId = remaining[0].id;
+        }
+      }
+
+      // 2. Trigger server deletion action
+      const deleteResult = await deleteHotelAction(hotelId);
+
+      if (deleteResult.success) {
+        if (nextHotelId) {
+          // Switch active hotel ID cookie
+          document.cookie = `active_hotel_id=${nextHotelId}; path=/; max-age=31536000; SameSite=Lax`;
+          // Refresh and redirect to dashboard
+          window.location.href = '/dashboard';
+        } else {
+          // Clear active hotel ID cookie and redirect to signup
+          document.cookie = 'active_hotel_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax';
+          window.location.href = '/auth/signup';
+        }
+      } else {
+        setDeleteError(deleteResult.error || 'Failed to delete hotel.');
+        setIsDeleting(false);
+      }
+    } catch (err: any) {
+      console.error('Delete hotel error:', err);
+      setDeleteError(err.message || 'An error occurred during deletion.');
+      setIsDeleting(false);
+    }
+  };
 
   // Load active hotel data from our secure API endpoint
   useEffect(() => {
@@ -303,6 +357,110 @@ export default function SettingsPage() {
         </div>
 
       </form>
+
+      {/* DANGER ZONE */}
+      <div className="bg-red-500/5 border border-red-500/20 p-6 md:p-8 rounded-xl space-y-6 mt-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg flex-shrink-0">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-red-500 uppercase tracking-widest">
+                Danger Zone
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                ลบโรงแรมนี้ออกจากระบบ แพลตฟอร์มจะลบข้อมูลหน้าแรก ห้องพัก โปรโมชั่น ไฟล์รูปภาพ และสถิติวิเคราะห์ทั้งหมดอย่างถาวรโดยไม่สามารถกู้คืนได้อีก
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setShowDeleteConfirm(true);
+              setDeleteConfirmName('');
+              setDeleteError(null);
+            }}
+            className="w-full sm:w-auto bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 hover:border-red-500/40 text-red-500 font-bold text-[10px] tracking-wider uppercase py-3.5 px-6 rounded-lg transition-all active:scale-[0.98] whitespace-nowrap"
+          >
+            Delete Hotel
+          </button>
+        </div>
+      </div>
+
+      {/* CONFIRMATION MODAL OVERLAY */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-xl p-6 max-w-md w-full space-y-5 shadow-2xl text-left animate-fade-in text-slate-800">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div className="p-1.5 bg-red-100 text-red-650 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                ลบโรงแรมนี้อย่างถาวร?
+              </h4>
+            </div>
+
+            <div className="space-y-3 text-xs leading-relaxed text-slate-650 font-medium">
+              <p>
+                คุณแน่ใจหรือไม่ว่าต้องการลบโรงแรม <strong className="text-slate-900 font-bold">&ldquo;{formData.name}&rdquo;</strong>? การกระทำนี้ไม่สามารถกู้คืนได้ในภายหลัง
+              </p>
+              <p className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-700 text-[11px] leading-normal font-semibold">
+                ข้อมูลทั้งหมด เช่น ห้องพัก, สไลด์หน้าแรก, โปรโมชั่น, สถิติการจอง และการตั้งค่าของโรงแรมนี้จะถูกลบออกจากระบบ
+              </p>
+              <div className="space-y-1.5 pt-2">
+                <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">
+                  พิมพ์ชื่อโรงแรมเพื่อยืนยันการลบ:
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmName}
+                  onChange={(e) => setDeleteConfirmName(e.target.value)}
+                  placeholder={formData.name}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-xs text-slate-800 font-bold outline-none focus:border-red-500 transition-colors"
+                  disabled={isDeleting}
+                />
+              </div>
+
+              {deleteError && (
+                <p className="text-[11px] font-bold text-red-500 flex items-center gap-1.5 bg-red-50 p-2.5 rounded-lg">
+                  <AlertCircle className="w-4 h-4" />
+                  {deleteError}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3 justify-end pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-lg font-bold text-[10px] tracking-wider uppercase transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteHotel}
+                disabled={isDeleting || deleteConfirmName !== formData.name}
+                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-[10px] tracking-wider uppercase transition-colors flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Confirm Delete
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
