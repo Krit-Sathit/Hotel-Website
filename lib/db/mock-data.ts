@@ -562,7 +562,12 @@ export function saveDb(state: DatabaseState): void {
 
 export async function getHotelBySlug(slug: string): Promise<Hotel | null> {
   if (isSupabaseConfigured) {
-    return getSupabaseHotelBySlug(slug);
+    try {
+      const hotel = await getSupabaseHotelBySlug(slug);
+      if (hotel) return hotel;
+    } catch (e) {
+      console.error('getHotelBySlug Supabase error:', e);
+    }
   }
   const db = getDb();
   return db.hotels.find(h => h.slug.toLowerCase() === slug.toLowerCase() || h.id === slug) || null;
@@ -570,7 +575,12 @@ export async function getHotelBySlug(slug: string): Promise<Hotel | null> {
 
 export async function getHotelByDomain(domain: string): Promise<Hotel | null> {
   if (isSupabaseConfigured) {
-    return getSupabaseHotelByDomain(domain);
+    try {
+      const hotel = await getSupabaseHotelByDomain(domain);
+      if (hotel) return hotel;
+    } catch (e) {
+      console.error('getHotelByDomain Supabase error:', e);
+    }
   }
   const db = getDb();
   const normalized = domain.toLowerCase().split(':')[0];
@@ -584,7 +594,12 @@ export async function getHotelByDomain(domain: string): Promise<Hotel | null> {
 
 export async function getHeroSlides(hotelId: string): Promise<HeroSlide[]> {
   if (isSupabaseConfigured) {
-    return getSupabaseHeroSlides(hotelId);
+    try {
+      const slides = await getSupabaseHeroSlides(hotelId);
+      if (slides && slides.length > 0) return slides;
+    } catch (e) {
+      console.error('getHeroSlides Supabase error:', e);
+    }
   }
   const db = getDb();
   return db.hero_slides
@@ -594,7 +609,12 @@ export async function getHeroSlides(hotelId: string): Promise<HeroSlide[]> {
 
 export async function getHomepageSections(hotelId: string): Promise<HomepageSection[]> {
   if (isSupabaseConfigured) {
-    return getSupabaseHomepageSections(hotelId);
+    try {
+      const sections = await getSupabaseHomepageSections(hotelId);
+      if (sections && sections.length > 0) return sections;
+    } catch (e) {
+      console.error('getHomepageSections Supabase error:', e);
+    }
   }
   const db = getDb();
   return db.homepage_sections
@@ -604,7 +624,12 @@ export async function getHomepageSections(hotelId: string): Promise<HomepageSect
 
 export async function getRooms(hotelId: string): Promise<Room[]> {
   if (isSupabaseConfigured) {
-    return getSupabaseRooms(hotelId);
+    try {
+      const rooms = await getSupabaseRooms(hotelId);
+      if (rooms && rooms.length > 0) return rooms;
+    } catch (e) {
+      console.error('getRooms Supabase error:', e);
+    }
   }
   const db = getDb();
   return db.rooms
@@ -614,7 +639,12 @@ export async function getRooms(hotelId: string): Promise<Room[]> {
 
 export async function getRoomById(id: string): Promise<Room | null> {
   if (isSupabaseConfigured) {
-    return getSupabaseRoomById(id);
+    try {
+      const room = await getSupabaseRoomById(id);
+      if (room) return room;
+    } catch (e) {
+      console.error('getRoomById Supabase error:', e);
+    }
   }
   const db = getDb();
   return db.rooms.find(r => r.id === id) || null;
@@ -622,7 +652,12 @@ export async function getRoomById(id: string): Promise<Room | null> {
 
 export async function getPromotions(hotelId: string): Promise<Promotion[]> {
   if (isSupabaseConfigured) {
-    return getSupabasePromotions(hotelId);
+    try {
+      const promos = await getSupabasePromotions(hotelId);
+      if (promos && promos.length > 0) return promos;
+    } catch (e) {
+      console.error('getPromotions Supabase error:', e);
+    }
   }
   const db = getDb();
   return db.promotions.filter(p => p.hotel_id === hotelId && p.is_active);
@@ -632,23 +667,24 @@ export async function getGalleryPhotos(hotelId: string): Promise<GalleryPhoto[]>
   if (isSupabaseConfigured) {
     try {
       const items = await getSupabaseMediaItems(hotelId);
-      const sortedItems = [...items].sort((a, b) => {
-        const aOrder = a.sort_order !== undefined ? a.sort_order : 999999;
-        const bOrder = b.sort_order !== undefined ? b.sort_order : 999999;
-        if (aOrder !== bOrder) return aOrder - bOrder;
-        return new Date(b.dateAdded || 0).getTime() - new Date(a.dateAdded || 0).getTime();
-      });
-      return sortedItems.map((item, index) => ({
-        id: item.id,
-        hotel_id: hotelId,
-        image_url: item.url,
-        category: item.category,
-        alt_text: item.altText,
-        sort_order: index
-      }));
+      if (items && items.length > 0) {
+        const sortedItems = [...items].sort((a, b) => {
+          const aOrder = a.sort_order !== undefined ? a.sort_order : 999999;
+          const bOrder = b.sort_order !== undefined ? b.sort_order : 999999;
+          if (aOrder !== bOrder) return aOrder - bOrder;
+          return new Date(b.dateAdded || 0).getTime() - new Date(a.dateAdded || 0).getTime();
+        });
+        return sortedItems.map((item, index) => ({
+          id: item.id,
+          hotel_id: hotelId,
+          image_url: item.url,
+          category: item.category,
+          alt_text: item.altText,
+          sort_order: index
+        }));
+      }
     } catch (e) {
       console.error('getGalleryPhotos Edge error:', e);
-      return [];
     }
   }
   const db = getDb();
