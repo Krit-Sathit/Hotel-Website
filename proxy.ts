@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const hostname = request.headers.get('host') || '';
   const pathname = url.pathname;
 
-  // 1. Exclude static files, API, auth, dashboard, and Next.js internal routes
+  // 1. Exclude static assets, API, auth, dashboard, and Next.js internal routes
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
@@ -64,8 +64,6 @@ export function middleware(request: NextRequest) {
 
   return NextResponse.next();
 }
-
-export default middleware;
 
 export const config = {
   matcher: [
