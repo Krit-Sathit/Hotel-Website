@@ -2,73 +2,73 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getHotelByDomainEdge } from './lib/db/edge-lookup';
 
-// Next.js 16 Proxy Convention (Default export is highly compatible on Vercel)
 export default async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const hostname = request.headers.get('host') || '';
 
-  console.log('[Proxy] Incoming Request - Host:', hostname, 'Path:', url.pathname);
-
-  // Exclude API routes, static assets, and internal Next.js paths
+  // Exclude API routes, static assets, dashboard, and Next.js internals
   if (
     url.pathname.startsWith('/_next') ||
-    url.pathname.startsWith('/api/auth') ||
+    url.pathname.startsWith('/api') ||
+    url.pathname.startsWith('/auth') ||
+    url.pathname.startsWith('/dashboard') ||
     url.pathname.includes('.') || 
     url.pathname.startsWith('/images') ||
     url.pathname.startsWith('/favicon.ico')
   ) {
-    console.log('[Proxy] Excluded path, proceeding normally:', url.pathname);
     return NextResponse.next();
   }
 
-  // Define main platform domain names (including local port)
-  const mainDomains = ['localhost:3000', 'flowstay.com', 'www.flowstay.com'];
-  const normalizedHost = hostname.toLowerCase().split(':')[0];
-  const hostParts = normalizedHost.split('.');
-  
-  let isMainDomain = mainDomains.includes(normalizedHost);
+  // If path already targets /sites/..., allow it to proceed normally
+  if (url.pathname.startsWith('/sites/')) {
+    return NextResponse.next();
+  }
 
-  // Dynamically recognize any Vercel deployment root domains as the main platform domain
-  if (normalizedHost.endsWith('vercel.app')) {
-    if (hostParts.length === 3) {
-      isMainDomain = true;
+  const normalizedHost = hostname.toLowerCase().split(':')[0];
+  const parts = normalizedHost.split('.');
+
+  // Subdomain / Custom Domain Resolution (e.g. the-par-phuket.localhost:3000 or custom domains)
+  let tenantSlug: string | null = null;
+  const isLocalhostSubdomain = parts.length > 1 && parts[parts.length - 1] === 'localhost';
+  const isVercelSubdomain = normalizedHost.endsWith('vercel.app') && parts.length > 3; // e.g. tenant.project.vercel.app
+
+  if (isLocalhostSubdomain || isVercelSubdomain) {
+    const subdomain = parts[0];
+    if (subdomain !== 'www' && subdomain !== 'localhost' && subdomain !== 'dashboard' && subdomain !== 'admin') {
+      tenantSlug = subdomain;
     }
   }
 
-  let tenantSlug: string | null = null;
-
-  if (!isMainDomain) {
-    // Dynamically resolve hotel mapping based on custom domain or subdomain (Edge-safe)
+  if (!tenantSlug) {
     const hotel = await getHotelByDomainEdge(hostname);
     if (hotel && hotel.status === 'active') {
       tenantSlug = hotel.slug;
     }
   }
 
-  console.log('[Proxy] Evaluated tenantSlug:', tenantSlug);
+  // Rewrite subdomain traffic to /sites/[tenant]
+  if (tenantSlug) {
+    url.pathname = `/sites/${tenantSlug}${url.pathname}`;
+    return NextResponse.rewrite(url);
+  }
 
-  // If a tenant slug is identified, rewrite the request internally to /sites/[tenant]
-  if (tenantSlug && tenantSlug !== 'www' && tenantSlug !== 'admin' && tenantSlug !== 'dashboard') {
-    if (!url.pathname.startsWith('/sites/')) {
-      url.pathname = `/sites/${tenantSlug}${url.pathname}`;
-      console.log('[Proxy] Rewriting to:', url.pathname);
+  // If user visits /[tenant-slug] on main domain (e.g. /the-par-phuket)
+  const pathParts = url.pathname.split('/').filter(Boolean);
+  if (pathParts.length >= 1) {
+    const candidateSlug = pathParts[0];
+    if (candidateSlug !== 'dashboard' && candidateSlug !== 'auth' && candidateSlug !== 'api') {
+      // Rewrite /[slug]/... to /sites/[slug]/...
+      const restPath = pathParts.slice(1).join('/');
+      url.pathname = `/sites/${candidateSlug}${restPath ? `/${restPath}` : ''}`;
       return NextResponse.rewrite(url);
     }
   }
 
-  // Otherwise, proceed normally on the main platform domain
-  console.log('[Proxy] Proceeding normally to:', url.pathname);
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all paths except for:
-     * 1. /api routes
-     * 2. /_next (Next.js internals)
-     * 3. Static files
-     */
     '/((?!api/|_next/|_static/|_images/|[^?]*\\.(?:html|css|js|gif|svg|png|jpg|jpeg|webp|ico|csv|docx|xlsx|zip|wav|mp3|mp4|webm)$).*)',
   ],
 };
