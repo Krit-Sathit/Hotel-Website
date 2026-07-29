@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import initialDatabaseJson from '@/database.json';
 import {
   isSupabaseConfigured,
   getSupabaseHotelBySlug,
@@ -537,15 +538,13 @@ const DB_FILE_PATH = path.join(process.cwd(), 'database.json');
 export function getDb(): DatabaseState {
   try {
     if (!fs.existsSync(DB_FILE_PATH)) {
-      // Write default state to file
-      fs.writeFileSync(DB_FILE_PATH, JSON.stringify(defaultState, null, 2), 'utf-8');
-      return defaultState;
+      return (initialDatabaseJson as unknown as DatabaseState) || defaultState;
     }
     const fileContent = fs.readFileSync(DB_FILE_PATH, 'utf-8');
     return JSON.parse(fileContent);
   } catch (error) {
     console.error('Error reading local mock database file:', error);
-    return defaultState;
+    return (initialDatabaseJson as unknown as DatabaseState) || defaultState;
   }
 }
 
