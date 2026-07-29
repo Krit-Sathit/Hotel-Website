@@ -268,6 +268,41 @@ const defaultHotelB: Hotel = {
   homepage_layout: ['hero', 'about', 'rooms', 'promotions', 'facilities', 'gallery', 'contact']
 };
 
+const defaultHotelTheParPhuket: Hotel = {
+  id: 'hotel-1784206393534',
+  name: 'The Par Phuket',
+  slug: 'the-par-phuket',
+  custom_domain: 'theparphuket.com',
+  status: 'active',
+  logo_url: null,
+  favicon_url: null,
+  email: 'theparpremium@gmail.com',
+  phone: '076 510 960',
+  address: '91/155 Moo 7 Kathu Phuket 83120',
+  google_map_url: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d100000!2d0!3d0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTPCsDAwJzAwLjAiTiAwwrAwMCcwMC4wIkU!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus',
+  social_links: {
+    facebook: '',
+    instagram: '',
+    whatsapp: '',
+    twitter: ''
+  },
+  theme: {
+    primary_color: '#0f172a',
+    secondary_color: '#475569',
+    accent_color: '#c5a880',
+    background_color: '#ffffff',
+    text_color: '#0f172a',
+    button_style: 'rounded',
+    border_radius: 'md',
+    font_family: 'Inter',
+    dark_mode: false,
+    header_layout: 'minimal',
+    footer_layout: 'simple',
+    animation_style: 'fade'
+  },
+  homepage_layout: ['hero', 'about', 'rooms', 'promotions', 'facilities', 'gallery', 'contact']
+};
+
 const getInitialSlides = (): HeroSlide[] => [
   {
     id: 's1',
@@ -520,7 +555,7 @@ const getInitialAnalytics = (): AnalyticsEvent[] => {
 
 // Complete Default State
 const defaultState: DatabaseState = {
-  hotels: [defaultHotelA, defaultHotelB],
+  hotels: [defaultHotelA, defaultHotelB, defaultHotelTheParPhuket],
   hero_slides: getInitialSlides(),
   homepage_sections: getInitialHomepageSections(),
   rooms: getInitialRooms(),
@@ -541,7 +576,11 @@ export function getDb(): DatabaseState {
       return (initialDatabaseJson as unknown as DatabaseState) || defaultState;
     }
     const fileContent = fs.readFileSync(DB_FILE_PATH, 'utf-8');
-    return JSON.parse(fileContent);
+    const parsed = JSON.parse(fileContent);
+    if (!parsed || !parsed.hotels || parsed.hotels.length === 0) {
+      return (initialDatabaseJson as unknown as DatabaseState) || defaultState;
+    }
+    return parsed;
   } catch (error) {
     console.error('Error reading local mock database file:', error);
     return (initialDatabaseJson as unknown as DatabaseState) || defaultState;
@@ -570,7 +609,13 @@ export async function getHotelBySlug(slug: string): Promise<Hotel | null> {
     }
   }
   const db = getDb();
-  return db.hotels.find(h => h.slug.toLowerCase() === slug.toLowerCase() || h.id === slug) || null;
+  const normalizedSlug = slug ? slug.toLowerCase() : '';
+  const found = db.hotels.find(h => 
+    h.slug.toLowerCase() === normalizedSlug || 
+    h.id === slug ||
+    h.slug.toLowerCase().replace(/-/g, '') === normalizedSlug.replace(/-/g, '')
+  );
+  return found || db.hotels.find(h => h.slug === 'the-par-phuket') || db.hotels[0] || defaultHotelTheParPhuket;
 }
 
 export async function getHotelByDomain(domain: string): Promise<Hotel | null> {
