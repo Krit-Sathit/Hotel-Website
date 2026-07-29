@@ -1,59 +1,52 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getHotelByDomainEdge } from './lib/db/edge-lookup';
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   const hostname = request.headers.get('host') || '';
+  const pathname = url.pathname;
 
-  // Exclude API routes, static assets, dashboard, auth, and Next.js internals
+  // 1. Exclude static files, API, auth, dashboard, and Next.js internal routes
   if (
-    url.pathname.startsWith('/_next') ||
-    url.pathname.startsWith('/api') ||
-    url.pathname.startsWith('/auth') ||
-    url.pathname.startsWith('/dashboard') ||
-    url.pathname.includes('.') || 
-    url.pathname.startsWith('/images') ||
-    url.pathname.startsWith('/favicon.ico')
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/dashboard') ||
+    pathname.includes('.') || 
+    pathname.startsWith('/images') ||
+    pathname.startsWith('/favicon.ico')
   ) {
     return NextResponse.next();
   }
 
-  // If path already targets /sites/..., allow it to proceed directly to the App Router route
-  if (url.pathname.startsWith('/sites/')) {
+  // 2. Allow direct /sites/[tenant] routes to pass through to App Router
+  if (pathname.startsWith('/sites/')) {
     return NextResponse.next();
   }
 
   const normalizedHost = hostname.toLowerCase().split(':')[0];
   const parts = normalizedHost.split('.');
 
-  // Subdomain / Custom Domain Resolution (e.g. the-par-phuket.localhost:3000 or custom domains)
-  let tenantSlug: string | null = null;
+  // 3. Subdomain / Custom Domain Resolution (e.g. tenant.localhost:3000 or tenant.vercel.app)
   const isLocalhostSubdomain = parts.length > 1 && parts[parts.length - 1] === 'localhost';
-  const isVercelSubdomain = normalizedHost.endsWith('vercel.app') && parts.length > 3; // e.g. tenant.project.vercel.app
+  const isVercelSubdomain = normalizedHost.endsWith('vercel.app') && parts.length > 3;
 
   if (isLocalhostSubdomain || isVercelSubdomain) {
     const subdomain = parts[0];
-    if (subdomain !== 'www' && subdomain !== 'localhost' && subdomain !== 'dashboard' && subdomain !== 'admin' && subdomain !== 'sites') {
-      tenantSlug = subdomain;
+    if (
+      subdomain !== 'www' && 
+      subdomain !== 'localhost' && 
+      subdomain !== 'dashboard' && 
+      subdomain !== 'admin' && 
+      subdomain !== 'sites'
+    ) {
+      url.pathname = `/sites/${subdomain}${pathname}`;
+      return NextResponse.rewrite(url);
     }
   }
 
-  if (!tenantSlug) {
-    const hotel = await getHotelByDomainEdge(hostname);
-    if (hotel && hotel.status === 'active') {
-      tenantSlug = hotel.slug;
-    }
-  }
-
-  // Rewrite subdomain traffic to /sites/[tenant]
-  if (tenantSlug) {
-    url.pathname = `/sites/${tenantSlug}${url.pathname}`;
-    return NextResponse.rewrite(url);
-  }
-
-  // If user visits /[tenant-slug] on main domain (e.g. /the-par-phuket)
-  const pathParts = url.pathname.split('/').filter(Boolean);
+  // 4. Path-based Tenant Routing on Main Domain (e.g. /the-par-phuket or /hotel-a)
+  const pathParts = pathname.split('/').filter(Boolean);
   if (pathParts.length >= 1) {
     const candidateSlug = pathParts[0];
     if (
@@ -63,7 +56,6 @@ export async function middleware(request: NextRequest) {
       candidateSlug !== 'sites' && 
       candidateSlug !== '_next'
     ) {
-      // Rewrite /[slug]/... to /sites/[slug]/...
       const restPath = pathParts.slice(1).join('/');
       url.pathname = `/sites/${candidateSlug}${restPath ? `/${restPath}` : ''}`;
       return NextResponse.rewrite(url);
