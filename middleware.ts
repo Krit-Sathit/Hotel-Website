@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getHotelByDomainEdge } from './lib/db/edge-lookup';
 
-export default async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   const hostname = request.headers.get('host') || '';
 
@@ -72,6 +72,8 @@ export default async function proxy(request: NextRequest) {
 
   return NextResponse.next();
 }
+
+export default middleware;
 
 export const config = {
   matcher: [
