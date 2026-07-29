@@ -6,7 +6,7 @@ export default async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const hostname = request.headers.get('host') || '';
 
-  // Exclude API routes, static assets, dashboard, and Next.js internals
+  // Exclude API routes, static assets, dashboard, auth, and Next.js internals
   if (
     url.pathname.startsWith('/_next') ||
     url.pathname.startsWith('/api') ||
@@ -19,7 +19,7 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // If path already targets /sites/..., allow it to proceed normally
+  // If path already targets /sites/..., allow it to proceed directly to the App Router route
   if (url.pathname.startsWith('/sites/')) {
     return NextResponse.next();
   }
@@ -34,7 +34,7 @@ export default async function proxy(request: NextRequest) {
 
   if (isLocalhostSubdomain || isVercelSubdomain) {
     const subdomain = parts[0];
-    if (subdomain !== 'www' && subdomain !== 'localhost' && subdomain !== 'dashboard' && subdomain !== 'admin') {
+    if (subdomain !== 'www' && subdomain !== 'localhost' && subdomain !== 'dashboard' && subdomain !== 'admin' && subdomain !== 'sites') {
       tenantSlug = subdomain;
     }
   }
@@ -56,7 +56,13 @@ export default async function proxy(request: NextRequest) {
   const pathParts = url.pathname.split('/').filter(Boolean);
   if (pathParts.length >= 1) {
     const candidateSlug = pathParts[0];
-    if (candidateSlug !== 'dashboard' && candidateSlug !== 'auth' && candidateSlug !== 'api') {
+    if (
+      candidateSlug !== 'dashboard' && 
+      candidateSlug !== 'auth' && 
+      candidateSlug !== 'api' && 
+      candidateSlug !== 'sites' && 
+      candidateSlug !== '_next'
+    ) {
       // Rewrite /[slug]/... to /sites/[slug]/...
       const restPath = pathParts.slice(1).join('/');
       url.pathname = `/sites/${candidateSlug}${restPath ? `/${restPath}` : ''}`;
