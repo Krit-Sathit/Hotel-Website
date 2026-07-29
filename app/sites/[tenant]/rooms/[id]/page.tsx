@@ -1,5 +1,8 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import Link from 'next/link';
 import { ChevronLeft, Maximize2, Users, BedDouble, Check, ArrowRight } from 'lucide-react';
 import { getHotelBySlug, getRoomById, trackAnalyticsEvent } from '@/lib/db/mock-data';

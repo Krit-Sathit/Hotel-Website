@@ -1,5 +1,8 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { 
   getHotelBySlug, 
   getHeroSlides, 

@@ -1,5 +1,8 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { getHotelBySlug, getGalleryPhotos, getRooms, trackAnalyticsEvent } from '@/lib/db/mock-data';
 import GallerySection from '@/components/sections/gallery-section';
 
