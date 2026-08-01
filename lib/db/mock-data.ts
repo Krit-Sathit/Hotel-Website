@@ -473,12 +473,16 @@ const getInitialHomepageSections = (): HomepageSection[] => [
 ];
 
 const getInitialGallery = (): GalleryPhoto[] => [
-  { id: 'g1', hotel_id: defaultHotelA.id, image_url: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80', category: 'Rooms', alt_text: 'Villa Living Area', sort_order: 0 },
-  { id: 'g2', hotel_id: defaultHotelA.id, image_url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80', category: 'Exterior', alt_text: 'Sunset Pool Deck', sort_order: 1 },
-  { id: 'g3', hotel_id: defaultHotelA.id, image_url: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=800&q=80', category: 'Spa', alt_text: 'Relaxation Massage Room', sort_order: 2 },
-  { id: 'g4', hotel_id: defaultHotelA.id, image_url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80', category: 'Dining', alt_text: 'Seafood Fine Dining', sort_order: 3 },
-  { id: 'g5', hotel_id: defaultHotelB.id, image_url: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80', category: 'Rooms', alt_text: 'Loft Suite Bed', sort_order: 0 },
-  { id: 'g6', hotel_id: defaultHotelB.id, image_url: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?auto=format&fit=crop&w=800&q=80', category: 'Dining', alt_text: 'Artisanal Cafe and Bar', sort_order: 1 }
+  { id: 'g-par-1', hotel_id: defaultHotelTheParPhuket.id, image_url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80', category: 'Exterior', alt_text: 'Night Resort Pool & Building Facade', sort_order: 0 },
+  { id: 'g-par-2', hotel_id: defaultHotelTheParPhuket.id, image_url: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80', category: 'Exterior', alt_text: 'Sunset Pool Landscape', sort_order: 1 },
+  { id: 'g-par-3', hotel_id: defaultHotelTheParPhuket.id, image_url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80', category: 'Exterior', alt_text: 'Golf Course & Mountain View', sort_order: 2 },
+  { id: 'g-par-4', hotel_id: defaultHotelTheParPhuket.id, image_url: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80', category: 'Exterior', alt_text: 'Modern Hotel Architecture', sort_order: 3 },
+  { id: 'g-par-5', hotel_id: defaultHotelTheParPhuket.id, image_url: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80', category: 'Rooms', alt_text: 'Deluxe King Suite', sort_order: 4 },
+  { id: 'g-par-6', hotel_id: defaultHotelTheParPhuket.id, image_url: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80', category: 'Rooms', alt_text: 'Executive Suite Lounge', sort_order: 5 },
+  { id: 'g-par-7', hotel_id: defaultHotelTheParPhuket.id, image_url: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80', category: 'Rooms', alt_text: 'Grand Master Suite Bed', sort_order: 6 },
+  { id: 'g-par-8', hotel_id: defaultHotelTheParPhuket.id, image_url: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80', category: 'Exterior', alt_text: 'Pool Deck Sunbeds', sort_order: 7 },
+  { id: 'g-par-9', hotel_id: defaultHotelTheParPhuket.id, image_url: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=1200&q=80', category: 'General', alt_text: 'Luxury Bathroom Suite', sort_order: 8 },
+  { id: 'g-par-10', hotel_id: defaultHotelTheParPhuket.id, image_url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80', category: 'Exterior', alt_text: 'Lush Resort Gardens', sort_order: 9 }
 ];
 
 const getInitialBlog = (): BlogPost[] => [
@@ -625,26 +629,21 @@ let memoryDb: DatabaseState | null = (globalThis as any).__GLOBAL_DB_STATE__ || 
 export function getDb(): DatabaseState {
   if (memoryDb) return memoryDb;
   try {
-    if (!fs.existsSync(DB_FILE_PATH)) {
-      memoryDb = (initialDatabaseJson as unknown as DatabaseState) || defaultState;
-      (globalThis as any).__GLOBAL_DB_STATE__ = memoryDb;
-      return memoryDb;
+    if (fs.existsSync(DB_FILE_PATH)) {
+      const fileContent = fs.readFileSync(DB_FILE_PATH, 'utf-8');
+      const parsed = JSON.parse(fileContent);
+      if (parsed && parsed.hotels && parsed.hotels.length > 0) {
+        memoryDb = parsed;
+        (globalThis as any).__GLOBAL_DB_STATE__ = memoryDb;
+        return memoryDb!;
+      }
     }
-    const fileContent = fs.readFileSync(DB_FILE_PATH, 'utf-8');
-    const parsed = JSON.parse(fileContent);
-    if (!parsed || !parsed.hotels || parsed.hotels.length === 0) {
-      memoryDb = (initialDatabaseJson as unknown as DatabaseState) || defaultState;
-    } else {
-      memoryDb = parsed;
-    }
-    (globalThis as any).__GLOBAL_DB_STATE__ = memoryDb;
-    return memoryDb!;
   } catch (error) {
-    console.error('Error reading local mock database file:', error);
-    memoryDb = (initialDatabaseJson as unknown as DatabaseState) || defaultState;
-    (globalThis as any).__GLOBAL_DB_STATE__ = memoryDb;
-    return memoryDb;
+    console.warn('Error reading filesystem DB, statically importing databaseJson');
   }
+  memoryDb = (initialDatabaseJson as unknown as DatabaseState) || defaultState;
+  (globalThis as any).__GLOBAL_DB_STATE__ = memoryDb;
+  return memoryDb!;
 }
 
 export function saveDb(state: DatabaseState): void {
