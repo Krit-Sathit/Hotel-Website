@@ -618,31 +618,42 @@ const defaultState: DatabaseState = {
   users: getInitialUsers()
 };
 
-// File-based DB helper
+// File-based & In-memory DB helper
 const DB_FILE_PATH = path.join(process.cwd(), 'database.json');
+let memoryDb: DatabaseState | null = (globalThis as any).__GLOBAL_DB_STATE__ || null;
 
 export function getDb(): DatabaseState {
+  if (memoryDb) return memoryDb;
   try {
     if (!fs.existsSync(DB_FILE_PATH)) {
-      return (initialDatabaseJson as unknown as DatabaseState) || defaultState;
+      memoryDb = (initialDatabaseJson as unknown as DatabaseState) || defaultState;
+      (globalThis as any).__GLOBAL_DB_STATE__ = memoryDb;
+      return memoryDb;
     }
     const fileContent = fs.readFileSync(DB_FILE_PATH, 'utf-8');
     const parsed = JSON.parse(fileContent);
     if (!parsed || !parsed.hotels || parsed.hotels.length === 0) {
-      return (initialDatabaseJson as unknown as DatabaseState) || defaultState;
+      memoryDb = (initialDatabaseJson as unknown as DatabaseState) || defaultState;
+    } else {
+      memoryDb = parsed;
     }
-    return parsed;
+    (globalThis as any).__GLOBAL_DB_STATE__ = memoryDb;
+    return memoryDb!;
   } catch (error) {
     console.error('Error reading local mock database file:', error);
-    return (initialDatabaseJson as unknown as DatabaseState) || defaultState;
+    memoryDb = (initialDatabaseJson as unknown as DatabaseState) || defaultState;
+    (globalThis as any).__GLOBAL_DB_STATE__ = memoryDb;
+    return memoryDb;
   }
 }
 
 export function saveDb(state: DatabaseState): void {
+  memoryDb = state;
+  (globalThis as any).__GLOBAL_DB_STATE__ = state;
   try {
     fs.writeFileSync(DB_FILE_PATH, JSON.stringify(state, null, 2), 'utf-8');
   } catch (error) {
-    console.error('Error writing local mock database file:', error);
+    console.warn('Filesystem write skipped (read-only environment like Vercel Serverless). Saved to memory state.');
   }
 }
 
