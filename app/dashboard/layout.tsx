@@ -23,12 +23,18 @@ interface DashboardLayoutProps {
 }
 
 export default async function DashboardLayout({ children }: DashboardLayoutProps) {
-  // Read active hotel from cookie, default to hotel-a
+  // Read active hotel & session from cookies
   const cookieStore = await cookies();
+  const authSession = cookieStore.get('auth_session')?.value;
   let activeHotelId = cookieStore.get('active_hotel_id')?.value;
+
+  // Protect Dashboard: redirect to login if session is missing or invalid
+  if (!authSession && !activeHotelId) {
+    redirect('/auth/login');
+  }
   
   if (!activeHotelId) {
-    activeHotelId = '11111111-1111-1111-1111-111111111111'; // Hotel A ID
+    activeHotelId = 'hotel-1784206393534'; // The Par Phuket default ID
   }
 
   const hotel = await getHotelBySlug(activeHotelId);

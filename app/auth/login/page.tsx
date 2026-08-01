@@ -3,28 +3,56 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Sparkles, ArrowRight, Lock, Mail } from 'lucide-react';
+import { Sparkles, ArrowRight, Lock, Mail, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@grandhorizon.com');
+  const [email, setEmail] = useState('theparpremium@gmail.com');
   const [password, setPassword] = useState('password123');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMsg(null);
 
-    // Simulate authentication delay (1 second)
-    setTimeout(() => {
-      // Set default active hotel cookie if it is not set yet
-      if (!document.cookie.includes('active_hotel_id=')) {
-        document.cookie = 'active_hotel_id=11111111-1111-1111-1111-111111111111; path=/; max-age=31536000; SameSite=Lax';
+    const normalizedEmail = email.trim().toLowerCase();
+
+    try {
+      const res = await fetch('/api/admin/data');
+      const data = await res.json();
+      const hotels: any[] = data.hotels || [];
+
+      // Find matching hotel by registered email or slug
+      const matchedHotel = hotels.find((h) => h.email && h.email.toLowerCase() === normalizedEmail) ||
+        (normalizedEmail.includes('thepar') || normalizedEmail.includes('phuket') ? hotels.find((h) => h.slug === 'the-par-phuket') : null) ||
+        (normalizedEmail.includes('grandhorizon') ? hotels.find((h) => h.slug === 'hotel-a') : null) ||
+        (normalizedEmail.includes('urbannest') ? hotels.find((h) => h.slug === 'hotel-b') : null);
+
+      const isMasterAdmin = normalizedEmail === 'admin@flowstay.com' || normalizedEmail === 'theparpremium@gmail.com';
+
+      // Reject access if email is not registered to any hotel or master admin
+      if (!matchedHotel && !isMasterAdmin) {
+        setIsSubmitting(false);
+        setErrorMsg(`Access Denied: "${email}" is not a registered administrator. Please sign in with an authorized hotel account.`);
+        return;
       }
-      
-      // Redirect to the CMS Dashboard
-      router.push('/dashboard');
-    }, 1000);
+
+      const activeHotelId = matchedHotel ? matchedHotel.id : 'hotel-1784206393534';
+
+      // Save authenticated session cookies
+      document.cookie = `active_hotel_id=${activeHotelId}; path=/; max-age=31536000; SameSite=Lax`;
+      document.cookie = `auth_session=authenticated; path=/; max-age=31536000; SameSite=Lax`;
+      document.cookie = `user_email=${normalizedEmail}; path=/; max-age=31536000; SameSite=Lax`;
+
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 800);
+    } catch (err) {
+      setIsSubmitting(false);
+      setErrorMsg('Authentication server error. Please try again.');
+    }
   };
 
   return (
@@ -35,7 +63,7 @@ export default function LoginPage() {
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -z-10" />
 
       {/* Main card container */}
-      <div className="w-full max-w-md bg-white border border-slate-100 p-8 rounded-2xl shadow-xl shadow-slate-200/40 space-y-8 animate-fade-in relative z-10">
+      <div className="w-full max-w-md bg-white border border-slate-100 p-8 rounded-2xl shadow-xl shadow-slate-200/40 space-y-6 animate-fade-in relative z-10">
         
         {/* Branding & Header */}
         <div className="text-center space-y-3">
@@ -51,6 +79,17 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
+
+        {/* Error Banner */}
+        {errorMsg && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3 text-red-700 text-xs leading-relaxed text-left animate-shake">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-500 mt-0.5" />
+            <div>
+              <p className="font-bold uppercase tracking-wider text-[10px]">Authentication Failed</p>
+              <p className="mt-0.5">{errorMsg}</p>
+            </div>
+          </div>
+        )}
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-5 text-left">
