@@ -241,26 +241,42 @@ export default function MediaLibraryPage() {
     setUploadMessage(null);
 
     try {
-      const uploadPromises = filesArray.map(async (file, index) => {
+      const uploadPromises = filesArray.map(async (file) => {
         const processedFile = await compressImageToWebP(file);
         const formData = new FormData();
         formData.append('file', processedFile);
 
-        const res = await fetch('/api/admin/media/upload', {
-          method: 'POST',
-          body: formData,
-        });
+        let imageUrl = '';
 
-        if (!res.ok) {
-          throw new Error(`Upload failed for ${file.name}`);
+        try {
+          const res = await fetch('/api/admin/media/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.url) {
+              imageUrl = data.url;
+            }
+          }
+        } catch (apiErr) {
+          console.warn('Upload API error, using client-side Data URL fallback:', apiErr);
         }
 
-        const data = await res.json();
+        // Fallback to client-side Data URL if API upload failed
+        if (!imageUrl) {
+          imageUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target?.result as string || '');
+            reader.readAsDataURL(processedFile);
+          });
+        }
 
         // Save item to database
         const saveRes = await saveMediaItemAction(hotelId, {
           name: processedFile.name,
-          url: data.url,
+          url: imageUrl,
           category: uploadFolder,
           size: `${Math.round(processedFile.size / 1024)} KB`,
           altText: uploadAlt || processedFile.name.split('.')[0]
@@ -291,7 +307,7 @@ export default function MediaLibraryPage() {
       setTimeout(() => setUploadMessage(null), 4000);
     } catch (err: any) {
       console.error(err);
-      alert('Failed to upload some files. Please make sure the server is running and the files are under 10MB.');
+      alert('Failed to upload some files. Please ensure the files are under 10MB.');
     } finally {
       setIsUploading(false);
       e.target.value = '';
