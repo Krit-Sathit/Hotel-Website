@@ -7,8 +7,8 @@ import { Sparkles, ArrowRight, Lock, Mail, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('theparpremium@gmail.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('sathit2527@gmail.com');
+  const [password, setPassword] = useState('Krit075388271');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -20,30 +20,40 @@ export default function LoginPage() {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      const res = await fetch('/api/admin/data');
+      const res = await fetch('/api/admin/users');
       const data = await res.json();
-      const hotels: any[] = data.hotels || [];
+      const users: any[] = data.users || [];
 
-      // Find matching hotel by registered email or slug
-      const matchedHotel = hotels.find((h) => h.email && h.email.toLowerCase() === normalizedEmail) ||
-        (normalizedEmail.includes('thepar') || normalizedEmail.includes('phuket') ? hotels.find((h) => h.slug === 'the-par-phuket') : null) ||
-        (normalizedEmail.includes('grandhorizon') ? hotels.find((h) => h.slug === 'hotel-a') : null) ||
-        (normalizedEmail.includes('urbannest') ? hotels.find((h) => h.slug === 'hotel-b') : null);
+      // Check for user matching email and password
+      const user = users.find(
+        (u) => u.email.toLowerCase() === normalizedEmail && u.password === password
+      );
 
-      const isMasterAdmin = normalizedEmail === 'admin@flowstay.com' || normalizedEmail === 'theparpremium@gmail.com';
+      // Super Admin fallback check for platform owner
+      const isPlatformOwner = normalizedEmail === 'sathit2527@gmail.com' && password === 'Krit075388271';
 
-      // Reject access if email is not registered to any hotel or master admin
-      if (!matchedHotel && !isMasterAdmin) {
+      if (!user && !isPlatformOwner) {
         setIsSubmitting(false);
-        setErrorMsg(`Access Denied: "${email}" is not a registered administrator. Please sign in with an authorized hotel account.`);
+        setErrorMsg('Invalid email address or security password. Access denied.');
         return;
       }
 
-      const activeHotelId = matchedHotel ? matchedHotel.id : 'hotel-1784206393534';
+      const role = isPlatformOwner ? 'super_admin' : (user?.role || 'hotel_admin');
+      const assignedHotelId = user?.hotel_id;
 
-      // Save authenticated session cookies
-      document.cookie = `active_hotel_id=${activeHotelId}; path=/; max-age=31536000; SameSite=Lax`;
+      // For Super Admin (Sathit), allow full hotel switching access (default to The Par Phuket or current cookie)
+      // For Hotel Admin, lock active_hotel_id to their specific assigned hotel
+      if (role === 'super_admin') {
+        if (!document.cookie.includes('active_hotel_id=')) {
+          document.cookie = `active_hotel_id=hotel-1784206393534; path=/; max-age=31536000; SameSite=Lax`;
+        }
+      } else if (assignedHotelId) {
+        document.cookie = `active_hotel_id=${assignedHotelId}; path=/; max-age=31536000; SameSite=Lax`;
+      }
+
+      // Save session cookies
       document.cookie = `auth_session=authenticated; path=/; max-age=31536000; SameSite=Lax`;
+      document.cookie = `user_role=${role}; path=/; max-age=31536000; SameSite=Lax`;
       document.cookie = `user_email=${normalizedEmail}; path=/; max-age=31536000; SameSite=Lax`;
 
       setTimeout(() => {

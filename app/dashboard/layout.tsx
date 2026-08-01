@@ -11,9 +11,11 @@ import {
   CalendarRange, 
   Hotel as HotelIcon, 
   Grid,
+  Users as UsersIcon,
   ExternalLink, 
   LogOut,
-  Sparkles
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
 import { getHotelBySlug, getAllHotels } from '@/lib/db/mock-data';
 import TenantSelector from '@/components/dashboard/tenant-selector';
@@ -27,6 +29,8 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
   const cookieStore = await cookies();
   const authSession = cookieStore.get('auth_session')?.value;
   let activeHotelId = cookieStore.get('active_hotel_id')?.value;
+  const userEmail = cookieStore.get('user_email')?.value || 'sathit2527@gmail.com';
+  const userRole = cookieStore.get('user_role')?.value || (userEmail === 'sathit2527@gmail.com' ? 'super_admin' : 'hotel_admin');
 
   // Protect Dashboard: redirect to login if session is missing or invalid
   if (!authSession && !activeHotelId) {
@@ -55,6 +59,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     { label: 'Rooms Manager', href: '/dashboard/rooms', icon: <HotelIcon className="w-4 h-4" /> },
     { label: 'Promotions Manager', href: '/dashboard/promotions', icon: <CalendarRange className="w-4 h-4" /> },
     { label: 'Media Library', href: '/dashboard/media', icon: <ImageIcon className="w-4 h-4" /> },
+    { label: 'User & Access Manager', href: '/dashboard/users', icon: <UsersIcon className="w-4 h-4" /> },
   ];
 
   // Map public website URL based on local port
@@ -146,11 +151,15 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
           {/* User profile capsule */}
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-slate-800">Alex Mercer</p>
-              <p className="text-[9px] text-accent uppercase font-bold tracking-wider">Hotel Owner</p>
+              <p className="text-xs font-bold text-slate-800">
+                {userEmail === 'sathit2527@gmail.com' ? 'Sathit' : (userEmail.split('@')[0] || 'Hotel Admin')}
+              </p>
+              <p className="text-[9px] text-accent uppercase font-bold tracking-wider">
+                {userRole === 'super_admin' ? 'Platform Owner' : 'Hotel Manager'}
+              </p>
             </div>
-            <div className="w-8 h-8 rounded-full bg-accent/20 border border-accent/35 flex items-center justify-center font-bold text-accent text-xs">
-              AM
+            <div className="w-8 h-8 rounded-full bg-accent/20 border border-accent/35 flex items-center justify-center font-bold text-accent text-xs uppercase">
+              {userEmail === 'sathit2527@gmail.com' ? 'ST' : userEmail.substring(0, 2)}
             </div>
           </div>
         </header>

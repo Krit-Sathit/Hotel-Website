@@ -183,6 +183,16 @@ export interface AnalyticsEvent {
   created_at: string;
 }
 
+export interface UserAccount {
+  id: string;
+  email: string;
+  password: string;
+  name: string;
+  role: 'super_admin' | 'hotel_admin';
+  hotel_id: string | null;
+  created_at: string;
+}
+
 export interface DatabaseState {
   hotels: Hotel[];
   hero_slides: HeroSlide[];
@@ -194,6 +204,7 @@ export interface DatabaseState {
   contact_messages: ContactMessage[];
   media_library: MediaItem[];
   analytics_events: AnalyticsEvent[];
+  users?: UserAccount[];
 }
 
 // Default luxury data for Hotel A
@@ -553,6 +564,45 @@ const getInitialAnalytics = (): AnalyticsEvent[] => {
   return events;
 };
 
+const getInitialUsers = (): UserAccount[] => [
+  {
+    id: 'user-super-admin',
+    email: 'sathit2527@gmail.com',
+    password: 'Krit075388271',
+    name: 'Sathit (Platform Owner)',
+    role: 'super_admin',
+    hotel_id: null,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'user-the-par-phuket',
+    email: 'theparpremium@gmail.com',
+    password: 'Krit075388271',
+    name: 'The Par Phuket Admin',
+    role: 'hotel_admin',
+    hotel_id: 'hotel-1784206393534',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'user-grand-horizon',
+    email: 'stay@grandhorizon.com',
+    password: 'password123',
+    name: 'Grand Horizon Admin',
+    role: 'hotel_admin',
+    hotel_id: '11111111-1111-1111-1111-111111111111',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'user-urban-nest',
+    email: 'stay@urbannest.com',
+    password: 'password123',
+    name: 'Urban Nest Admin',
+    role: 'hotel_admin',
+    hotel_id: '22222222-2222-2222-2222-222222222222',
+    created_at: new Date().toISOString()
+  }
+];
+
 // Complete Default State
 const defaultState: DatabaseState = {
   hotels: [defaultHotelA, defaultHotelB, defaultHotelTheParPhuket],
@@ -564,7 +614,8 @@ const defaultState: DatabaseState = {
   blog_posts: getInitialBlog(),
   contact_messages: [],
   media_library: [],
-  analytics_events: getInitialAnalytics()
+  analytics_events: getInitialAnalytics(),
+  users: getInitialUsers()
 };
 
 // File-based DB helper
@@ -1226,6 +1277,66 @@ export async function saveMediaOrder(ids: string[]): Promise<void> {
     return item;
   });
   saveDb(db);
+}
+
+// -----------------------------------------------------------------------------
+// USER MANAGEMENT DAL METHODS
+// -----------------------------------------------------------------------------
+
+export async function getUsers(): Promise<UserAccount[]> {
+  const db = getDb();
+  if (!db.users || db.users.length === 0) {
+    db.users = getInitialUsers();
+    saveDb(db);
+  }
+  return db.users;
+}
+
+export async function authenticateUser(email: string, pass: string): Promise<UserAccount | null> {
+  const users = await getUsers();
+  const normalizedEmail = email.trim().toLowerCase();
+  
+  const user = users.find(
+    (u) => u.email.toLowerCase() === normalizedEmail && u.password === pass
+  );
+
+  return user || null;
+}
+
+export async function createUser(userData: {
+  email: string;
+  password: string;
+  name: string;
+  role: 'super_admin' | 'hotel_admin';
+  hotel_id: string | null;
+}): Promise<UserAccount> {
+  const db = getDb();
+  if (!db.users) {
+    db.users = getInitialUsers();
+  }
+
+  const newUser: UserAccount = {
+    id: `user-${Date.now()}`,
+    email: userData.email.trim().toLowerCase(),
+    password: userData.password,
+    name: userData.name || userData.email.split('@')[0],
+    role: userData.role,
+    hotel_id: userData.hotel_id,
+    created_at: new Date().toISOString()
+  };
+
+  db.users.push(newUser);
+  saveDb(db);
+  return newUser;
+}
+
+export async function deleteUser(userId: string): Promise<boolean> {
+  const db = getDb();
+  if (!db.users) return false;
+
+  db.users = db.users.filter((u) => u.id !== userId);
+  saveDb(db);
+  return true;
 }
 
 
