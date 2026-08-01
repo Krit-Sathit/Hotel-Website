@@ -516,15 +516,15 @@
     {
       "id": "g1",
       "hotel_id": "11111111-1111-1111-1111-111111111111",
-      "image_url": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80",
-      "category": "Rooms",
-      "alt_text": "Villa Living Area",
+      "image_url": "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
+      "category": "Exterior",
+      "alt_text": "Resort Ocean View Pool Deck",
       "sort_order": 0
     },
     {
       "id": "g2",
       "hotel_id": "11111111-1111-1111-1111-111111111111",
-      "image_url": "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
+      "image_url": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80",
       "category": "Exterior",
       "alt_text": "Sunset Pool Deck",
       "sort_order": 1
@@ -532,17 +532,17 @@
     {
       "id": "g3",
       "hotel_id": "11111111-1111-1111-1111-111111111111",
-      "image_url": "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=800&q=80",
-      "category": "Spa",
-      "alt_text": "Relaxation Massage Room",
+      "image_url": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+      "category": "Exterior",
+      "alt_text": "Lush Tropical Resort Grounds",
       "sort_order": 2
     },
     {
       "id": "g4",
       "hotel_id": "11111111-1111-1111-1111-111111111111",
-      "image_url": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80",
-      "category": "Dining",
-      "alt_text": "Seafood Fine Dining",
+      "image_url": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
+      "category": "Exterior",
+      "alt_text": "Luxury Hotel Architecture",
       "sort_order": 3
     },
     {

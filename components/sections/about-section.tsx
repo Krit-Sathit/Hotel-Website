@@ -88,7 +88,7 @@ export default function AboutSection({ content }: AboutSectionProps) {
             <div className="absolute bottom-0 right-0 w-[55%] h-[55%] rounded-hotel overflow-hidden shadow-2xl border-4 border-white dark:border-slate-900">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
-                src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=600&q=80" 
+                src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80" 
                 alt="Wellness Treatment Room" 
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
               />

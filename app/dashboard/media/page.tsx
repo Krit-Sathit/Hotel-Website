@@ -135,7 +135,7 @@ export default function MediaLibraryPage() {
                 { name: 'ocean-suite-bed.webp', url: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=80', category: 'Rooms', size: '124 KB', altText: 'Oceanfront King Suite master bed and pillows' },
                 { name: 'villa-terrace-view.webp', url: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80', category: 'Rooms', size: '248 KB', altText: 'Private plunge pool terrace overlooking beach' },
                 { name: 'resort-pool-sunset.webp', url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80', category: 'Exterior', size: '312 KB', altText: 'Malibu sunset reflected in infinity pool' },
-                { name: 'spa-massage-table.webp', url: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=800&q=80', category: 'Spa', size: '89 KB', altText: 'Therapeutic massage bed with warm stones' },
+                { name: 'resort-landscape.webp', url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80', category: 'Exterior', size: '189 KB', altText: 'Tropical Resort Landscape' },
                 { name: 'seafood-gastronomy.webp', url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80', category: 'Dining', size: '185 KB', altText: 'Michelin oysters and fine white wine plating' }
               );
             } else {
