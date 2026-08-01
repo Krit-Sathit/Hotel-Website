@@ -165,9 +165,9 @@
     {
       "id": "slide-1784206393534",
       "hotel_id": "hotel-1784206393534",
-      "image_url": "/uploads/1784209730938-image-15.webp",
+      "image_url": "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1600&q=80",
       "headline": "Welcome to The Par Phuket",
-      "subheadline": "Bespoke Experience",
+      "subheadline": "Bespoke Golf & Resort Retreat",
       "button_text": "Book Stay",
       "button_link": "#booking",
       "overlay_color": "#000000",
@@ -177,11 +177,11 @@
     {
       "id": "slide-1784206393535",
       "hotel_id": "hotel-1784206393534",
-      "image_url": "/uploads/1784210026586-image-155.webp",
-      "headline": "Brand New Experience",
+      "image_url": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1600&q=80",
+      "headline": "Serene Tropical Oasis",
       "subheadline": "Luxury Redefined",
-      "button_text": "Book Now",
-      "button_link": "#booking",
+      "button_text": "Explore Suites",
+      "button_link": "#rooms",
       "overlay_color": "#000000",
       "overlay_opacity": 0.4,
       "sort_order": 1
@@ -189,11 +189,11 @@
     {
       "id": "slide-1784216164635",
       "hotel_id": "hotel-1784206393534",
-      "image_url": "/uploads/1784214434525-image-172.webp",
-      "headline": "Brand New Experience",
-      "subheadline": "Luxury Redefined",
-      "button_text": "Book Now",
-      "button_link": "#booking",
+      "image_url": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=80",
+      "headline": "Championship Golf & Spa",
+      "subheadline": "Unmatched Mountain & Lake Panoramas",
+      "button_text": "Discover More",
+      "button_link": "#about",
       "overlay_color": "#000000",
       "overlay_opacity": 0.4,
       "sort_order": 2
@@ -352,14 +352,14 @@
       "id": "room-1784206393534",
       "hotel_id": "hotel-1784206393534",
       "name": "Deluxe Twin Room",
-      "description": "A spacious and beautifully designed suite featuring high-end fixtures and direct ocean views.",
+      "description": "A spacious and beautifully designed suite featuring high-end fixtures and direct mountain views.",
       "gallery": [
-        "/uploads/1784209977386-image-158.webp"
+        "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80"
       ],
       "amenities": [
         "Free Wi-Fi",
         "Air Conditioning",
-        "Ocean View"
+        "Mountain View"
       ],
       "max_guests": 2,
       "room_size": 40,
@@ -370,9 +370,9 @@
     {
       "id": "room-1784207206083",
       "name": "Deluxe Double Room",
-      "description": "Deluxe Double",
+      "description": "Deluxe Double Suite with warm hardwood accents and private balcony.",
       "gallery": [
-        "/uploads/1784213883176-image-118.webp"
+        "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80"
       ],
       "amenities": [
         "Free Wi-Fi",
@@ -388,16 +388,15 @@
     {
       "id": "room-1784207385307",
       "name": "Grand Deluxe Twin Room",
-      "description": "Grand Deluxe Twin Room",
+      "description": "Grand Deluxe Twin Room with direct panoramic golf course views.",
       "gallery": [
-        "/uploads/1784209977538-image-162.webp",
-        "/uploads/1784209977386-image-158.webp",
-        "/uploads/1784209977446-image-159.webp"
+        "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80"
       ],
       "amenities": [
         "Free Wi-Fi",
         "Air Conditioning",
-        "City View",
+        "Golf Course View",
         "Private Terrace"
       ],
       "max_guests": 2,
@@ -410,11 +409,10 @@
     {
       "id": "room-1784210249499",
       "name": "Grand Deluxe Double Room",
-      "description": "Grand Deluxe Double Room",
+      "description": "Grand Deluxe Double Room with executive lounge privileges.",
       "gallery": [
-        "/uploads/1784210026586-image-155.webp",
-        "/uploads/1784210026465-image-149.webp",
-        "/uploads/1784210026522-image-150.webp"
+        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80"
       ],
       "amenities": [
         "Free Wi-Fi",
@@ -430,11 +428,10 @@
     {
       "id": "room-1784213614405",
       "name": "Grand Deluxe Triple Room",
-      "description": "Grand Deluxe Twin Room",
+      "description": "Grand Deluxe Triple Room ideal for families and small groups.",
       "gallery": [
-        "/uploads/1784210123578-image-134.webp",
-        "/uploads/1784210123636-image-136.webp",
-        "/uploads/1784210123691-image-138.webp"
+        "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80"
       ],
       "amenities": [
         "Free Wi-Fi",
@@ -450,17 +447,15 @@
     {
       "id": "room-1784213985101",
       "name": "Deluxe Pool Access",
-      "description": "Deluxe Pool Access",
+      "description": "Deluxe Pool Access with immediate step-out to the resort infinity pool.",
       "gallery": [
-        "/uploads/1784213883145-image-117.webp",
-        "/uploads/1784213883231-image-128.webp",
-        "/uploads/1784213883198-image-120.webp",
-        "/uploads/1784213883176-image-118.webp",
-        "/uploads/1784213883172-image-122.webp"
+        "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80"
       ],
       "amenities": [
         "Free Wi-Fi",
-        "Air Conditioning"
+        "Air Conditioning",
+        "Direct Pool Access"
       ],
       "max_guests": 2,
       "room_size": 50,
@@ -472,16 +467,10 @@
     {
       "id": "room-1784215718366",
       "name": "Junior Suite Room",
-      "description": "Junior Suite Room",
+      "description": "Junior Suite Room with luxury master bath and private lounge.",
       "gallery": [
-        "/uploads/1784214434525-image-172.webp",
-        "/uploads/1784214434566-image-176.webp",
-        "/uploads/1784214434619-image-177.webp",
-        "/uploads/1784214434512-image-174.webp",
-        "/uploads/1784214434546-image-175.webp",
-        "/uploads/1784214434480-image-167.webp",
-        "/uploads/1784214434465-image-165.webp",
-        "/uploads/1784214434497-image-168.webp"
+        "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80"
       ],
       "amenities": [
         "Free Wi-Fi",

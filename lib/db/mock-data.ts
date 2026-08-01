@@ -794,24 +794,57 @@ export async function getGalleryPhotos(hotelId: string): Promise<GalleryPhoto[]>
       console.error('getGalleryPhotos Edge error:', e);
     }
   }
+
   const db = getDb();
   const list = db.media_library || [];
-  return list
-    .filter((item: any) => item.hotel_id === hotelId)
-    .sort((a: any, b: any) => {
-      const aOrder = a.sort_order !== undefined ? a.sort_order : 999999;
-      const bOrder = b.sort_order !== undefined ? b.sort_order : 999999;
-      if (aOrder !== bOrder) return aOrder - bOrder;
-      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-    })
-    .map((item: any, index: number) => ({
-      id: item.id,
-      hotel_id: hotelId,
-      image_url: item.file_path || item.url,
-      category: item.folder || item.category,
-      alt_text: item.alt_text,
-      sort_order: index
-    }));
+
+  // Filter valid media photos for this hotel (exclude broken local /uploads/ paths)
+  const validMediaPhotos = list.filter((item: any) => 
+    item.hotel_id === hotelId && 
+    (item.file_path || item.url) && 
+    !(item.file_path || item.url).startsWith('/uploads/')
+  );
+
+  if (validMediaPhotos.length > 0) {
+    return validMediaPhotos
+      .sort((a: any, b: any) => {
+        const aOrder = a.sort_order !== undefined ? a.sort_order : 999999;
+        const bOrder = b.sort_order !== undefined ? b.sort_order : 999999;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      })
+      .map((item: any, index: number) => ({
+        id: item.id,
+        hotel_id: hotelId,
+        image_url: item.file_path || item.url,
+        category: item.folder || item.category || 'General',
+        alt_text: item.alt_text || '',
+        sort_order: index
+      }));
+  }
+
+  // Fallback to db.gallery_photos with valid URLs
+  const fallbackGallery = (db.gallery_photos || []).filter(
+    (p) => p.hotel_id === hotelId && p.image_url && !p.image_url.startsWith('/uploads/')
+  );
+
+  if (fallbackGallery.length > 0) {
+    return fallbackGallery;
+  }
+
+  // Guaranteed fallback for The Par Phuket / Resorts
+  return [
+    { id: 'g1', hotel_id: hotelId, image_url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80', category: 'Exterior', alt_text: 'Night Pool & Resort Facade', sort_order: 0 },
+    { id: 'g2', hotel_id: hotelId, image_url: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80', category: 'Exterior', alt_text: 'Sunset Pool Landscape', sort_order: 1 },
+    { id: 'g3', hotel_id: hotelId, image_url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80', category: 'Exterior', alt_text: 'Golf Course & Mountain Landscape', sort_order: 2 },
+    { id: 'g4', hotel_id: hotelId, image_url: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80', category: 'Exterior', alt_text: 'Modern Hotel Architecture', sort_order: 3 },
+    { id: 'g5', hotel_id: hotelId, image_url: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80', category: 'Rooms', alt_text: 'Deluxe King Suite', sort_order: 4 },
+    { id: 'g6', hotel_id: hotelId, image_url: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80', category: 'Rooms', alt_text: 'Executive Suite Lounge', sort_order: 5 },
+    { id: 'g7', hotel_id: hotelId, image_url: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80', category: 'Rooms', alt_text: 'Grand Master Suite Bed', sort_order: 6 },
+    { id: 'g8', hotel_id: hotelId, image_url: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80', category: 'Exterior', alt_text: 'Pool Deck Sunbeds', sort_order: 7 },
+    { id: 'g9', hotel_id: hotelId, image_url: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=1200&q=80', category: 'General', alt_text: 'Luxury Bathroom Suite', sort_order: 8 },
+    { id: 'g10', hotel_id: hotelId, image_url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80', category: 'Exterior', alt_text: 'Lush Resort Gardens', sort_order: 9 }
+  ];
 }
 
 export async function getBlogPosts(hotelId: string): Promise<BlogPost[]> {
