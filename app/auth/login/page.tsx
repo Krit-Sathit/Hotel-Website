@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Sparkles, ArrowRight, Lock, Mail, AlertCircle } from 'lucide-react';
+import { Sparkles, ArrowRight, Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('sathit2527@gmail.com');
   const [password, setPassword] = useState('Krit075388271');
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -129,14 +130,22 @@ export default function LoginPage() {
             <div className="relative bg-slate-50 border border-slate-200 rounded-lg flex items-center px-3.5 text-slate-400 focus-within:border-accent focus-within:bg-white transition-all">
               <Lock className="w-4 h-4 mr-2.5 flex-shrink-0" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-transparent border-none outline-none py-3.5 text-xs text-slate-800 w-full placeholder-slate-400"
+                className="bg-transparent border-none outline-none py-3.5 text-xs text-slate-800 w-full placeholder-slate-400 font-mono"
                 placeholder="Enter your security code"
                 required
                 disabled={isSubmitting}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-slate-400 hover:text-slate-700 focus:outline-none p-1 transition-colors ml-1 flex-shrink-0"
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
