@@ -5,9 +5,10 @@ import { Room } from '@/lib/db/mock-data';
 
 interface RoomsSectionProps {
   rooms: Room[];
+  tenantPrefix?: string;
 }
 
-export default function RoomsSection({ rooms }: RoomsSectionProps) {
+export default function RoomsSection({ rooms, tenantPrefix = '' }: RoomsSectionProps) {
   return (
     <section id="rooms" className="w-full py-20 md:py-28 bg-slate-50 dark:bg-slate-900/40 text-slate-800 dark:text-slate-200 px-6">
       <div className="max-w-7xl mx-auto space-y-12 md:space-y-16">
@@ -76,7 +77,7 @@ export default function RoomsSection({ rooms }: RoomsSectionProps) {
                 {/* Footer Buttons Row */}
                 <div className="flex items-center justify-between gap-4 pt-1">
                   <Link 
-                    href={`/rooms/${room.id}`}
+                    href={`${tenantPrefix}/rooms/${room.id}`}
                     className="text-xs font-bold tracking-widest uppercase text-slate-400 hover:text-accent transition-colors flex items-center gap-1 group/btn"
                   >
                     Explore Suite

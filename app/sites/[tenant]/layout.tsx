@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import { Phone, Mail, MapPin, Globe, Menu } from 'lucide-react';
 import { getHotelBySlug } from '@/lib/db/mock-data';
 import HotelThemeProvider from '@/components/hotel-theme-provider';
@@ -22,14 +23,22 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
 
   const { theme } = hotel;
 
-  // Curated list of navigation links
+  // Determine tenant prefix for links based on domain host
+  const headerList = await headers();
+  const host = headerList.get('host') || '';
+  
+  // If accessing on main platform domain (e.g. vercel.app or localhost without custom tenant domain)
+  const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
+  const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
+
+  // Curated list of navigation links with tenant-aware hrefs
   const navLinks = [
-    { label: 'Home', href: '/' },
-    { label: 'Rooms', href: '/rooms' },
-    { label: 'Promotions', href: '/promotions' },
-    { label: 'Gallery', href: '/gallery' },
-    { label: 'Blog', href: '/blog' },
-    { label: 'Contact', href: '/contact' },
+    { label: 'Home', href: tenantPrefix || '/' },
+    { label: 'Rooms', href: `${tenantPrefix}/rooms` },
+    { label: 'Promotions', href: `${tenantPrefix}/promotions` },
+    { label: 'Gallery', href: `${tenantPrefix}/gallery` },
+    { label: 'Blog', href: `${tenantPrefix}/blog` },
+    { label: 'Contact', href: `${tenantPrefix}/contact` },
   ];
 
   return (
@@ -69,7 +78,7 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             
             {/* BRAND LOGO / NAME */}
-            <Link href="/" className="flex flex-col text-left group">
+            <Link href={tenantPrefix || '/'} className="flex flex-col text-left group">
               <span className="text-lg md:text-xl font-bold tracking-widest text-primary font-hotel uppercase group-hover:text-accent transition-colors">
                 {hotel.name}
               </span>

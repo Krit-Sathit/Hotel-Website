@@ -1,5 +1,6 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import { ChevronLeft, Calendar, User, Tag } from 'lucide-react';
 import { getHotelBySlug, getBlogPostBySlug, trackAnalyticsEvent } from '@/lib/db/mock-data';
@@ -21,6 +22,12 @@ export default async function BlogPostDetailPage({ params }: BlogPostDetailPageP
     notFound();
   }
 
+  // Compute tenantPrefix for internal navigation links
+  const headerList = await headers();
+  const host = headerList.get('host') || '';
+  const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
+  const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
+
   // Track blog post view analytics on the server
   await trackAnalyticsEvent(hotel.id, 'page_view', `/blog/${slug}`);
 
@@ -39,7 +46,7 @@ export default async function BlogPostDetailPage({ params }: BlogPostDetailPageP
         {/* BACK BUTTON */}
         <div className="text-left">
           <Link 
-            href="/blog" 
+            href={`${tenantPrefix}/blog`} 
             className="inline-flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase text-slate-400 hover:text-accent transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />

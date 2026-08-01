@@ -1,5 +1,6 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import { Calendar, ChevronRight, BookOpen } from 'lucide-react';
 import { getHotelBySlug, getBlogPosts, trackAnalyticsEvent } from '@/lib/db/mock-data';
@@ -15,6 +16,12 @@ export default async function BlogPage({ params }: BlogPageProps) {
   if (!hotel || hotel.status !== 'active') {
     notFound();
   }
+
+  // Compute tenantPrefix for internal navigation links
+  const headerList = await headers();
+  const host = headerList.get('host') || '';
+  const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
+  const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
 
   // Track page view for blog listing
   await trackAnalyticsEvent(hotel.id, 'page_view', '/blog');
@@ -56,7 +63,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
                 className="bg-white dark:bg-slate-950 rounded-hotel overflow-hidden shadow-sm hover:shadow-md border border-slate-150/45 dark:border-slate-900 transition-all duration-300 flex flex-col group"
               >
                 {/* Featured Image */}
-                <Link href={`/blog/${post.slug}`} className="relative aspect-[16/10] overflow-hidden bg-slate-150 flex-shrink-0">
+                <Link href={`${tenantPrefix}/blog/${post.slug}`} className="relative aspect-[16/10] overflow-hidden bg-slate-150 flex-shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     src={post.featured_image || 'https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?auto=format&fit=crop&w=800&q=80'} 
@@ -81,7 +88,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
                     </div>
 
                     <h3 className="text-lg md:text-xl font-bold tracking-wide text-primary font-hotel leading-snug group-hover:text-accent transition-colors">
-                      <Link href={`/blog/${post.slug}`}>
+                      <Link href={`${tenantPrefix}/blog/${post.slug}`}>
                         {post.title}
                       </Link>
                     </h3>
@@ -94,7 +101,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
                   {/* Read More Link */}
                   <div className="pt-2 border-t border-slate-50 dark:border-slate-900">
                     <Link 
-                      href={`/blog/${post.slug}`}
+                      href={`${tenantPrefix}/blog/${post.slug}`}
                       className="inline-flex items-center gap-1 text-xs font-bold tracking-widest uppercase text-accent hover:underline group/btn"
                     >
                       Read Article

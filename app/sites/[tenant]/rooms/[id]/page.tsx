@@ -1,5 +1,6 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -25,6 +26,12 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
     notFound();
   }
 
+  // Compute tenantPrefix for internal navigation links
+  const headerList = await headers();
+  const host = headerList.get('host') || '';
+  const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
+  const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
+
   // Track room-specific page view analytics on the server
   await trackAnalyticsEvent(hotel.id, 'page_view', `/rooms/${id}`, id);
 
@@ -35,7 +42,7 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
         {/* BACK TO LIST & BREADCRUMB */}
         <div className="text-left">
           <Link 
-            href="/rooms" 
+            href={`${tenantPrefix}/rooms`} 
             className="inline-flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase text-slate-400 hover:text-accent transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />

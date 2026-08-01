@@ -1,5 +1,6 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -37,6 +38,12 @@ export default async function TenantPage({ params }: TenantPageProps) {
     notFound();
   }
 
+  // Compute tenantPrefix for internal navigation links
+  const headerList = await headers();
+  const host = headerList.get('host') || '';
+  const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
+  const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
+
   // Log a privacy-compliant page view event on the server side on load
   await trackAnalyticsEvent(hotel.id, 'page_view', '/');
 
@@ -71,7 +78,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
         
       case 'rooms':
         return rooms.length > 0 ? (
-          <RoomsSection key="rooms" rooms={rooms} />
+          <RoomsSection key="rooms" rooms={rooms} tenantPrefix={tenantPrefix} />
         ) : null;
         
       case 'facilities':
