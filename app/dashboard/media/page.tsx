@@ -123,10 +123,24 @@ export default function MediaLibraryPage() {
           setHotelId(hotel.id);
           setRooms(data.rooms || []);
           
+          // Check localStorage cache first to preserve user deletions across serverless reloads
+          let deletedIds: string[] = [];
+          if (typeof window !== 'undefined') {
+            const deletedCache = localStorage.getItem(`flowstay_deleted_media_${hotel.id}`);
+            if (deletedCache) {
+              try {
+                deletedIds = JSON.parse(deletedCache) || [];
+              } catch (e) {
+                console.error('Failed to parse deleted media cache:', e);
+              }
+            }
+          }
+
           // Load media items from database
           const dbResult = await getMediaItemsAction(hotel.id);
           if (dbResult.success && dbResult.items && dbResult.items.length > 0) {
-            setFiles(dbResult.items);
+            const filtered = dbResult.items.filter((item: MediaFile) => !deletedIds.includes(item.id));
+            setFiles(filtered);
           } else {
             // Seed files based on hotel's default room & gallery assets
             const seedFiles = [];
@@ -162,7 +176,8 @@ export default function MediaLibraryPage() {
                 });
               }
             }
-            setFiles(savedItems);
+            const filteredSeeds = savedItems.filter((item) => !deletedIds.includes(item.id));
+            setFiles(filteredSeeds);
           }
         }
       } catch (err) {
@@ -317,11 +332,25 @@ export default function MediaLibraryPage() {
   const handleDeleteFile = async (id: string) => {
     if (!confirm('Are you sure you want to delete this asset from your media library? Any pages referencing this URL will show a broken image.')) return;
     try {
-      const res = await deleteMediaItemAction(id);
-      if (res.success) {
-        setFiles(files.filter(f => f.id !== id));
-        setSelectedFile(null);
+      const nextFiles = files.filter(f => f.id !== id);
+      setFiles(nextFiles);
+      setSelectedFile(null);
+
+      if (typeof window !== 'undefined' && hotelId) {
+        const deletedCache = localStorage.getItem(`flowstay_deleted_media_${hotelId}`);
+        let deletedIds: string[] = [];
+        if (deletedCache) {
+          try {
+            deletedIds = JSON.parse(deletedCache) || [];
+          } catch (e) {}
+        }
+        if (!deletedIds.includes(id)) {
+          deletedIds.push(id);
+          localStorage.setItem(`flowstay_deleted_media_${hotelId}`, JSON.stringify(deletedIds));
+        }
       }
+
+      await deleteMediaItemAction(id);
     } catch (err) {
       console.error(err);
     }
