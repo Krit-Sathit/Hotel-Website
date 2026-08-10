@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Folder, 
   FolderPlus, 
@@ -94,7 +94,6 @@ async function compressImageToWebP(file: File, maxWidth = 1200, quality = 0.8): 
 
 export default function MediaLibraryPage() {
   const [hotelId, setHotelId] = useState('');
-  const [hotelName, setHotelName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFolder, setActiveFolder] = useState('All');
   const [selectedFile, setSelectedFile] = useState<MediaFile | null>(null);
@@ -113,11 +112,13 @@ export default function MediaLibraryPage() {
   // Seed default library files
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
+  const mediaLoadId = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
 
     const getActiveMedia = async () => {
+      const loadId = ++mediaLoadId.current;
       try {
         setLibraryError(null);
         setSelectedFile(null);
@@ -130,8 +131,7 @@ export default function MediaLibraryPage() {
         if (!res.ok) throw new Error('Failed to fetch data');
         const data = await res.json();
         const hotel = data.hotel;
-        if (hotel && !cancelled) {
-          setHotelName(hotel.name);
+        if (hotel && !cancelled && loadId === mediaLoadId.current) {
           setHotelId(hotel.id);
           setRooms(data.rooms || []);
           
@@ -150,6 +150,8 @@ export default function MediaLibraryPage() {
 
           // Load media items from database
           const dbResult = await getMediaItemsAction(hotel.id);
+          if (cancelled || loadId !== mediaLoadId.current) return;
+
           if (dbResult.success) {
             const filtered = dbResult.items.filter((item: MediaFile) => !deletedIds.includes(item.id));
             setFiles(filtered);
