@@ -21,6 +21,10 @@ export default function TenantSelector({ currentHotelId, currentHotelName, hotel
     // This allows both server components and API routes to read the active tenant ID
     document.cookie = `active_hotel_id=${newId}; path=/; max-age=31536000; SameSite=Lax`;
 
+    // Client pages keep their own data in memory. Notify them immediately so they
+    // reload tenant-specific records instead of continuing to show the last hotel.
+    window.dispatchEvent(new CustomEvent('active-hotel-changed', { detail: { hotelId: newId } }));
+
     // Refresh the router to reload the active server layout with new hotel data
     router.refresh();
   };

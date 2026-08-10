@@ -115,13 +115,22 @@ export default function MediaLibraryPage() {
   const [rooms, setRooms] = useState<any[]>([]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const getActiveMedia = async () => {
       try {
-        const res = await fetch('/api/admin/data');
+        setLibraryError(null);
+        setSelectedFile(null);
+        setSelectedFileIds([]);
+        setFiles([]);
+
+        // The selected hotel is stored in a cookie, so this request must always
+        // bypass browser caches and read the cookie that was just updated.
+        const res = await fetch('/api/admin/data', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch data');
         const data = await res.json();
         const hotel = data.hotel;
-        if (hotel) {
+        if (hotel && !cancelled) {
           setHotelName(hotel.name);
           setHotelId(hotel.id);
           setRooms(data.rooms || []);
@@ -151,11 +160,23 @@ export default function MediaLibraryPage() {
         }
       } catch (err) {
         console.error('Failed to load media details via API:', err);
+        if (!cancelled) {
+          setLibraryError('Media Library could not be loaded. Please select the hotel again and retry.');
+          setFiles([]);
+        }
       }
     };
 
     getActiveMedia();
-  }, [hotelName]);
+
+    // TenantSelector emits this event as soon as the user chooses another hotel.
+    // This is necessary because router.refresh() preserves this client page state.
+    window.addEventListener('active-hotel-changed', getActiveMedia);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('active-hotel-changed', getActiveMedia);
+    };
+  }, []);
 
   const handleCopyLink = (url: string, id: string) => {
     navigator.clipboard.writeText(url);
