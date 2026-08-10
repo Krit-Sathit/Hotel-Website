@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Sparkles, ArrowRight, Lock, Mail, Building, User, Globe, AlertCircle } from 'lucide-react';
-import { registerNewHotelAction } from '@/lib/db/actions';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -33,10 +32,15 @@ export default function SignupPage() {
     setErrorMsg(null);
 
     try {
-      // Trigger our server action to securely register the new hotel and seed default tables
-      const result = await registerNewHotelAction(hotelName, slug, email);
+      // A route handler keeps the signup endpoint stable across deployments.
+      const response = await fetch('/api/admin/hotels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hotelName, slug, email }),
+      });
+      const result = await response.json();
 
-      if (result.success && result.hotelId) {
+      if (response.ok && result.success && result.hotelId) {
         // Save the new hotel's ID to cookies as the active tenant
         document.cookie = `active_hotel_id=${result.hotelId}; path=/; max-age=31536000; SameSite=Lax`;
         
