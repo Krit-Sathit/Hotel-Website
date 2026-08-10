@@ -165,6 +165,7 @@ CREATE TABLE public.media_library (
     mime_type TEXT NOT NULL,
     alt_text TEXT,
     folder TEXT NOT NULL DEFAULT 'root',
+    sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -193,6 +194,7 @@ CREATE INDEX idx_gallery_photos_hotel_id ON public.gallery_photos(hotel_id);
 CREATE INDEX idx_blog_posts_hotel_id ON public.blog_posts(hotel_id);
 CREATE INDEX idx_contact_messages_hotel_id ON public.contact_messages(hotel_id);
 CREATE INDEX idx_media_library_hotel_id ON public.media_library(hotel_id);
+CREATE INDEX idx_media_library_hotel_sort_order ON public.media_library(hotel_id, sort_order);
 CREATE INDEX idx_analytics_events_hotel_id ON public.analytics_events(hotel_id);
 CREATE INDEX idx_analytics_events_created_at ON public.analytics_events(created_at);
 

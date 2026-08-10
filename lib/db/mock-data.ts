@@ -30,6 +30,7 @@ import {
   deleteSupabasePromotion,
   deleteSupabaseHotel,
   getSupabaseMediaItems,
+  saveSupabaseMediaOrder,
   saveSupabaseMediaItem,
   updateSupabaseMediaItemCategory,
   deleteSupabaseMediaItem
@@ -625,6 +626,13 @@ const defaultState: DatabaseState = {
 // File-based & In-memory DB helper
 const DB_FILE_PATH = path.join(process.cwd(), 'database.json');
 let memoryDb: DatabaseState | null = (globalThis as any).__GLOBAL_DB_STATE__ || null;
+const isVercelDeployment = process.env.VERCEL === '1';
+
+function requirePersistentMediaStorage(): void {
+  if (isVercelDeployment && !isSupabaseConfigured) {
+    throw new Error('Persistent media storage is not configured. Connect Supabase before uploading images.');
+  }
+}
 
 export function getDb(): DatabaseState {
   if (memoryDb) return memoryDb;
@@ -773,26 +781,27 @@ export async function getGalleryPhotos(hotelId: string): Promise<GalleryPhoto[]>
   if (isSupabaseConfigured) {
     try {
       const items = await getSupabaseMediaItems(hotelId);
-      if (items && items.length > 0) {
-        const sortedItems = [...items].sort((a, b) => {
-          const aOrder = a.sort_order !== undefined ? a.sort_order : 999999;
-          const bOrder = b.sort_order !== undefined ? b.sort_order : 999999;
-          if (aOrder !== bOrder) return aOrder - bOrder;
-          return new Date(b.dateAdded || 0).getTime() - new Date(a.dateAdded || 0).getTime();
-        });
-        return sortedItems.map((item, index) => ({
-          id: item.id,
-          hotel_id: hotelId,
-          image_url: item.url,
-          category: item.category,
-          alt_text: item.altText,
-          sort_order: index
-        }));
-      }
+      const sortedItems = [...items].sort((a, b) => {
+        const aOrder = a.sort_order !== undefined ? a.sort_order : 999999;
+        const bOrder = b.sort_order !== undefined ? b.sort_order : 999999;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return new Date(b.dateAdded || 0).getTime() - new Date(a.dateAdded || 0).getTime();
+      });
+      return sortedItems.map((item, index) => ({
+        id: item.id,
+        hotel_id: hotelId,
+        image_url: item.url,
+        category: item.category,
+        alt_text: item.altText,
+        sort_order: index
+      }));
     } catch (e) {
       console.error('getGalleryPhotos Edge error:', e);
+      return [];
     }
   }
+
+  if (isVercelDeployment) return [];
 
   const db = getDb();
   const list = db.media_library || [];
@@ -1216,6 +1225,7 @@ export async function getMediaItems(hotelId: string): Promise<any[]> {
   if (isSupabaseConfigured) {
     return getSupabaseMediaItems(hotelId);
   }
+  requirePersistentMediaStorage();
   const db = getDb();
   const list = db.media_library || [];
   return list
@@ -1242,6 +1252,7 @@ export async function saveMediaItem(hotelId: string, data: any): Promise<any> {
   if (isSupabaseConfigured) {
     return saveSupabaseMediaItem(hotelId, data);
   }
+  requirePersistentMediaStorage();
   const db = getDb();
   if (!db.media_library) db.media_library = [];
   
@@ -1310,6 +1321,11 @@ export async function deleteMediaItem(mediaId: string): Promise<void> {
 }
 
 export async function saveMediaOrder(ids: string[]): Promise<void> {
+  if (isSupabaseConfigured) {
+    await saveSupabaseMediaOrder(ids);
+    return;
+  }
+
   const db = getDb();
   if (!db.media_library) return;
   db.media_library = db.media_library.map((item: any) => {
@@ -1381,5 +1397,3 @@ export async function deleteUser(userId: string): Promise<boolean> {
   saveDb(db);
   return true;
 }
-
-

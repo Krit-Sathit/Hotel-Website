@@ -15,7 +15,8 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // 1. Supabase Cloud Storage (if configured)
+    // Production uploads must use durable object storage. Vercel's filesystem
+    // and in-memory fallbacks are discarded after a request or deployment.
     if (isSupabaseConfigured) {
       const filename = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
       try {
@@ -23,10 +24,18 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, url: publicUrl });
       } catch (storageError: any) {
         console.error('Supabase Storage upload error:', storageError);
+        return NextResponse.json({ error: 'Image could not be saved to persistent storage.' }, { status: 502 });
       }
     }
 
-    // 2. Local Filesystem (for Local Development)
+    if (process.env.VERCEL === '1') {
+      return NextResponse.json(
+        { error: 'Persistent media storage is not configured. Connect Supabase before uploading images.' },
+        { status: 503 }
+      );
+    }
+
+    // Local filesystem storage is only available during local development.
     try {
       const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
       if (!fs.existsSync(uploadsDir)) {
@@ -40,13 +49,7 @@ export async function POST(request: NextRequest) {
       const publicUrl = `/uploads/${filename}`;
       return NextResponse.json({ success: true, url: publicUrl });
     } catch (fsError) {
-      // 3. Vercel Serverless Fallback (Read-Only Filesystem) -> Convert to Base64 Data URL
-      console.warn('Filesystem write failed (Vercel Serverless detected), converting upload to Base64 Data URL');
-      const mimeType = file.type || 'image/webp';
-      const base64Data = buffer.toString('base64');
-      const dataUrl = `data:${mimeType};base64,${base64Data}`;
-
-      return NextResponse.json({ success: true, url: dataUrl });
+      return NextResponse.json({ error: 'Local media storage is unavailable.' }, { status: 500 });
     }
   } catch (error: any) {
     console.error('Upload API error:', error);

@@ -106,6 +106,7 @@ export default function MediaLibraryPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [uploadMethod, setUploadMethod] = useState<'upload' | 'paste'>('upload');
+  const [libraryError, setLibraryError] = useState<string | null>(null);
 
   // Seed default library files
   const [files, setFiles] = useState<MediaFile[]>([]);
@@ -138,46 +139,12 @@ export default function MediaLibraryPage() {
 
           // Load media items from database
           const dbResult = await getMediaItemsAction(hotel.id);
-          if (dbResult.success && dbResult.items && dbResult.items.length > 0) {
+          if (dbResult.success) {
             const filtered = dbResult.items.filter((item: MediaFile) => !deletedIds.includes(item.id));
             setFiles(filtered);
           } else {
-            // Seed files based on hotel's default room & gallery assets
-            const seedFiles = [];
-            if (hotel.slug === 'hotel-a') {
-              seedFiles.push(
-                { name: 'ocean-suite-bed.webp', url: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=80', category: 'Rooms', size: '124 KB', altText: 'Oceanfront King Suite master bed and pillows' },
-                { name: 'villa-terrace-view.webp', url: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80', category: 'Rooms', size: '248 KB', altText: 'Private plunge pool terrace overlooking beach' },
-                { name: 'resort-pool-sunset.webp', url: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80', category: 'Exterior', size: '312 KB', altText: 'Malibu sunset reflected in infinity pool' },
-                { name: 'resort-landscape.webp', url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80', category: 'Exterior', size: '189 KB', altText: 'Tropical Resort Landscape' },
-                { name: 'seafood-gastronomy.webp', url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80', category: 'Dining', size: '185 KB', altText: 'Michelin oysters and fine white wine plating' }
-              );
-            } else {
-              seedFiles.push(
-                { name: 'soho-loft-interior.webp', url: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80', category: 'Rooms', size: '142 KB', altText: 'Minimalist industrial Soho suite master bedroom' },
-                { name: 'lounge-cocktails.webp', url: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?auto=format&fit=crop&w=800&q=80', category: 'Dining', size: '118 KB', altText: 'Craft cocktails served on industrial zinc bar top' }
-              );
-            }
-
-            // Save seeds to database
-            const savedItems = [];
-            for (const seed of seedFiles) {
-              const saveRes = await saveMediaItemAction(hotel.id, seed);
-              if (saveRes.success && saveRes.item) {
-                savedItems.push({
-                  id: saveRes.item.id,
-                  name: saveRes.item.name,
-                  url: saveRes.item.url,
-                  category: saveRes.item.category,
-                  size: saveRes.item.size,
-                  dimensions: 'Dynamic',
-                  altText: saveRes.item.alt_text || '',
-                  dateAdded: saveRes.item.created_at ? saveRes.item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
-                });
-              }
-            }
-            const filteredSeeds = savedItems.filter((item) => !deletedIds.includes(item.id));
-            setFiles(filteredSeeds);
+            setLibraryError('Media Library is unavailable because persistent Supabase storage is not configured. No mock images are being used.');
+            setFiles([]);
           }
         }
       } catch (err) {
@@ -239,9 +206,12 @@ export default function MediaLibraryPage() {
         setUploadAlt('');
         setUploadMessage('Image successfully saved to library database!');
         setTimeout(() => setUploadMessage(null), 4000);
+      } else {
+        throw new Error(saveRes.error || 'Image could not be saved to persistent storage.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      alert(err.message || 'Failed to save image to persistent storage.');
     } finally {
       setIsUploading(false);
     }
@@ -269,23 +239,13 @@ export default function MediaLibraryPage() {
             body: formData,
           });
 
-          if (res.ok) {
-            const data = await res.json();
-            if (data.url) {
-              imageUrl = data.url;
-            }
+          const data = await res.json();
+          if (!res.ok || !data.url) {
+            throw new Error(data.error || 'Image could not be saved to persistent storage.');
           }
+          imageUrl = data.url;
         } catch (apiErr) {
-          console.warn('Upload API error, using client-side Data URL fallback:', apiErr);
-        }
-
-        // Fallback to client-side Data URL if API upload failed
-        if (!imageUrl) {
-          imageUrl = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target?.result as string || '');
-            reader.readAsDataURL(processedFile);
-          });
+          throw apiErr;
         }
 
         // Save item to database
@@ -322,7 +282,7 @@ export default function MediaLibraryPage() {
       setTimeout(() => setUploadMessage(null), 4000);
     } catch (err: any) {
       console.error(err);
-      alert('Failed to upload some files. Please ensure the files are under 10MB.');
+      alert(err.message || 'Failed to upload images to persistent storage.');
     } finally {
       setIsUploading(false);
       e.target.value = '';
@@ -490,6 +450,13 @@ export default function MediaLibraryPage() {
           <div className="p-3 bg-green-500/10 border border-green-500/25 text-green-400 text-xs rounded-lg animate-fade-in flex items-center gap-2">
             <Check className="w-4 h-4" />
             {uploadMessage}
+          </div>
+        )}
+
+        {libraryError && (
+          <div className="p-3 bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs rounded-lg animate-fade-in flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            {libraryError}
           </div>
         )}
 

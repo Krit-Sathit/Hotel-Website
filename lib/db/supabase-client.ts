@@ -12,16 +12,18 @@ import type {
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServerKey = supabaseServiceRoleKey || supabaseAnonKey;
 
-export const isSupabaseConfigured = !!supabaseUrl && !!supabaseAnonKey;
+export const isSupabaseConfigured = !!supabaseUrl && !!supabaseServerKey;
 
 async function supabaseFetch(path: string, options: RequestInit = {}) {
   if (!isSupabaseConfigured) return null;
   
   const url = `${supabaseUrl}/rest/v1${path}`;
   const headers = new Headers(options.headers);
-  headers.set('apikey', supabaseAnonKey!);
-  headers.set('Authorization', `Bearer ${supabaseAnonKey}`);
+  headers.set('apikey', supabaseServerKey!);
+  headers.set('Authorization', `Bearer ${supabaseServerKey}`);
   headers.set('Content-Type', 'application/json');
   headers.set('Prefer', 'return=representation');
 
@@ -551,8 +553,8 @@ export async function uploadSupabaseFile(
   const res = await fetch(url, {
     method: 'POST',
     headers: {
-      'apikey': supabaseAnonKey!,
-      'Authorization': `Bearer ${supabaseAnonKey}`,
+      'apikey': supabaseServerKey!,
+      'Authorization': `Bearer ${supabaseServerKey}`,
       'Content-Type': mimeType
     },
     body: new Uint8Array(fileBuffer)
@@ -568,22 +570,18 @@ export async function uploadSupabaseFile(
 }
 
 export async function getSupabaseMediaItems(hotelId: string): Promise<any[]> {
-  try {
-    const items = await supabaseFetch(`/media_library?hotel_id=eq.${hotelId}&order=created_at.desc&select=*`);
-    return (items || []).map((item: any) => ({
-      id: item.id,
-      name: item.file_name,
-      url: item.file_path,
-      category: item.folder,
-      size: `${Math.round(item.file_size / 1024)} KB`,
-      dimensions: 'Dynamic',
-      altText: item.alt_text || '',
-      dateAdded: item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
-    }));
-  } catch (e) {
-    console.error('getSupabaseMediaItems error:', e);
-    return [];
-  }
+  const items = await supabaseFetch(`/media_library?hotel_id=eq.${hotelId}&order=sort_order.asc,created_at.desc&select=*`);
+  return (items || []).map((item: any) => ({
+    id: item.id,
+    name: item.file_name,
+    url: item.file_path,
+    category: item.folder,
+    size: `${Math.round(item.file_size / 1024)} KB`,
+    dimensions: 'Dynamic',
+    altText: item.alt_text || '',
+    dateAdded: item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+    sort_order: item.sort_order
+  }));
 }
 
 export async function saveSupabaseMediaItem(hotelId: string, data: any): Promise<any> {
@@ -614,9 +612,19 @@ export async function updateSupabaseMediaItemCategory(mediaId: string, category:
   });
 }
 
+export async function saveSupabaseMediaOrder(ids: string[]): Promise<void> {
+  await Promise.all(
+    ids.map((mediaId, sortOrder) =>
+      supabaseFetch(`/media_library?id=eq.${encodeURIComponent(mediaId)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ sort_order: sortOrder })
+      })
+    )
+  );
+}
+
 export async function deleteSupabaseMediaItem(mediaId: string): Promise<void> {
   await supabaseFetch(`/media_library?id=eq.${mediaId}`, {
     method: 'DELETE'
   });
 }
-
