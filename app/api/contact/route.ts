@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveContactMessage } from '@/lib/db/mock-data';
+import { getHotelBySlug, saveContactMessage } from '@/lib/db/mock-data';
+import { sendContactNotification } from '@/lib/email/contact-notification';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,10 +17,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email address format' }, { status: 400 });
     }
 
-    // Save message to our database/mock store
+    const hotel = await getHotelBySlug(hotelId);
+    if (!hotel) {
+      return NextResponse.json({ error: 'Hotel not found' }, { status: 404 });
+    }
+
+    // Keep every inquiry in the CMS database before attempting email delivery.
     const savedMessage = await saveContactMessage(hotelId, { name, email, phone, message });
 
-    return NextResponse.json({ success: true, message: savedMessage });
+    const delivery = await sendContactNotification({
+      hotelName: hotel.name,
+      recipient: hotel.email,
+      senderName: name,
+      senderEmail: email,
+      senderPhone: phone,
+      message,
+    });
+
+    if (!delivery.success) {
+      return NextResponse.json(
+        {
+          error: 'Your message was saved, but email delivery is temporarily unavailable. Please contact the hotel directly.',
+          message: savedMessage,
+        },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({ success: true, message: savedMessage, sentTo: hotel.email });
   } catch (error) {
     console.error('Contact form API endpoint error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

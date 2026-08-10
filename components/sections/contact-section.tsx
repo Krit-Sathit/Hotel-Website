@@ -49,15 +49,14 @@ export default function ContactSection({ hotelId, email, phone, address, socials
         }),
       });
 
-      if (!res.ok) {
-        throw new Error('Failed to submit message');
-      }
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Failed to submit message');
 
       setSubmitSuccess(true);
       setFormData({ name: '', email: '', phone: '', message: '' });
     } catch (err) {
       console.error('Contact form submission error:', err);
-      setSubmitError('An error occurred. Please try again later.');
+      setSubmitError(err instanceof Error ? err.message : 'An error occurred. Please try again later.');
     } finally {
       setIsSubmitting(false);
     }
