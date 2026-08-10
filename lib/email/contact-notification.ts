@@ -1,3 +1,5 @@
+import nodemailer from 'nodemailer';
+
 interface ContactNotification {
   hotelName: string;
   recipient: string;
@@ -18,10 +20,13 @@ function escapeHtml(value: string) {
 }
 
 export async function sendContactNotification(notification: ContactNotification) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.CONTACT_EMAIL_FROM;
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const password = process.env.SMTP_PASS;
+  const port = Number.parseInt(process.env.SMTP_PORT || '587', 10);
+  const secure = process.env.SMTP_SECURE === 'true';
 
-  if (!apiKey || !from) {
+  if (!host || !user || !password) {
     return { success: false, error: 'Email notifications are not configured.' };
   }
 
@@ -34,24 +39,31 @@ export async function sendContactNotification(notification: ContactNotification)
     <p>${escapeHtml(notification.message).replace(/\n/g, '<br />')}</p>
   `;
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from,
-      to: [notification.recipient],
-      reply_to: notification.senderEmail,
-      subject: `New website inquiry — ${notification.hotelName}`,
-      html,
-    }),
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: { user, pass: password },
   });
 
-  if (!response.ok) {
-    const detail = await response.text();
-    console.error('Resend contact notification failed:', detail);
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || `FlowStay Website <${user}>`,
+      to: notification.recipient,
+      replyTo: notification.senderEmail,
+      subject: `New website inquiry — ${notification.hotelName}`,
+      html,
+      text: [
+        `New website inquiry for ${notification.hotelName}`,
+        `Name: ${notification.senderName}`,
+        `Email: ${notification.senderEmail}`,
+        `Phone: ${notification.senderPhone || 'Not provided'}`,
+        '',
+        notification.message,
+      ].join('\n'),
+    });
+  } catch (error) {
+    console.error('SMTP contact notification failed:', error);
     return { success: false, error: 'Email delivery failed.' };
   }
 
