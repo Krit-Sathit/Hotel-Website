@@ -98,7 +98,9 @@ export default function MediaLibraryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFolder, setActiveFolder] = useState('All');
   const [selectedFile, setSelectedFile] = useState<MediaFile | null>(null);
+  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isDeletingSelected, setIsDeletingSelected] = useState(false);
 
   const [uploadUrl, setUploadUrl] = useState('');
   const [uploadAlt, setUploadAlt] = useState('');
@@ -289,30 +291,91 @@ export default function MediaLibraryPage() {
     }
   };
 
+  const rememberDeletedMedia = (ids: string[]) => {
+    if (typeof window === 'undefined' || !hotelId || ids.length === 0) return;
+
+    const deletedCache = localStorage.getItem(`flowstay_deleted_media_${hotelId}`);
+    let deletedIds: string[] = [];
+    if (deletedCache) {
+      try {
+        deletedIds = JSON.parse(deletedCache) || [];
+      } catch (err) {
+        console.error('Failed to parse deleted media cache:', err);
+      }
+    }
+
+    localStorage.setItem(
+      `flowstay_deleted_media_${hotelId}`,
+      JSON.stringify([...new Set([...deletedIds, ...ids])])
+    );
+  };
+
+  const deleteMediaFiles = async (ids: string[]) => {
+    const results = await Promise.all(
+      ids.map(async (id) => {
+        try {
+          const result = await deleteMediaItemAction(id);
+          return { id, success: result.success };
+        } catch (err) {
+          console.error(`Failed to delete media item ${id}:`, err);
+          return { id, success: false };
+        }
+      })
+    );
+
+    const deletedIds = results.filter(result => result.success).map(result => result.id);
+    if (deletedIds.length > 0) {
+      const deletedIdSet = new Set(deletedIds);
+      setFiles(currentFiles => currentFiles.filter(file => !deletedIdSet.has(file.id)));
+      setSelectedFile(currentFile => currentFile && deletedIdSet.has(currentFile.id) ? null : currentFile);
+      setSelectedFileIds(currentIds => currentIds.filter(id => !deletedIdSet.has(id)));
+      rememberDeletedMedia(deletedIds);
+    }
+
+    return results.length - deletedIds.length;
+  };
+
   const handleDeleteFile = async (id: string) => {
     if (!confirm('Are you sure you want to delete this asset from your media library? Any pages referencing this URL will show a broken image.')) return;
+
+    const failedCount = await deleteMediaFiles([id]);
+    if (failedCount > 0) {
+      alert('This asset could not be deleted. Please try again.');
+    }
+  };
+
+  const toggleFileSelection = (id: string) => {
+    setSelectedFileIds(currentIds =>
+      currentIds.includes(id)
+        ? currentIds.filter(selectedId => selectedId !== id)
+        : [...currentIds, id]
+    );
+  };
+
+  const handleSelectAllFiltered = () => {
+    const filteredIds = filteredFiles.map(file => file.id);
+    const allShownSelected = filteredIds.length > 0 && filteredIds.every(id => selectedFileIds.includes(id));
+
+    setSelectedFileIds(currentIds => allShownSelected
+      ? currentIds.filter(id => !filteredIds.includes(id))
+      : [...new Set([...currentIds, ...filteredIds])]
+    );
+  };
+
+  const handleDeleteSelectedFiles = async () => {
+    if (selectedFileIds.length === 0) return;
+
+    const assetLabel = selectedFileIds.length === 1 ? 'this asset' : `${selectedFileIds.length} selected assets`;
+    if (!confirm(`Are you sure you want to delete ${assetLabel} from your media library? Any pages referencing these URLs will show broken images.`)) return;
+
+    setIsDeletingSelected(true);
     try {
-      const nextFiles = files.filter(f => f.id !== id);
-      setFiles(nextFiles);
-      setSelectedFile(null);
-
-      if (typeof window !== 'undefined' && hotelId) {
-        const deletedCache = localStorage.getItem(`flowstay_deleted_media_${hotelId}`);
-        let deletedIds: string[] = [];
-        if (deletedCache) {
-          try {
-            deletedIds = JSON.parse(deletedCache) || [];
-          } catch (e) {}
-        }
-        if (!deletedIds.includes(id)) {
-          deletedIds.push(id);
-          localStorage.setItem(`flowstay_deleted_media_${hotelId}`, JSON.stringify(deletedIds));
-        }
+      const failedCount = await deleteMediaFiles(selectedFileIds);
+      if (failedCount > 0) {
+        alert(`${failedCount} asset${failedCount === 1 ? '' : 's'} could not be deleted. Please try again.`);
       }
-
-      await deleteMediaItemAction(id);
-    } catch (err) {
-      console.error(err);
+    } finally {
+      setIsDeletingSelected(false);
     }
   };
 
@@ -589,6 +652,41 @@ export default function MediaLibraryPage() {
             </div>
           </div>
 
+          {/* BULK ACTIONS */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+            <p className="text-[10px] text-slate-500 font-medium">
+              Use the checkboxes on each image to select multiple assets.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSelectAllFiltered}
+                disabled={filteredFiles.length === 0}
+                className="px-3 py-2 rounded-lg border border-slate-800 bg-slate-900 text-[10px] font-bold uppercase tracking-wider text-slate-300 hover:text-white hover:border-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {filteredFiles.length > 0 && filteredFiles.every(file => selectedFileIds.includes(file.id))
+                  ? 'Clear shown'
+                  : 'Select shown'}
+              </button>
+              {selectedFileIds.length > 0 && (
+                <>
+                  <span className="text-[10px] font-bold text-accent uppercase tracking-wider">
+                    {selectedFileIds.length} selected
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleDeleteSelectedFiles}
+                    disabled={isDeletingSelected}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-500/40 bg-red-500/10 text-[10px] font-bold uppercase tracking-wider text-red-300 hover:bg-red-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isDeletingSelected ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    Delete selected
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* FILES GRID */}
           {filteredFiles.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -608,7 +706,7 @@ export default function MediaLibraryPage() {
                   }}
                   onDragEnd={handleDragEnd}
                   className={`group relative aspect-square bg-slate-950 rounded-xl overflow-hidden cursor-move border-2 transition-all ${
-                    selectedFile?.id === file.id
+                    selectedFile?.id === file.id || selectedFileIds.includes(file.id)
                       ? 'border-accent shadow-lg'
                       : 'border-slate-850 hover:border-slate-700'
                   } ${draggedIndex === files.findIndex(f => f.id === file.id) ? 'opacity-40 scale-95 border-dashed border-accent' : ''}`}
@@ -623,6 +721,22 @@ export default function MediaLibraryPage() {
                   <div className="absolute top-2 left-2 bg-black/75 text-accent text-[8px] font-bold px-1.5 py-0.5 rounded border border-white/10 tracking-widest uppercase">
                     {file.category}
                   </div>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleFileSelection(file.id);
+                    }}
+                    onMouseDown={(event) => event.stopPropagation()}
+                    aria-label={`${selectedFileIds.includes(file.id) ? 'Deselect' : 'Select'} ${file.name}`}
+                    className={`absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-md border transition-all ${
+                      selectedFileIds.includes(file.id)
+                        ? 'border-accent bg-accent text-primary'
+                        : 'border-white/30 bg-black/50 text-transparent hover:border-accent hover:text-white'
+                    }`}
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
                   {/* File Size details on hover */}
                   <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent text-left opacity-0 group-hover:opacity-100 transition-opacity">
                     <p className="text-[10px] font-bold text-white truncate">{file.name}</p>
