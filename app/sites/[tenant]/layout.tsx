@@ -2,10 +2,11 @@ import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
-import { Phone, Mail, MapPin, Globe, Menu } from 'lucide-react';
+import { Phone, Mail, MapPin } from 'lucide-react';
 import { getHotelBySlug } from '@/lib/db/mock-data';
 import HotelThemeProvider from '@/components/hotel-theme-provider';
 import BookingWidget from '@/components/booking-widget';
+import MobileNavigation from '@/components/mobile-navigation';
 
 interface TenantLayoutProps {
   children: React.ReactNode;
@@ -100,10 +101,7 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
               ))}
             </nav>
 
-            {/* MOBILE MENU TRIGGER */}
-            <button className="md:hidden text-primary p-1 hover:text-accent transition-colors">
-              <Menu className="w-6 h-6" />
-            </button>
+            <MobileNavigation links={navLinks} />
           </div>
 
           {/* DESKTOP STICKY BOOKING BAR (Injected directly under the navigation header) */}
