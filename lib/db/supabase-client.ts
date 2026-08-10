@@ -31,10 +31,16 @@ async function supabaseFetch(path: string, options: RequestInit = {}) {
   headers.set('Content-Type', 'application/json');
   headers.set('Prefer', 'return=representation');
 
+  const isReadRequest = !options.method || options.method.toUpperCase() === 'GET';
   const res = await fetch(url, {
     ...options,
     headers,
-    cache: 'no-store' // Ensure fresh data on every fetch
+    // Public and CMS read operations share this cache. Server Actions invalidate
+    // the tag immediately after every content change, so visitors do not wait on
+    // a Supabase round trip for unchanged content.
+    ...(isReadRequest
+      ? { next: { revalidate: 120, tags: ['hotel-content'] } }
+      : { cache: 'no-store' })
   });
 
   if (!res.ok) {

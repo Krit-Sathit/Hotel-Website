@@ -1,7 +1,8 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { getHotelBySlug, getPromotions, trackAnalyticsEvent } from '@/lib/db/mock-data';
+import { getHotelBySlug, getPromotions } from '@/lib/db/mock-data';
 import PromotionsSection from '@/components/sections/promotions-section';
+import PageViewTracker from '@/components/analytics/page-view-tracker';
 
 interface PromotionsPageProps {
   params: Promise<{ tenant: string }>;
@@ -15,13 +16,11 @@ export default async function PromotionsPage({ params }: PromotionsPageProps) {
     notFound();
   }
 
-  // Track page view for promotions
-  await trackAnalyticsEvent(hotel.id, 'page_view', '/promotions');
-
   const promotions = await getPromotions(hotel.id);
 
   return (
     <div className="pt-8 bg-slate-50 dark:bg-slate-900/40">
+      <PageViewTracker hotelId={hotel.id} pagePath="/promotions" />
       {promotions.length > 0 ? (
         <PromotionsSection promotions={promotions} />
       ) : (

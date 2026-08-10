@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { ChevronLeft, Calendar, User, Tag } from 'lucide-react';
-import { getHotelBySlug, getBlogPostBySlug, trackAnalyticsEvent } from '@/lib/db/mock-data';
+import { getHotelBySlug, getBlogPostBySlug } from '@/lib/db/mock-data';
+import PageViewTracker from '@/components/analytics/page-view-tracker';
 
 interface BlogPostDetailPageProps {
   params: Promise<{ tenant: string; slug: string }>;
@@ -28,9 +29,6 @@ export default async function BlogPostDetailPage({ params }: BlogPostDetailPageP
   const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
 
-  // Track blog post view analytics on the server
-  await trackAnalyticsEvent(hotel.id, 'page_view', `/blog/${slug}`);
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'long',
@@ -41,6 +39,7 @@ export default async function BlogPostDetailPage({ params }: BlogPostDetailPageP
 
   return (
     <article className="w-full bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 py-12 px-6">
+      <PageViewTracker hotelId={hotel.id} pagePath={`/blog/${slug}`} />
       <div className="max-w-4xl mx-auto space-y-8">
         
         {/* BACK BUTTON */}

@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { Calendar, ChevronRight, BookOpen } from 'lucide-react';
-import { getHotelBySlug, getBlogPosts, trackAnalyticsEvent } from '@/lib/db/mock-data';
+import { getHotelBySlug, getBlogPosts } from '@/lib/db/mock-data';
+import PageViewTracker from '@/components/analytics/page-view-tracker';
 
 interface BlogPageProps {
   params: Promise<{ tenant: string }>;
@@ -23,9 +24,6 @@ export default async function BlogPage({ params }: BlogPageProps) {
   const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
 
-  // Track page view for blog listing
-  await trackAnalyticsEvent(hotel.id, 'page_view', '/blog');
-
   const posts = await getBlogPosts(hotel.id);
 
   const formatDate = (dateString: string) => {
@@ -38,6 +36,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
 
   return (
     <section className="w-full py-16 md:py-24 bg-slate-50 dark:bg-slate-900/40 text-slate-800 dark:text-slate-200 px-6">
+      <PageViewTracker hotelId={hotel.id} pagePath="/blog" />
       <div className="max-w-7xl mx-auto space-y-12 md:space-y-16">
         
         {/* SECTION HEADER */}

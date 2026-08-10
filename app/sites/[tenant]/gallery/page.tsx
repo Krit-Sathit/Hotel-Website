@@ -1,10 +1,9 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-import { getHotelBySlug, getGalleryPhotos, getRooms, trackAnalyticsEvent } from '@/lib/db/mock-data';
+import { getHotelBySlug, getGalleryPhotos, getRooms } from '@/lib/db/mock-data';
 import GallerySection from '@/components/sections/gallery-section';
+import PageViewTracker from '@/components/analytics/page-view-tracker';
 
 interface GalleryPageProps {
   params: Promise<{ tenant: string }>;
@@ -18,14 +17,12 @@ export default async function GalleryPage({ params }: GalleryPageProps) {
     notFound();
   }
 
-  // Track page view for gallery
-  await trackAnalyticsEvent(hotel.id, 'page_view', '/gallery');
-
   const photos = await getGalleryPhotos(hotel.id);
   const rooms = await getRooms(hotel.id);
 
   return (
     <div className="pt-8">
+      <PageViewTracker hotelId={hotel.id} pagePath="/gallery" />
       <GallerySection photos={photos} rooms={rooms} showFilters={true} />
     </div>
   );

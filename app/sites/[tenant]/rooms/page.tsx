@@ -2,10 +2,9 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-import { getHotelBySlug, getRooms, trackAnalyticsEvent } from '@/lib/db/mock-data';
+import { getHotelBySlug, getRooms } from '@/lib/db/mock-data';
 import RoomsSection from '@/components/sections/rooms-section';
+import PageViewTracker from '@/components/analytics/page-view-tracker';
 
 interface RoomsPageProps {
   params: Promise<{ tenant: string }>;
@@ -25,13 +24,11 @@ export default async function RoomsPage({ params }: RoomsPageProps) {
   const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
 
-  // Track page view for the rooms listing
-  await trackAnalyticsEvent(hotel.id, 'page_view', '/rooms');
-
   const rooms = await getRooms(hotel.id);
 
   return (
     <div className="pt-8 bg-slate-50 dark:bg-slate-900/40">
+      <PageViewTracker hotelId={hotel.id} pagePath="/rooms" />
       <RoomsSection rooms={rooms} tenantPrefix={tenantPrefix} />
     </div>
   );

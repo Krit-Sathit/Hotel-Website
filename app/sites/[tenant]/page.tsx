@@ -2,17 +2,15 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 import { 
   getHotelBySlug, 
   getHeroSlides, 
   getHomepageSections, 
   getRooms, 
   getPromotions, 
-  getGalleryPhotos, 
-  trackAnalyticsEvent 
+  getGalleryPhotos
 } from '@/lib/db/mock-data';
+import PageViewTracker from '@/components/analytics/page-view-tracker';
 
 // Import our beautiful section components
 import HeroSlider from '@/components/sections/hero-slider';
@@ -43,9 +41,6 @@ export default async function TenantPage({ params }: TenantPageProps) {
   const host = headerList.get('host') || '';
   const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
-
-  // Log a privacy-compliant page view event on the server side on load
-  await trackAnalyticsEvent(hotel.id, 'page_view', '/');
 
   // Fetch all content concurrently
   const [slides, dbSections, rooms, promotions, gallery] = await Promise.all([
@@ -163,6 +158,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
 
   return (
     <div className="flex flex-col w-full overflow-hidden">
+      <PageViewTracker hotelId={hotel.id} pagePath="/" />
       {/* Loop through and render each homepage block in the layout array */}
       {hotel.homepage_layout.map((sectionType) => renderSection(sectionType))}
     </div>

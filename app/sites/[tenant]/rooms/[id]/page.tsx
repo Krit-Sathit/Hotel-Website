@@ -2,12 +2,11 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 import Link from 'next/link';
 import { ChevronLeft, Maximize2, Users, BedDouble, Check, ArrowRight } from 'lucide-react';
-import { getHotelBySlug, getRoomById, trackAnalyticsEvent } from '@/lib/db/mock-data';
+import { getHotelBySlug, getRoomById } from '@/lib/db/mock-data';
 import BookingWidget from '@/components/booking-widget';
+import PageViewTracker from '@/components/analytics/page-view-tracker';
 
 interface RoomDetailPageProps {
   params: Promise<{ tenant: string; id: string }>;
@@ -32,11 +31,9 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
   const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
 
-  // Track room-specific page view analytics on the server
-  await trackAnalyticsEvent(hotel.id, 'page_view', `/rooms/${id}`, id);
-
   return (
     <div className="bg-slate-50 dark:bg-slate-900/20 text-slate-800 dark:text-slate-200 py-12 px-6">
+      <PageViewTracker hotelId={hotel.id} pagePath={`/rooms/${id}`} roomId={id} />
       <div className="max-w-7xl mx-auto space-y-10">
         
         {/* BACK TO LIST & BREADCRUMB */}

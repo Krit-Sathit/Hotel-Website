@@ -11,16 +11,19 @@ interface HeroSliderProps {
 
 export default function HeroSlider({ slides, hotelId }: HeroSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [previousIndex, setPreviousIndex] = useState<number | null>(null);
 
   const prevSlide = () => {
     const isFirst = currentIndex === 0;
     const newIndex = isFirst ? slides.length - 1 : currentIndex - 1;
+    setPreviousIndex(currentIndex);
     setCurrentIndex(newIndex);
   };
 
   const nextSlide = useCallback(() => {
     const isLast = currentIndex === slides.length - 1;
     const newIndex = isLast ? 0 : currentIndex + 1;
+    setPreviousIndex(currentIndex);
     setCurrentIndex(newIndex);
   }, [currentIndex, slides.length]);
 
@@ -31,6 +34,17 @@ export default function HeroSlider({ slides, hotelId }: HeroSliderProps) {
     }, 6000);
     return () => clearInterval(timer);
   }, [currentIndex, nextSlide]);
+
+  // Keep the first screen light: only render the active and outgoing images,
+  // then warm up the next one after the page has become interactive.
+  useEffect(() => {
+    const nextIndex = currentIndex === slides.length - 1 ? 0 : currentIndex + 1;
+    const nextSlideImage = slides[nextIndex]?.image_url;
+    if (!nextSlideImage) return;
+
+    const image = new window.Image();
+    image.src = nextSlideImage;
+  }, [currentIndex, slides]);
 
   if (!slides || slides.length === 0) return null;
 
@@ -66,14 +80,16 @@ export default function HeroSlider({ slides, hotelId }: HeroSliderProps) {
             >
               <source src={slide.video_url} type="video/mp4" />
             </video>
-          ) : (
+          ) : index === currentIndex || index === previousIndex ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={slide.image_url}
               alt={slide.headline || 'Hotel Slide'}
+              loading={index === 0 ? 'eager' : 'lazy'}
+              fetchPriority={index === 0 ? 'high' : 'auto'}
               className="absolute inset-0 w-full h-full object-cover scale-105 transition-transform duration-10000"
             />
-          )}
+          ) : null}
 
           {/* Color Overlay */}
           <div
@@ -143,7 +159,10 @@ export default function HeroSlider({ slides, hotelId }: HeroSliderProps) {
             {slides.map((_, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentIndex(index)}
+                onClick={() => {
+                  setPreviousIndex(currentIndex);
+                  setCurrentIndex(index);
+                }}
                 className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
                   index === currentIndex ? 'bg-accent w-6' : 'bg-white/40'
                 }`}

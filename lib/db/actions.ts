@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { 
   updateHotelGeneralSettings, 
   updateHotelTheme, 
@@ -25,6 +25,11 @@ import {
   Promotion,
   HeroSlide
 } from './mock-data';
+
+function refreshHotelContent() {
+  updateTag('hotel-content');
+  revalidatePath('/', 'layout');
+}
 
 // -----------------------------------------------------------------------------
 // 1. GENERAL SETTINGS ACTIONS
@@ -61,7 +66,7 @@ export async function saveGeneralSettingsAction(
     });
 
     // Revalidate paths to ensure tenant site reflects changes instantly
-    revalidatePath('/', 'layout');
+    refreshHotelContent();
     return { success: true };
   } catch (error: any) {
     console.error('saveGeneralSettingsAction error:', error);
@@ -75,7 +80,7 @@ export async function saveGeneralSettingsAction(
 export async function saveThemeSettingsAction(hotelId: string, theme: Partial<HotelTheme>) {
   try {
     await updateHotelTheme(hotelId, theme);
-    revalidatePath('/', 'layout');
+    refreshHotelContent();
     return { success: true };
   } catch (error: any) {
     console.error('saveThemeSettingsAction error:', error);
@@ -89,7 +94,7 @@ export async function saveThemeSettingsAction(hotelId: string, theme: Partial<Ho
 export async function saveHomepageLayoutAction(hotelId: string, layout: string[]) {
   try {
     await updateHomepageLayout(hotelId, layout);
-    revalidatePath('/', 'layout');
+    refreshHotelContent();
     return { success: true };
   } catch (error: any) {
     console.error('saveHomepageLayoutAction error:', error);
@@ -103,7 +108,7 @@ export async function saveHomepageLayoutAction(hotelId: string, layout: string[]
 export async function saveHeroSlidesAction(hotelId: string, slides: HeroSlide[]) {
   try {
     await saveHeroSlides(hotelId, slides);
-    revalidatePath('/', 'layout');
+    refreshHotelContent();
     return { success: true };
   } catch (error: any) {
     console.error('saveHeroSlidesAction error:', error);
@@ -117,7 +122,7 @@ export async function saveHeroSlidesAction(hotelId: string, slides: HeroSlide[])
 export async function saveRoomAction(hotelId: string, roomData: Omit<Room, 'hotel_id'>) {
   try {
     const room = await saveRoom(hotelId, roomData);
-    revalidatePath('/', 'layout');
+    refreshHotelContent();
     return { success: true, room };
   } catch (error: any) {
     console.error('saveRoomAction error:', error);
@@ -128,7 +133,7 @@ export async function saveRoomAction(hotelId: string, roomData: Omit<Room, 'hote
 export async function deleteRoomAction(roomId: string) {
   try {
     await deleteRoom(roomId);
-    revalidatePath('/', 'layout');
+    refreshHotelContent();
     return { success: true };
   } catch (error: any) {
     console.error('deleteRoomAction error:', error);
@@ -142,7 +147,7 @@ export async function deleteRoomAction(roomId: string) {
 export async function savePromotionAction(hotelId: string, promoData: Omit<Promotion, 'hotel_id'>) {
   try {
     const promotion = await savePromotion(hotelId, promoData);
-    revalidatePath('/', 'layout');
+    refreshHotelContent();
     return { success: true, promotion };
   } catch (error: any) {
     console.error('savePromotionAction error:', error);
@@ -153,7 +158,7 @@ export async function savePromotionAction(hotelId: string, promoData: Omit<Promo
 export async function deletePromotionAction(promoId: string) {
   try {
     await deletePromotion(promoId);
-    revalidatePath('/', 'layout');
+    refreshHotelContent();
     return { success: true };
   } catch (error: any) {
     console.error('deletePromotionAction error:', error);
@@ -171,7 +176,7 @@ export async function registerNewHotelAction(
 ) {
   try {
     const hotelId = await registerNewHotel(hotelName, slug, email);
-    revalidatePath('/', 'layout');
+    refreshHotelContent();
     return { success: true, hotelId };
   } catch (error: any) {
     console.error('registerNewHotelAction error:', error);
@@ -185,7 +190,7 @@ export async function registerNewHotelAction(
 export async function deleteHotelAction(hotelId: string) {
   try {
     await deleteHotel(hotelId);
-    revalidatePath('/', 'layout');
+    refreshHotelContent();
     return { success: true };
   } catch (error: any) {
     console.error('deleteHotelAction error:', error);
@@ -219,6 +224,7 @@ export async function getMediaItemsAction(hotelId: string) {
 export async function saveMediaItemAction(hotelId: string, data: any) {
   try {
     const item = await saveMediaItem(hotelId, data);
+    refreshHotelContent();
     return { success: true, item };
   } catch (error: any) {
     console.error('saveMediaItemAction error:', error);
@@ -229,6 +235,7 @@ export async function saveMediaItemAction(hotelId: string, data: any) {
 export async function updateMediaItemCategoryAction(mediaId: string, category: string) {
   try {
     await updateMediaItemCategory(mediaId, category);
+    refreshHotelContent();
     return { success: true };
   } catch (error: any) {
     console.error('updateMediaItemCategoryAction error:', error);
@@ -239,6 +246,7 @@ export async function updateMediaItemCategoryAction(mediaId: string, category: s
 export async function deleteMediaItemAction(mediaId: string) {
   try {
     await deleteMediaItem(mediaId);
+    refreshHotelContent();
     return { success: true };
   } catch (error: any) {
     console.error('deleteMediaItemAction error:', error);
@@ -249,6 +257,7 @@ export async function deleteMediaItemAction(mediaId: string) {
 export async function saveMediaOrderAction(ids: string[]) {
   try {
     await saveMediaOrder(ids);
+    refreshHotelContent();
     return { success: true };
   } catch (error: any) {
     console.error('saveMediaOrderAction error:', error);
@@ -280,13 +289,12 @@ export async function associatePhotoWithRoomAction(hotelId: string, photoUrl: st
         await saveRoom(hotelId, room);
       }
     }
-    
+    refreshHotelContent();
     return { success: true };
   } catch (error: any) {
     console.error('associatePhotoWithRoomAction error:', error);
     return { success: false, error: error.message };
   }
 }
-
 
 

@@ -1,8 +1,9 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { getHotelBySlug, trackAnalyticsEvent } from '@/lib/db/mock-data';
+import { getHotelBySlug } from '@/lib/db/mock-data';
 import ContactSection from '@/components/sections/contact-section';
 import LocationSection from '@/components/sections/location-section';
+import PageViewTracker from '@/components/analytics/page-view-tracker';
 
 interface ContactPageProps {
   params: Promise<{ tenant: string }>;
@@ -16,11 +17,9 @@ export default async function ContactPage({ params }: ContactPageProps) {
     notFound();
   }
 
-  // Track page view for contact
-  await trackAnalyticsEvent(hotel.id, 'page_view', '/contact');
-
   return (
     <div className="flex flex-col w-full">
+      <PageViewTracker hotelId={hotel.id} pagePath="/contact" />
       {/* Contact form and details */}
       <ContactSection 
         hotelId={hotel.id}
