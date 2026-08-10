@@ -1,10 +1,33 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { getUsers, createUser, deleteUser, getAllHotels } from '@/lib/db/mock-data';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const users = await getUsers();
     const hotels = await getAllHotels();
+
+    // The access-management screen is scoped to the currently selected hotel.
+    // The unscoped response remains available to the login flow, which needs to
+    // locate the account before an active hotel has been chosen.
+    const scope = new URL(request.url).searchParams.get('scope');
+    if (scope === 'active') {
+      const cookieStore = await cookies();
+      const activeHotelId = cookieStore.get('active_hotel_id')?.value || 'hotel-1784206393534';
+      const activeHotel = hotels.find((hotel) => hotel.id === activeHotelId);
+
+      if (!activeHotel) {
+        return NextResponse.json({ success: false, error: 'Selected hotel was not found' }, { status: 404 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        users: users.filter((user) => user.hotel_id === activeHotelId),
+        hotels: [{ id: activeHotel.id, name: activeHotel.name, slug: activeHotel.slug }],
+        activeHotel: { id: activeHotel.id, name: activeHotel.name }
+      });
+    }
+
     return NextResponse.json({
       success: true,
       users,

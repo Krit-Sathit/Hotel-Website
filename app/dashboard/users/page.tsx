@@ -35,6 +35,7 @@ interface HotelItem {
 export default function UserManagementPage() {
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [hotels, setHotels] = useState<HotelItem[]>([]);
+  const [activeHotelName, setActiveHotelName] = useState('selected hotel');
   const [loading, setLoading] = useState(true);
   const [showPasswordMap, setShowPasswordMap] = useState<Record<string, boolean>>({});
 
@@ -51,12 +52,13 @@ export default function UserManagementPage() {
   const fetchUsersData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/users');
+      const res = await fetch('/api/admin/users?scope=active', { cache: 'no-store' });
       const data = await res.json();
       if (data.success) {
         setUsers(data.users || []);
         setHotels(data.hotels || []);
-        if (data.hotels && data.hotels.length > 0 && !hotelId) {
+        setActiveHotelName(data.activeHotel?.name || 'selected hotel');
+        if (data.hotels && data.hotels.length > 0) {
           setHotelId(data.hotels[0].id);
         }
       }
@@ -69,6 +71,9 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     fetchUsersData();
+
+    window.addEventListener('active-hotel-changed', fetchUsersData);
+    return () => window.removeEventListener('active-hotel-changed', fetchUsersData);
   }, []);
 
   const togglePasswordVisibility = (id: string) => {
@@ -188,7 +193,7 @@ export default function UserManagementPage() {
         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
             <Users className="w-4 h-4 text-accent" />
-            Registered Accounts ({users.length})
+            {activeHotelName} Accounts ({users.length})
           </div>
         </div>
 
