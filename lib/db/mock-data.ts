@@ -684,7 +684,21 @@ export async function getHotelBySlug(slug: string): Promise<Hotel | null> {
     h.id === slug ||
     h.slug.toLowerCase().replace(/-/g, '') === normalizedSlug.replace(/-/g, '')
   );
-  return found || db.hotels.find(h => h.slug === 'the-par-phuket') || db.hotels[0] || defaultHotelTheParPhuket;
+  const fallbackHotel = found || db.hotels.find(h => h.slug === 'the-par-phuket') || db.hotels[0] || defaultHotelTheParPhuket;
+
+  // Dashboard sessions created before the Supabase migration store legacy IDs
+  // such as "hotel-1784206393534". Resolve those IDs through the matching
+  // slug so the rest of the CMS consistently receives Supabase's UUID.
+  if (isSupabaseConfigured && fallbackHotel?.slug) {
+    try {
+      const migratedHotel = await getSupabaseHotelBySlug(fallbackHotel.slug);
+      if (migratedHotel) return migratedHotel;
+    } catch (e) {
+      console.error('getHotelBySlug legacy tenant resolution error:', e);
+    }
+  }
+
+  return fallbackHotel;
 }
 
 export async function getHotelByDomain(domain: string): Promise<Hotel | null> {
