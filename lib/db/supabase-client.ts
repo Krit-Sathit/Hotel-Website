@@ -17,6 +17,10 @@ const supabaseServerKey = supabaseServiceRoleKey || supabaseAnonKey;
 
 export const isSupabaseConfigured = !!supabaseUrl && !!supabaseServerKey;
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 async function supabaseFetch(path: string, options: RequestInit = {}) {
   if (!isSupabaseConfigured) return null;
   
@@ -50,7 +54,10 @@ async function supabaseFetch(path: string, options: RequestInit = {}) {
 export async function getSupabaseHotelBySlug(slug: string): Promise<Hotel | null> {
   try {
     const encodedSlug = encodeURIComponent(slug);
-    const hotels = await supabaseFetch(`/hotels?or=(slug.eq.${encodedSlug},id.eq.${encodedSlug})&select=*`);
+    const filter = isUuid(slug)
+      ? `or=(slug.eq.${encodedSlug},id.eq.${encodedSlug})`
+      : `slug=eq.${encodedSlug}`;
+    const hotels = await supabaseFetch(`/hotels?${filter}&select=*`);
     if (!hotels || hotels.length === 0) return null;
     return hotels[0] as Hotel;
   } catch (e) {

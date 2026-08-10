@@ -158,7 +158,10 @@ CREATE TABLE public.contact_messages (
 -- Media Library
 CREATE TABLE public.media_library (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    hotel_id UUID NOT NULL REFERENCES public.hotels(id) ON DELETE CASCADE,
+    -- The existing CMS tenants use stable legacy IDs (for example
+    -- "hotel-1784206393534"), so media records must support those IDs while
+    -- the rest of the data is progressively migrated to Supabase UUIDs.
+    hotel_id TEXT NOT NULL,
     file_name TEXT NOT NULL,
     file_path TEXT NOT NULL,
     file_size INTEGER NOT NULL,

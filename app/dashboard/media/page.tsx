@@ -143,7 +143,7 @@ export default function MediaLibraryPage() {
             const filtered = dbResult.items.filter((item: MediaFile) => !deletedIds.includes(item.id));
             setFiles(filtered);
           } else {
-            setLibraryError('Media Library is unavailable because persistent Supabase storage is not configured. No mock images are being used.');
+            setLibraryError('Media Library could not be loaded. Check the selected hotel and persistent storage settings.');
             setFiles([]);
           }
         }
