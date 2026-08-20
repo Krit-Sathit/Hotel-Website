@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import { Phone, Mail, MapPin } from 'lucide-react';
@@ -11,6 +12,20 @@ import MobileNavigation from '@/components/mobile-navigation';
 interface TenantLayoutProps {
   children: React.ReactNode;
   params: Promise<{ tenant: string }>;
+}
+
+export async function generateMetadata({ params }: Pick<TenantLayoutProps, 'params'>): Promise<Metadata> {
+  const { tenant } = await params;
+  const hotel = await getHotelBySlug(tenant);
+  const hotelName = hotel?.name || 'Hotel';
+
+  return {
+    title: `${hotelName} Hotel`,
+    description: `Official website for ${hotelName}.`,
+    icons: {
+      icon: '/hotel-icon.svg'
+    }
+  };
 }
 
 export default async function TenantLayout({ children, params }: TenantLayoutProps) {
