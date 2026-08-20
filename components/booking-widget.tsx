@@ -6,10 +6,11 @@ import { Calendar, Users, Home, Tag, ArrowRight } from 'lucide-react';
 interface BookingWidgetProps {
   hotelId: string;
   hotelName: string;
+  bookingUrl: string;
   variant?: 'inline' | 'sticky-header' | 'sticky-bottom';
 }
 
-export default function BookingWidget({ hotelId, hotelName, variant = 'inline' }: BookingWidgetProps) {
+export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant = 'inline' }: BookingWidgetProps) {
   // Initialize dates: tomorrow and day after tomorrow
   const getFormattedDate = (daysAhead = 0) => {
     const date = new Date();
@@ -43,22 +44,19 @@ export default function BookingWidget({ hotelId, hotelName, variant = 'inline' }
       console.error('Failed to log analytics event:', err);
     }
 
-    // Construct FlowStay Booking Engine URL
-    const baseUrl = 'https://booking.flowstay.com/';
-    const params = new URLSearchParams({
-      hotel_id: hotelId,
-      checkin: checkIn,
-      checkout: checkOut,
-      adults,
-      children,
-      rooms,
-    });
+    // Forward the selected stay details to the live FlowStay booking engine.
+    const destination = new URL(bookingUrl);
+    destination.searchParams.set('checkIn', checkIn);
+    destination.searchParams.set('checkOut', checkOut);
+    destination.searchParams.set('adults', adults);
+    destination.searchParams.set('children', children);
+    destination.searchParams.set('rooms', rooms);
     if (promoCode.trim()) {
-      params.append('promo', promoCode.trim());
+      destination.searchParams.set('promoCode', promoCode.trim());
     }
 
     // Open booking engine in a new tab
-    window.open(`${baseUrl}?${params.toString()}`, '_blank');
+    window.open(destination.toString(), '_blank', 'noopener,noreferrer');
     setIsMobileModalOpen(false);
   };
 

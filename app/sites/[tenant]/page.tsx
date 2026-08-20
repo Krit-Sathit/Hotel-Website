@@ -23,6 +23,7 @@ import TestimonialsSection from '@/components/sections/testimonials-section';
 import AwardsSection from '@/components/sections/awards-section';
 import LocationSection from '@/components/sections/location-section';
 import ContactSection from '@/components/sections/contact-section';
+import { getBookingEngineUrl } from '@/lib/booking-engine';
 
 interface TenantPageProps {
   params: Promise<{ tenant: string }>;
@@ -41,6 +42,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
   const host = headerList.get('host') || '';
   const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
+  const bookingUrl = getBookingEngineUrl(hotel.slug);
 
   // Fetch all content concurrently
   const [slides, dbSections, rooms, promotions, gallery] = await Promise.all([
@@ -62,7 +64,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
     switch (sectionType) {
       case 'hero':
         return slides.length > 0 ? (
-          <HeroSlider key="hero" slides={slides} hotelId={hotel.id} />
+          <HeroSlider key="hero" slides={slides} hotelId={hotel.id} bookingUrl={bookingUrl} />
         ) : null;
         
       case 'about':
@@ -73,7 +75,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
         
       case 'rooms':
         return rooms.length > 0 ? (
-          <RoomsSection key="rooms" rooms={rooms} tenantPrefix={tenantPrefix} />
+          <RoomsSection key="rooms" rooms={rooms} tenantPrefix={tenantPrefix} bookingUrl={bookingUrl} />
         ) : null;
         
       case 'facilities':
@@ -94,7 +96,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
         
       case 'promotions':
         return promotions.length > 0 ? (
-          <PromotionsSection key="promotions" promotions={promotions} />
+          <PromotionsSection key="promotions" promotions={promotions} bookingUrl={bookingUrl} />
         ) : null;
         
       case 'gallery':

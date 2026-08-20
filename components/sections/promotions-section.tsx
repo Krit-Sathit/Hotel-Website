@@ -6,9 +6,10 @@ import { Promotion } from '@/lib/db/mock-data';
 
 interface PromotionsSectionProps {
   promotions: Promotion[];
+  bookingUrl: string;
 }
 
-export default function PromotionsSection({ promotions }: PromotionsSectionProps) {
+export default function PromotionsSection({ promotions, bookingUrl }: PromotionsSectionProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const copyPromoCode = (code: string, id: string) => {
@@ -105,7 +106,9 @@ export default function PromotionsSection({ promotions }: PromotionsSectionProps
                   )}
 
                   <a 
-                    href={promo.cta_link || '#booking'}
+                    href={promo.cta_link === '#booking' ? bookingUrl : (promo.cta_link || bookingUrl)}
+                    target={promo.cta_link === '#booking' ? '_blank' : undefined}
+                    rel={promo.cta_link === '#booking' ? 'noopener noreferrer' : undefined}
                     className="w-full bg-primary hover:bg-primary/95 text-white font-bold text-xs tracking-wider uppercase py-3.5 px-6 rounded-hotel transition-all shadow-sm flex items-center justify-center gap-2"
                   >
                     {promo.cta_text}

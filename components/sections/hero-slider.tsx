@@ -7,9 +7,10 @@ import { HeroSlide } from '@/lib/db/mock-data';
 interface HeroSliderProps {
   slides: HeroSlide[];
   hotelId: string;
+  bookingUrl: string;
 }
 
-export default function HeroSlider({ slides, hotelId }: HeroSliderProps) {
+export default function HeroSlider({ slides, hotelId, bookingUrl }: HeroSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
 
@@ -121,7 +122,9 @@ export default function HeroSlider({ slides, hotelId }: HeroSliderProps) {
               {/* Action Button */}
               {slide.button_text && (
                 <a
-                  href={slide.button_link || '#rooms'}
+                  href={slide.button_link === '#booking' ? bookingUrl : (slide.button_link || '#rooms')}
+                  target={slide.button_link === '#booking' ? '_blank' : undefined}
+                  rel={slide.button_link === '#booking' ? 'noopener noreferrer' : undefined}
                   className="inline-flex items-center gap-2 border border-white/30 bg-white/5 hover:bg-white text-white hover:text-primary transition-all duration-300 font-semibold text-[10px] md:text-xs tracking-[0.2em] uppercase py-3.5 px-8 rounded-hotel mt-4 shadow-lg backdrop-blur-sm"
                 >
                   {slide.button_text}

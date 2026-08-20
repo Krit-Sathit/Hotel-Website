@@ -5,6 +5,7 @@ import { headers } from 'next/headers';
 import { getHotelBySlug, getRooms } from '@/lib/db/mock-data';
 import RoomsSection from '@/components/sections/rooms-section';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
+import { getBookingEngineUrl } from '@/lib/booking-engine';
 
 interface RoomsPageProps {
   params: Promise<{ tenant: string }>;
@@ -29,7 +30,7 @@ export default async function RoomsPage({ params }: RoomsPageProps) {
   return (
     <div className="pt-8 bg-slate-50 dark:bg-slate-900/40">
       <PageViewTracker hotelId={hotel.id} pagePath="/rooms" />
-      <RoomsSection rooms={rooms} tenantPrefix={tenantPrefix} />
+      <RoomsSection rooms={rooms} tenantPrefix={tenantPrefix} bookingUrl={getBookingEngineUrl(hotel.slug)} />
     </div>
   );
 }

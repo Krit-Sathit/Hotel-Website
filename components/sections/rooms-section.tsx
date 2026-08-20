@@ -6,9 +6,10 @@ import { Room } from '@/lib/db/mock-data';
 interface RoomsSectionProps {
   rooms: Room[];
   tenantPrefix?: string;
+  bookingUrl: string;
 }
 
-export default function RoomsSection({ rooms, tenantPrefix = '' }: RoomsSectionProps) {
+export default function RoomsSection({ rooms, tenantPrefix = '', bookingUrl }: RoomsSectionProps) {
   return (
     <section id="rooms" className="w-full py-20 md:py-28 bg-slate-50 dark:bg-slate-900/40 text-slate-800 dark:text-slate-200 px-6">
       <div className="max-w-7xl mx-auto space-y-12 md:space-y-16">
@@ -85,7 +86,9 @@ export default function RoomsSection({ rooms, tenantPrefix = '' }: RoomsSectionP
                   </Link>
 
                   <a 
-                    href="#booking"
+                    href={bookingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="bg-primary hover:bg-primary/95 text-white font-semibold text-[10px] md:text-xs tracking-[0.15em] uppercase py-3 px-6 rounded-hotel transition-all shadow-sm flex items-center gap-1.5"
                   >
                     Reserve

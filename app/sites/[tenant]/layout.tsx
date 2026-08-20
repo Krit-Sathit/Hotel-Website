@@ -8,6 +8,7 @@ import { getHotelBySlug } from '@/lib/db/mock-data';
 import HotelThemeProvider from '@/components/hotel-theme-provider';
 import BookingWidget from '@/components/booking-widget';
 import MobileNavigation from '@/components/mobile-navigation';
+import { getBookingEngineUrl } from '@/lib/booking-engine';
 
 interface TenantLayoutProps {
   children: React.ReactNode;
@@ -38,6 +39,7 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
   }
 
   const { theme } = hotel;
+  const bookingUrl = getBookingEngineUrl(hotel.slug);
 
   // Determine tenant prefix for links based on domain host
   const headerList = await headers();
@@ -120,7 +122,7 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
           </div>
 
           {/* DESKTOP STICKY BOOKING BAR (Injected directly under the navigation header) */}
-          <BookingWidget hotelId={hotel.id} hotelName={hotel.name} variant="sticky-header" />
+          <BookingWidget hotelId={hotel.id} hotelName={hotel.name} bookingUrl={bookingUrl} variant="sticky-header" />
         </header>
 
         {/* MAIN PAGE CONTENT */}
@@ -199,7 +201,7 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
         </footer>
 
         {/* MOBILE STICKY BOTTOM BAR (Always visible at the bottom on touch devices) */}
-        <BookingWidget hotelId={hotel.id} hotelName={hotel.name} variant="sticky-bottom" />
+        <BookingWidget hotelId={hotel.id} hotelName={hotel.name} bookingUrl={bookingUrl} variant="sticky-bottom" />
       </div>
     </HotelThemeProvider>
   );

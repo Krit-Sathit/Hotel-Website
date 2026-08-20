@@ -7,6 +7,7 @@ import { ChevronLeft, Maximize2, Users, BedDouble, Check, ArrowRight } from 'luc
 import { getHotelBySlug, getRoomById } from '@/lib/db/mock-data';
 import BookingWidget from '@/components/booking-widget';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
+import { getBookingEngineUrl } from '@/lib/booking-engine';
 
 interface RoomDetailPageProps {
   params: Promise<{ tenant: string; id: string }>;
@@ -139,6 +140,7 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
             <BookingWidget 
               hotelId={hotel.id} 
               hotelName={hotel.name} 
+              bookingUrl={getBookingEngineUrl(hotel.slug)}
               variant="inline" 
             />
 
