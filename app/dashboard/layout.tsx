@@ -62,8 +62,9 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     { label: 'User & Access Manager', href: '/dashboard/users', icon: <UsersIcon className="w-4 h-4" /> },
   ];
 
-  // Map public website URL based on local port
-  const publicUrl = `http://${hotel.slug}.localhost:3000`;
+  // The public tenant site is served through this production app. Using a
+  // relative URL also keeps the button working in local development.
+  const publicUrl = `/sites/${hotel.slug}`;
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-800 overflow-hidden dashboard-light-override">
