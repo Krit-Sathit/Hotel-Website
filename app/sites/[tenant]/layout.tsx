@@ -44,9 +44,16 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
   // Determine tenant prefix for links based on domain host
   const headerList = await headers();
   const host = headerList.get('host') || '';
+  const normalizedHost = host.toLowerCase().split(':')[0];
+  const customDomain = hotel.custom_domain?.toLowerCase();
+  const isCustomDomain = !!customDomain && (
+    normalizedHost === customDomain || normalizedHost === `www.${customDomain}`
+  );
   
   // If accessing on main platform domain (e.g. vercel.app or localhost without custom tenant domain)
-  const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
+  const isMainDomain = !isCustomDomain && (
+    host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant)
+  );
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
 
   // Curated list of navigation links with tenant-aware hrefs
