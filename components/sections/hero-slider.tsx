@@ -60,7 +60,7 @@ export default function HeroSlider({ slides, hotelId, bookingUrl }: HeroSliderPr
   };
 
   return (
-    <section className="relative w-full h-[88vh] md:h-[92vh] overflow-hidden bg-slate-900 select-none">
+    <section className="relative w-full h-auto aspect-video md:h-[92vh] md:aspect-auto overflow-hidden bg-slate-900 select-none">
       
       {/* BACKGROUND SLIDES */}
       {slides.map((slide, index) => (
@@ -83,15 +83,6 @@ export default function HeroSlider({ slides, hotelId, bookingUrl }: HeroSliderPr
             </video>
           ) : index === currentIndex || index === previousIndex ? (
             <>
-              {/* On phones, keep the entire landscape image visible. The softly
-                  blurred copy fills the remaining portrait space without cropping. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={slide.image_url}
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-70 md:hidden"
-              />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={slide.image_url}
