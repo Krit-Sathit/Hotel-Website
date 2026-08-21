@@ -55,7 +55,6 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
     { label: 'Rooms', href: `${tenantPrefix}/rooms` },
     { label: 'Promotions', href: `${tenantPrefix}/promotions` },
     { label: 'Gallery', href: `${tenantPrefix}/gallery` },
-    { label: 'Blog', href: `${tenantPrefix}/blog` },
     { label: 'Contact', href: `${tenantPrefix}/contact` },
   ];
 
