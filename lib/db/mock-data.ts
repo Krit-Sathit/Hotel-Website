@@ -8,6 +8,7 @@ import {
   getSupabaseAllHotels,
   getSupabaseHeroSlides,
   getSupabaseHomepageSections,
+  saveSupabaseHomepageSection,
   getSupabaseRooms,
   getSupabaseRoomById,
   getSupabasePromotions,
@@ -748,6 +749,34 @@ export async function getHomepageSections(hotelId: string): Promise<HomepageSect
   return db.homepage_sections
     .filter(s => s.hotel_id === hotelId)
     .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+export async function saveHomepageSection(
+  hotelId: string,
+  sectionType: string,
+  content: HomepageSection['content']
+): Promise<void> {
+  if (isSupabaseConfigured) {
+    return saveSupabaseHomepageSection(hotelId, sectionType, content);
+  }
+
+  const db = getDb();
+  const existing = db.homepage_sections.find(
+    section => section.hotel_id === hotelId && section.section_type === sectionType
+  );
+  if (existing) {
+    existing.content = content;
+  } else {
+    db.homepage_sections.push({
+      id: `section-${Date.now()}`,
+      hotel_id: hotelId,
+      section_type: sectionType,
+      content,
+      is_enabled: true,
+      sort_order: 1
+    });
+  }
+  saveDb(db);
 }
 
 export async function getRooms(hotelId: string): Promise<Room[]> {

@@ -117,6 +117,30 @@ export async function getSupabaseHomepageSections(hotelId: string): Promise<Home
   }
 }
 
+export async function saveSupabaseHomepageSection(
+  hotelId: string,
+  sectionType: string,
+  content: HomepageSection['content']
+): Promise<void> {
+  const updated = await supabaseFetch(
+    `/homepage_sections?hotel_id=eq.${encodeURIComponent(hotelId)}&section_type=eq.${encodeURIComponent(sectionType)}`,
+    { method: 'PATCH', body: JSON.stringify({ content }) }
+  );
+
+  if (updated && updated.length > 0) return;
+
+  await supabaseFetch('/homepage_sections', {
+    method: 'POST',
+    body: JSON.stringify({
+      hotel_id: hotelId,
+      section_type: sectionType,
+      content,
+      is_enabled: true,
+      sort_order: 1
+    })
+  });
+}
+
 export async function getSupabaseRooms(hotelId: string): Promise<Room[]> {
   try {
     const rooms = await supabaseFetch(`/rooms?hotel_id=eq.${hotelId}&order=sort_order.asc&select=*`);

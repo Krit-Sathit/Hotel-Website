@@ -7,6 +7,8 @@ interface AboutSectionProps {
     subtitle?: string;
     description: string;
     badge?: string;
+    primary_image_url?: string;
+    secondary_image_url?: string;
     features?: Array<{ title: string; desc: string }>;
   };
 }
@@ -78,7 +80,7 @@ export default function AboutSection({ content }: AboutSectionProps) {
             <div className="absolute top-0 left-0 w-[80%] h-[80%] rounded-hotel overflow-hidden shadow-xl border border-slate-200/20">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
-                src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80" 
+                src={content.primary_image_url || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80'} 
                 alt="Luxury Lobby Lounge" 
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
               />
@@ -88,7 +90,7 @@ export default function AboutSection({ content }: AboutSectionProps) {
             <div className="absolute bottom-0 right-0 w-[55%] h-[55%] rounded-hotel overflow-hidden shadow-2xl border-4 border-white dark:border-slate-900">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
-                src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80" 
+                src={content.secondary_image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80'} 
                 alt="Wellness Treatment Room" 
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
               />

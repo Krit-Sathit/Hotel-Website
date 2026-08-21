@@ -5,6 +5,7 @@ import {
   updateHotelGeneralSettings, 
   updateHotelTheme, 
   updateHomepageLayout,
+  saveHomepageSection,
   saveHeroSlides,
   saveRoom,
   deleteRoom,
@@ -98,6 +99,28 @@ export async function saveHomepageLayoutAction(hotelId: string, layout: string[]
     return { success: true };
   } catch (error: any) {
     console.error('saveHomepageLayoutAction error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function saveAboutSectionAction(
+  hotelId: string,
+  content: {
+    title: string;
+    subtitle?: string;
+    description: string;
+    badge?: string;
+    primary_image_url?: string;
+    secondary_image_url?: string;
+    features?: Array<{ title: string; desc: string }>;
+  }
+) {
+  try {
+    await saveHomepageSection(hotelId, 'about', content);
+    refreshHotelContent();
+    return { success: true };
+  } catch (error: any) {
+    console.error('saveAboutSectionAction error:', error);
     return { success: false, error: error.message };
   }
 }
@@ -296,5 +319,4 @@ export async function associatePhotoWithRoomAction(hotelId: string, photoUrl: st
     return { success: false, error: error.message };
   }
 }
-
 

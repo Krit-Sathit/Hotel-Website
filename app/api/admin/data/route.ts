@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getHotelBySlug, getHeroSlides, getRooms, getAllPromotions } from '@/lib/db/mock-data';
+import { getHotelBySlug, getHeroSlides, getRooms, getAllPromotions, getHomepageSections, getMediaItems } from '@/lib/db/mock-data';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
 
     const slides = await getHeroSlides(hotel.id);
     const rooms = await getRooms(hotel.id);
+    const sections = await getHomepageSections(hotel.id);
+    const media = await getMediaItems(hotel.id);
     
     // Fetch all promotions for this hotel (both active and inactive)
     const promotions = await getAllPromotions(hotel.id);
@@ -25,6 +27,8 @@ export async function GET(request: NextRequest) {
       hotel,
       slides,
       rooms,
+      sections,
+      media,
       promotions
     });
   } catch (error) {
@@ -32,4 +36,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 550 });
   }
 }
-

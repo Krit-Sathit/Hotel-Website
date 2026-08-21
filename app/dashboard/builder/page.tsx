@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Save, ChevronUp, ChevronDown, Eye, EyeOff, AlertCircle, CheckCircle, GripVertical } from 'lucide-react';
 import { saveHomepageLayoutAction } from '@/lib/db/actions';
 
@@ -213,6 +214,14 @@ export default function BuilderPage() {
 
             {/* Reorder and Visibility Controls Column */}
             <div className="flex items-center gap-4">
+              {block.id === 'about' && (
+                <Link
+                  href="/dashboard/about"
+                  className="px-3 py-2 rounded-lg border border-accent/40 text-accent hover:bg-accent/10 text-[10px] font-bold uppercase tracking-wider transition-colors"
+                >
+                  Edit content
+                </Link>
+              )}
               
               {/* Up / Down Reordering Buttons */}
               <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-1">
