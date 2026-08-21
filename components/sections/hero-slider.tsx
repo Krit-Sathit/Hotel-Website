@@ -82,14 +82,25 @@ export default function HeroSlider({ slides, hotelId, bookingUrl }: HeroSliderPr
               <source src={slide.video_url} type="video/mp4" />
             </video>
           ) : index === currentIndex || index === previousIndex ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={slide.image_url}
-              alt={slide.headline || 'Hotel Slide'}
-              loading={index === 0 ? 'eager' : 'lazy'}
-              fetchPriority={index === 0 ? 'high' : 'auto'}
-              className="absolute inset-0 w-full h-full object-cover scale-105 transition-transform duration-10000"
-            />
+            <>
+              {/* On phones, keep the entire landscape image visible. The softly
+                  blurred copy fills the remaining portrait space without cropping. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={slide.image_url}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-70 md:hidden"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={slide.image_url}
+                alt={slide.headline || 'Hotel Slide'}
+                loading={index === 0 ? 'eager' : 'lazy'}
+                fetchPriority={index === 0 ? 'high' : 'auto'}
+                className="absolute inset-0 w-full h-full object-contain md:object-cover md:scale-105 transition-transform duration-10000"
+              />
+            </>
           ) : null}
 
           {/* Color Overlay */}
