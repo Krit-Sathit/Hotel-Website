@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 
@@ -9,6 +10,14 @@ import { getBookingEngineUrl } from '@/lib/booking-engine';
 
 interface RoomsPageProps {
   params: Promise<{ tenant: string }>;
+}
+
+export async function generateMetadata({ params }: RoomsPageProps): Promise<Metadata> {
+  const { tenant } = await params;
+
+  return tenant === 'the-par-phuket'
+    ? { robots: { index: false, follow: true } }
+    : {};
 }
 
 export default async function RoomsPage({ params }: RoomsPageProps) {

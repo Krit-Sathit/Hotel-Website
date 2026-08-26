@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 
@@ -27,6 +28,26 @@ import { getBookingEngineUrl } from '@/lib/booking-engine';
 
 interface TenantPageProps {
   params: Promise<{ tenant: string }>;
+}
+
+export async function generateMetadata({ params }: TenantPageProps): Promise<Metadata> {
+  const { tenant } = await params;
+
+  if (tenant === 'the-par-phuket') {
+    return {
+      title: 'The Par Phuket – Luxury Boutique Hotel | ที่พักหรูภูเก็ต',
+      description: 'The Par Phuket – โรงแรมบูติคสุดหรูในภูเก็ต ประเทศไทย สัมผัสประสบการณ์ความหรูหราท่ามกลางธรรมชาติ',
+      alternates: {
+        canonical: 'https://theparphuket.com',
+      },
+      robots: {
+        index: true,
+        follow: true,
+      },
+    };
+  }
+
+  return {};
 }
 
 export default async function TenantPage({ params }: TenantPageProps) {
