@@ -5,7 +5,7 @@ const THE_PAR_HOSTS = new Set(['theparphuket.com', 'www.theparphuket.com']);
 const LEGACY_PATHS: Record<string, string> = {
   // These links were indexed before the public hotel routes were introduced.
   '/rc': '/',
-  '/rooms/4': '/rooms',
+  '/rooms/4': '/',
 };
 
 export function proxy(request: NextRequest) {
