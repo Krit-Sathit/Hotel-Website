@@ -6,11 +6,11 @@ const nextConfig: NextConfig = {
       // Serve The Par Phuket at its public custom domain without exposing the
       // internal multi-tenant `/sites/the-par-phuket` path.
       {
-        source: '/:tenant(the-par-phuket|hotel-a|hotel-b)',
+        source: '/:tenant(the-par-phuket|hotel-a|hotel-b|phuket-airport-villa)',
         destination: '/sites/:tenant',
       },
       {
-        source: '/:tenant(the-par-phuket|hotel-a|hotel-b)/:path*',
+        source: '/:tenant(the-par-phuket|hotel-a|hotel-b|phuket-airport-villa)/:path*',
         destination: '/sites/:tenant/:path*',
       },
     ];

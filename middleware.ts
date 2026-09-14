@@ -16,7 +16,7 @@ const LEGACY_PATHS: Record<string, string> = {
   '/rooms/4': '/',
 };
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const host = request.headers.get('host')?.toLowerCase().split(':')[0];
   const pathname = request.nextUrl.pathname;
 
