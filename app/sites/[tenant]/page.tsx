@@ -2,10 +2,6 @@ import React from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
-
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 import { 
   getHotelBySlug, 
   getHeroSlides, 
@@ -28,6 +24,9 @@ import AwardsSection from '@/components/sections/awards-section';
 import LocationSection from '@/components/sections/location-section';
 import ContactSection from '@/components/sections/contact-section';
 import { getBookingEngineUrl } from '@/lib/booking-engine';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface TenantPageProps {
   params: Promise<{ tenant: string }>;

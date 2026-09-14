@@ -3,15 +3,15 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
-
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 import { Phone, Mail, MapPin } from 'lucide-react';
 import { getHotelBySlug } from '@/lib/db/mock-data';
 import HotelThemeProvider from '@/components/hotel-theme-provider';
 import BookingWidget from '@/components/booking-widget';
 import MobileNavigation from '@/components/mobile-navigation';
 import { getBookingEngineUrl } from '@/lib/booking-engine';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface TenantLayoutProps {
   children: React.ReactNode;
