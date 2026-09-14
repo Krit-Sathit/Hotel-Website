@@ -15,20 +15,76 @@ export default function GallerySection({ photos, limit, showFilters = true, room
   const [activeCategory, setActiveCategory] = useState('All');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  // Helper to determine if alt text is a user-entered description vs auto-generated filename
-  const isValidAltText = (text?: string) => {
+  // Helper to determine if alt text is a user-entered description vs auto-generated filename / machine ID
+  const isValidAltText = (text?: string): boolean => {
     if (!text) return false;
-    const lower = text.toLowerCase();
+    const trimmed = text.trim();
+    if (!trimmed) return false;
+
+    // Never show anything that has file extensions
+    if (/\.(webp|jpg|jpeg|png|gif|avif|svg)$/i.test(trimmed) || /\.(webp|jpg|jpeg|png|gif|avif|svg)/i.test(trimmed)) {
+      return false;
+    }
+
+    // Never show anything with underscores (typical in filenames like file_..., img_..., my_photo)
+    if (trimmed.includes('_')) {
+      return false;
+    }
+
+    const lower = trimmed.toLowerCase();
+
+    // Never show common machine/file prefixes
     if (
-      lower.startsWith('image-') || 
-      lower.startsWith('upload-') || 
-      lower.includes('.webp') || 
-      lower.includes('.jpg') || 
-      lower.includes('.png') ||
-      lower.includes('.jpeg')
+      lower.startsWith('file') ||
+      lower.startsWith('img') ||
+      lower.startsWith('dsc') ||
+      lower.startsWith('image') ||
+      lower.startsWith('upload') ||
+      lower.startsWith('photo') ||
+      lower.startsWith('pic') ||
+      lower.startsWith('asset') ||
+      lower.startsWith('media') ||
+      lower.startsWith('attachment') ||
+      lower.startsWith('screenshot') ||
+      lower.startsWith('sam_') ||
+      lower.startsWith('wp-')
     ) {
       return false;
     }
+
+    // Never show generic placeholder alt texts
+    if (
+      lower === 'resort photo' ||
+      lower === 'resort custom upload asset' ||
+      lower === 'hotel photo' ||
+      lower === 'gallery photo' ||
+      lower === 'photo' ||
+      lower === 'image'
+    ) {
+      return false;
+    }
+
+    // Never show purely numeric timestamps/IDs (e.g. 1784209896326)
+    if (/^\d+$/.test(trimmed)) {
+      return false;
+    }
+
+    // Never show hex/UUID/hash patterns (e.g. 000000008d9881fbb617abca009d37dc or 550e8400-e29b-41d4-a716-446655440000)
+    if (/^[0-9a-f-]{8,}$/i.test(trimmed)) {
+      return false;
+    }
+
+    // If it has no spaces and no Thai characters and length > 12, it's almost certainly a code/slug/filename
+    const hasThai = /[\u0E00-\u0E7F]/.test(trimmed);
+    if (!trimmed.includes(' ') && !hasThai && trimmed.length > 12) {
+      return false;
+    }
+
+    // If it's a kebab-case slug like "deluxe-room-with-balcony-view" without spaces
+    if (trimmed.includes('-') && !trimmed.includes(' ') && !hasThai) {
+      return false;
+    }
+
     return true;
   };
 
@@ -143,7 +199,7 @@ export default function GallerySection({ photos, limit, showFilters = true, room
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.image_url}
-                  alt={photo.alt_text || 'Resort Photo'}
+                  alt={isValidAltText(photo.alt_text) ? photo.alt_text : `${photo.category} Photo`}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-750"
                   loading="lazy"
                 />
@@ -198,7 +254,7 @@ export default function GallerySection({ photos, limit, showFilters = true, room
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={currentPhoto.image_url}
-                  alt={currentPhoto.alt_text || 'Resort Photo'}
+                  alt={isValidAltText(currentPhoto.alt_text) ? currentPhoto.alt_text : `${currentPhoto.category} Photo`}
                   className="max-w-full max-h-[80vh] object-contain rounded-md shadow-2xl"
                   onClick={(e) => e.stopPropagation()} // Prevent closing
                 />

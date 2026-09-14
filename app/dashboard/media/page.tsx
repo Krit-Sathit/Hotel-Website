@@ -211,7 +211,7 @@ export default function MediaLibraryPage() {
         url: uploadUrl,
         category: uploadFolder,
         size: `${Math.floor(80 + Math.random() * 150)} KB`,
-        altText: uploadAlt || 'Resort custom upload asset'
+        altText: uploadAlt.trim() || ''
       });
 
       if (saveRes.success && saveRes.item) {
@@ -279,7 +279,7 @@ export default function MediaLibraryPage() {
           url: imageUrl,
           category: uploadFolder,
           size: `${Math.round(processedFile.size / 1024)} KB`,
-          altText: uploadAlt || processedFile.name.split('.')[0]
+          altText: uploadAlt.trim() || ''
         });
 
         if (!saveRes.success || !saveRes.item) {
