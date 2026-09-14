@@ -47,6 +47,20 @@ export async function generateMetadata({ params }: TenantPageProps): Promise<Met
     };
   }
 
+  if (tenant === 'phuket-airport-villa') {
+    return {
+      title: 'Phuket Airport Villa – Luxury Villa & Resort | ที่พักใกล้สนามบินภูเก็ต',
+      description: 'Phuket Airport Villa – วิลล่าหรูส่วนตัวใกล้สนามบินภูเก็ต สัมผัสการพักผ่อนอันเงียบสงบและสะดวกสบาย',
+      alternates: {
+        canonical: 'https://phuketairportvilla.com',
+      },
+      robots: {
+        index: true,
+        follow: true,
+      },
+    };
+  }
+
   return {};
 }
 

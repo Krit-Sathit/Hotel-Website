@@ -316,6 +316,41 @@ const defaultHotelTheParPhuket: Hotel = {
   homepage_layout: ['hero', 'about', 'rooms', 'promotions', 'facilities', 'gallery', 'contact']
 };
 
+const defaultHotelPhuketAirportVilla: Hotel = {
+  id: 'hotel-phuket-airport-villa',
+  name: 'Phuket Airport Villa',
+  slug: 'phuket-airport-villa',
+  custom_domain: 'phuketairportvilla.com',
+  status: 'active',
+  logo_url: null,
+  favicon_url: null,
+  email: 'stay@phuketairportvilla.com',
+  phone: '+66 76 328 111',
+  address: '11/2 Moo 3, Tambon Mai Khao, Thalang, Phuket 83110',
+  google_map_url: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3949.3364969248443!2d98.3065!3d8.1111!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zOMKwMDYnNDAuMCJOIDk4wrAxOCcyMy40IkU!5e0!3m2!1sen!2sth!4v1700000000000!5m2!1sen!2sth',
+  social_links: {
+    facebook: 'https://facebook.com/phuketairportvilla',
+    instagram: 'https://instagram.com/phuketairportvilla',
+    whatsapp: '',
+    twitter: ''
+  },
+  theme: {
+    primary_color: '#0f172a',
+    secondary_color: '#334155',
+    accent_color: '#0d9488',
+    background_color: '#ffffff',
+    text_color: '#0f172a',
+    button_style: 'rounded',
+    border_radius: '8px',
+    font_family: 'Inter',
+    dark_mode: false,
+    header_layout: 'minimal',
+    footer_layout: 'simple',
+    animation_style: 'fade'
+  },
+  homepage_layout: ['hero', 'about', 'rooms', 'promotions', 'facilities', 'gallery', 'contact']
+};
+
 const getInitialSlides = (): HeroSlide[] => [
   {
     id: 's1',
@@ -611,7 +646,7 @@ const getInitialUsers = (): UserAccount[] => [
 
 // Complete Default State
 const defaultState: DatabaseState = {
-  hotels: [defaultHotelA, defaultHotelB, defaultHotelTheParPhuket],
+  hotels: [defaultHotelA, defaultHotelB, defaultHotelTheParPhuket, defaultHotelPhuketAirportVilla],
   hero_slides: getInitialSlides(),
   homepage_sections: getInitialHomepageSections(),
   rooms: getInitialRooms(),
@@ -703,17 +738,21 @@ export async function getHotelBySlug(slug: string): Promise<Hotel | null> {
 }
 
 export async function getHotelByDomain(domain: string): Promise<Hotel | null> {
+  const normalized = domain.toLowerCase().split(':')[0].replace(/^www\./, '');
   if (isSupabaseConfigured) {
     try {
-      const hotel = await getSupabaseHotelByDomain(domain);
+      const hotel = (await getSupabaseHotelByDomain(normalized)) || (await getSupabaseHotelByDomain(domain));
       if (hotel) return hotel;
     } catch (e) {
       console.error('getHotelByDomain Supabase error:', e);
     }
   }
   const db = getDb();
-  const normalized = domain.toLowerCase().split(':')[0];
-  let hotel = db.hotels.find(h => h.custom_domain && h.custom_domain.toLowerCase() === normalized);
+  let hotel = db.hotels.find(h => {
+    if (!h.custom_domain) return false;
+    const cd = h.custom_domain.toLowerCase().replace(/^www\./, '');
+    return cd === normalized;
+  });
   if (!hotel) {
     const firstPart = normalized.split('.')[0];
     hotel = db.hotels.find(h => h.slug.toLowerCase() === firstPart);

@@ -7,15 +7,15 @@ import { getHotelByDomain } from '@/lib/db/mock-data';
 
 export default async function PlatformLandingPage() {
   const headerList = await headers();
-  const host = headerList.get('host')?.toLowerCase().split(':')[0] || '';
+  const host = (headerList.get('x-forwarded-host') || headerList.get('host') || '').toLowerCase().split(':')[0];
 
   const DOMAIN_TO_SLUG: Record<string, string> = {
     'theparphuket.com': 'the-par-phuket',
     'www.theparphuket.com': 'the-par-phuket',
-    'phuketairportvilla.com': 'phuket-airport-villa',
-    'www.phuketairportvilla.com': 'phuket-airport-villa',
-    'phuketairvilla.com': 'phuket-airport-villa',
-    'www.phuketairvilla.com': 'phuket-airport-villa',
+    'phuketairportvilla.com': 'the-par-phuket',
+    'www.phuketairportvilla.com': 'the-par-phuket',
+    'phuketairvilla.com': 'the-par-phuket',
+    'www.phuketairvilla.com': 'the-par-phuket',
   };
 
   if (host && DOMAIN_TO_SLUG[host]) {

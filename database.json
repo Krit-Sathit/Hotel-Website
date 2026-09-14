@@ -123,6 +123,48 @@
         "rooms",
         "contact"
       ]
+    },
+    {
+      "id": "hotel-phuket-airport-villa",
+      "name": "Phuket Airport Villa",
+      "slug": "phuket-airport-villa",
+      "custom_domain": "phuketairportvilla.com",
+      "status": "active",
+      "logo_url": null,
+      "favicon_url": null,
+      "email": "stay@phuketairportvilla.com",
+      "phone": "+66 76 328 111",
+      "address": "11/2 Moo 3, Tambon Mai Khao, Thalang, Phuket 83110",
+      "google_map_url": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3949.3364969248443!2d98.3065!3d8.1111!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zOMKwMDYnNDAuMCJOIDk4wrAxOCcyMy40IkU!5e0!3m2!1sen!2sth!4v1700000000000!5m2!1sen!2sth",
+      "social_links": {
+        "facebook": "https://facebook.com/phuketairportvilla",
+        "instagram": "https://instagram.com/phuketairportvilla",
+        "whatsapp": "",
+        "twitter": ""
+      },
+      "theme": {
+        "primary_color": "#0f172a",
+        "secondary_color": "#334155",
+        "accent_color": "#0d9488",
+        "background_color": "#ffffff",
+        "text_color": "#0f172a",
+        "button_style": "rounded",
+        "border_radius": "8px",
+        "font_family": "Inter",
+        "dark_mode": false,
+        "header_layout": "minimal",
+        "footer_layout": "simple",
+        "animation_style": "fade"
+      },
+      "homepage_layout": [
+        "hero",
+        "about",
+        "rooms",
+        "promotions",
+        "facilities",
+        "gallery",
+        "contact"
+      ]
     }
   ],
   "hero_slides": [
@@ -197,6 +239,30 @@
       "overlay_color": "#000000",
       "overlay_opacity": 0.4,
       "sort_order": 2
+    },
+    {
+      "id": "slide-pav-1",
+      "hotel_id": "hotel-phuket-airport-villa",
+      "image_url": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1600&q=80",
+      "headline": "Welcome to Phuket Airport Villa",
+      "subheadline": "Your Private Tropical Sanctuary Just Minutes from Phuket Airport",
+      "button_text": "Book Your Villa",
+      "button_link": "#rooms",
+      "overlay_color": "#000000",
+      "overlay_opacity": 0.35,
+      "sort_order": 0
+    },
+    {
+      "id": "slide-pav-2",
+      "hotel_id": "hotel-phuket-airport-villa",
+      "image_url": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1600&q=80",
+      "headline": "Private Pool & Lush Gardens",
+      "subheadline": "Experience serene relaxation surrounded by nature",
+      "button_text": "Explore Villas",
+      "button_link": "#rooms",
+      "overlay_color": "#000000",
+      "overlay_opacity": 0.35,
+      "sort_order": 1
     }
   ],
   "homepage_sections": [
@@ -271,6 +337,29 @@
           {
             "title": "Curated Gastronomy",
             "desc": "Exceptional dining options crafted by our culinary team."
+          }
+        ]
+      },
+      "is_enabled": true,
+      "sort_order": 1
+    },
+    {
+      "id": "sec-pav-1",
+      "hotel_id": "hotel-phuket-airport-villa",
+      "section_type": "about",
+      "content": {
+        "title": "A Private Tropical Sanctuary",
+        "subtitle": "Welcome to Phuket Airport Villa",
+        "description": "Experience private villas designed for ultimate relaxation just moments away from Phuket International Airport and Naiyang Beach. Enjoy tranquil gardens, modern amenities, and genuine Thai hospitality.",
+        "badge": "Tropical Haven",
+        "features": [
+          {
+            "title": "Airport Shuttle",
+            "desc": "Complimentary seamless round-trip transfers to Phuket Airport."
+          },
+          {
+            "title": "Private Pool & Garden",
+            "desc": "Spacious villas featuring lush garden views and private pool access."
           }
         ]
       },
@@ -479,6 +568,50 @@
       "price": 7000,
       "sort_order": 6,
       "hotel_id": "hotel-1784206393534"
+    },
+    {
+      "id": "room-pav-1",
+      "name": "Deluxe Pool Villa",
+      "description": "A private tropical villa featuring a private plunge pool, king-size bed, terrace, and garden views.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "amenities": [
+        "Private Pool",
+        "Free Wi-Fi",
+        "Air Conditioning",
+        "Airport Transfer Included",
+        "King Bed"
+      ],
+      "max_guests": 2,
+      "room_size": 65,
+      "bed_type": "King Bed",
+      "price": 3500,
+      "sort_order": 0,
+      "hotel_id": "hotel-phuket-airport-villa"
+    },
+    {
+      "id": "room-pav-2",
+      "name": "Family Two-Bedroom Villa",
+      "description": "Expansive two-bedroom private villa ideal for families, featuring a shared living pavilion, kitchenette, and garden patio.",
+      "gallery": [
+        "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "amenities": [
+        "2 King Beds",
+        "Kitchenette",
+        "Free Wi-Fi",
+        "Airport Transfer Included",
+        "Private Garden"
+      ],
+      "max_guests": 4,
+      "room_size": 110,
+      "bed_type": "2 King Beds",
+      "price": 5500,
+      "sort_order": 1,
+      "hotel_id": "hotel-phuket-airport-villa"
     }
   ],
   "promotions": [
