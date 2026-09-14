@@ -5,9 +5,13 @@ import { redirect } from 'next/navigation';
 import { Sparkles, ArrowRight, Layers, Layout, Compass, Flame, ArrowUpRight, CheckCircle2 } from 'lucide-react';
 import { getHotelByDomain } from '@/lib/db/mock-data';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function PlatformLandingPage() {
   const headerList = await headers();
-  const host = (headerList.get('x-forwarded-host') || headerList.get('host') || '').toLowerCase().split(':')[0];
+  const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
+  const host = rawHost.toLowerCase().split(':')[0];
 
   const DOMAIN_TO_SLUG: Record<string, string> = {
     'theparphuket.com': 'the-par-phuket',
@@ -22,8 +26,11 @@ export default async function PlatformLandingPage() {
     redirect(`/sites/${DOMAIN_TO_SLUG[host]}`);
   }
 
-  // Also check database for any custom domain registered
-  if (host && !host.includes('localhost') && !host.includes('vercel.app')) {
+  // Any non-localhost/non-platform domain should go to the primary hotel
+  if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+    if (host.includes('phuket') || host.includes('villa') || host.includes('thepar') || host.includes('hotel-website-gamma-five')) {
+      redirect('/sites/the-par-phuket');
+    }
     const hotel = await getHotelByDomain(host);
     if (hotel && hotel.slug) {
       redirect(`/sites/${hotel.slug}`);
