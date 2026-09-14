@@ -1,8 +1,34 @@
 import React from 'react';
 import Link from 'next/link';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { Sparkles, ArrowRight, Layers, Layout, Compass, Flame, ArrowUpRight, CheckCircle2 } from 'lucide-react';
+import { getHotelByDomain } from '@/lib/db/mock-data';
 
-export default function PlatformLandingPage() {
+export default async function PlatformLandingPage() {
+  const headerList = await headers();
+  const host = headerList.get('host')?.toLowerCase().split(':')[0] || '';
+
+  const DOMAIN_TO_SLUG: Record<string, string> = {
+    'theparphuket.com': 'the-par-phuket',
+    'www.theparphuket.com': 'the-par-phuket',
+    'phuketairportvilla.com': 'phuket-airport-villa',
+    'www.phuketairportvilla.com': 'phuket-airport-villa',
+    'phuketairvilla.com': 'phuket-airport-villa',
+    'www.phuketairvilla.com': 'phuket-airport-villa',
+  };
+
+  if (host && DOMAIN_TO_SLUG[host]) {
+    redirect(`/sites/${DOMAIN_TO_SLUG[host]}`);
+  }
+
+  // Also check database for any custom domain registered
+  if (host && !host.includes('localhost') && !host.includes('vercel.app')) {
+    const hotel = await getHotelByDomain(host);
+    if (hotel && hotel.slug) {
+      redirect(`/sites/${hotel.slug}`);
+    }
+  }
   const features = [
     {
       icon: <Layers className="w-5 h-5 text-accent" />,
