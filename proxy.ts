@@ -16,7 +16,7 @@ const LEGACY_PATHS: Record<string, string> = {
   '/rooms/4': '/',
 };
 
-export function proxy(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const rawHost = request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.hostname || '';
   const host = rawHost.split(',')[0].trim().toLowerCase().split(':')[0];
   const normalizedHost = host.replace(/^www\./, '');
