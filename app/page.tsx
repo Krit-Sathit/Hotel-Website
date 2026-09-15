@@ -11,7 +11,8 @@ export const revalidate = 0;
 export default async function PlatformLandingPage() {
   const headerList = await headers();
   const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
-  const host = rawHost.toLowerCase().split(':')[0];
+  const host = rawHost.split(',')[0].trim().toLowerCase().split(':')[0];
+  const normalizedHost = host.replace(/^www\./, '');
 
   const DOMAIN_TO_SLUG: Record<string, string> = {
     'theparphuket.com': 'the-par-phuket',
@@ -22,8 +23,9 @@ export default async function PlatformLandingPage() {
     'www.phuketairvilla.com': 'phuket-airport-villa',
   };
 
-  if (host && DOMAIN_TO_SLUG[host]) {
-    redirect(`/sites/${DOMAIN_TO_SLUG[host]}`);
+  const matchedSlug = DOMAIN_TO_SLUG[host] || DOMAIN_TO_SLUG[normalizedHost];
+  if (matchedSlug) {
+    redirect(`/sites/${matchedSlug}`);
   }
 
   // Any non-localhost/non-platform domain should go to the primary hotel

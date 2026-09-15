@@ -17,12 +17,20 @@ const LEGACY_PATHS: Record<string, string> = {
 };
 
 export function proxy(request: NextRequest) {
-  const host = (request.headers.get('x-forwarded-host') || request.headers.get('host'))?.toLowerCase().split(':')[0];
+  const rawHost = request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.hostname || '';
+  const host = rawHost.split(',')[0].trim().toLowerCase().split(':')[0];
+  const normalizedHost = host.replace(/^www\./, '');
   const pathname = request.nextUrl.pathname;
 
-  if (host && DOMAIN_TO_SLUG[host]) {
-    const slug = DOMAIN_TO_SLUG[host];
+  const slug = DOMAIN_TO_SLUG[host] || DOMAIN_TO_SLUG[normalizedHost] || (
+    host.includes('phuketairport') || host.includes('phuketairvilla') || host.includes('airportvilla')
+      ? 'phuket-airport-villa'
+      : host.includes('thepar')
+        ? 'the-par-phuket'
+        : null
+  );
 
+  if (slug) {
     const legacyDestination = LEGACY_PATHS[pathname];
     if (legacyDestination) {
       const url = request.nextUrl.clone();
