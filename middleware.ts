@@ -4,10 +4,10 @@ import type { NextRequest } from 'next/server';
 const DOMAIN_TO_SLUG: Record<string, string> = {
   'theparphuket.com': 'the-par-phuket',
   'www.theparphuket.com': 'the-par-phuket',
-  'phuketairportvilla.com': 'the-par-phuket',
-  'www.phuketairportvilla.com': 'the-par-phuket',
-  'phuketairvilla.com': 'the-par-phuket',
-  'www.phuketairvilla.com': 'the-par-phuket',
+  'phuketairportvilla.com': 'phuket-airport-villa',
+  'www.phuketairportvilla.com': 'phuket-airport-villa',
+  'phuketairvilla.com': 'phuket-airport-villa',
+  'www.phuketairvilla.com': 'phuket-airport-villa',
 };
 
 const LEGACY_PATHS: Record<string, string> = {

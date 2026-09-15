@@ -16,10 +16,10 @@ export default async function PlatformLandingPage() {
   const DOMAIN_TO_SLUG: Record<string, string> = {
     'theparphuket.com': 'the-par-phuket',
     'www.theparphuket.com': 'the-par-phuket',
-    'phuketairportvilla.com': 'the-par-phuket',
-    'www.phuketairportvilla.com': 'the-par-phuket',
-    'phuketairvilla.com': 'the-par-phuket',
-    'www.phuketairvilla.com': 'the-par-phuket',
+    'phuketairportvilla.com': 'phuket-airport-villa',
+    'www.phuketairportvilla.com': 'phuket-airport-villa',
+    'phuketairvilla.com': 'phuket-airport-villa',
+    'www.phuketairvilla.com': 'phuket-airport-villa',
   };
 
   if (host && DOMAIN_TO_SLUG[host]) {
@@ -28,7 +28,10 @@ export default async function PlatformLandingPage() {
 
   // Any non-localhost/non-platform domain should go to the primary hotel
   if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
-    if (host.includes('phuket') || host.includes('villa') || host.includes('thepar') || host.includes('hotel-website-gamma-five')) {
+    if (host.includes('phuketairport') || host.includes('airportvilla') || host.includes('phuketairvilla')) {
+      redirect('/sites/phuket-airport-villa');
+    }
+    if (host.includes('thepar') || host.includes('the-par') || host.includes('hotel-website-gamma-five')) {
       redirect('/sites/the-par-phuket');
     }
     const hotel = await getHotelByDomain(host);
