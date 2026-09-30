@@ -29,6 +29,15 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
   const [promoCode, setPromoCode] = useState('');
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
 
+  // Format ISO date (YYYY-MM-DD) into DD/MM/YY display format
+  const formatDateDisplay = (dateStr: string) => {
+    if (!dateStr) return '';
+    const [year, month, day] = dateStr.split('-');
+    if (!year || !month || !day) return dateStr;
+    const shortYear = year.slice(-2);
+    return `${day}/${month}/${shortYear}`;
+  };
+
   const getNextDay = (dateValue: string) => {
     const date = new Date(`${dateValue}T00:00:00`);
     date.setDate(date.getDate() + 1);
@@ -94,35 +103,41 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
             </div>
 
             {/* Check-In */}
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded px-2 py-1.5 flex-1">
-              <Calendar className="w-3.5 h-3.5 text-accent" />
-              <div className="flex flex-col text-left">
-                <span className="text-[9px] text-slate-400 font-medium uppercase">Check In</span>
-                <input
-                  type="date"
-                  value={checkIn}
-                  onChange={(e) => handleCheckInChange(e.target.value)}
-                  min={getFormattedDate(0)}
-                  className="bg-transparent border-none outline-none font-medium text-slate-700 dark:text-slate-300 w-24 [color-scheme:light]"
-                  required
-                />
+            <div className="relative flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded px-2.5 py-1.5 flex-1 hover:border-accent/60 transition-colors cursor-pointer group">
+              <Calendar className="w-3.5 h-3.5 text-accent flex-shrink-0" />
+              <div className="flex flex-col text-left flex-1 min-w-0">
+                <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider">Check In</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-200 text-xs truncate">
+                  {formatDateDisplay(checkIn)}
+                </span>
               </div>
+              <input
+                type="date"
+                value={checkIn}
+                onChange={(e) => handleCheckInChange(e.target.value)}
+                min={getFormattedDate(0)}
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+                required
+              />
             </div>
 
             {/* Check-Out */}
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded px-2 py-1.5 flex-1">
-              <Calendar className="w-3.5 h-3.5 text-accent" />
-              <div className="flex flex-col text-left">
-                <span className="text-[9px] text-slate-400 font-medium uppercase">Check Out</span>
-                <input
-                  type="date"
-                  value={checkOut}
-                  onChange={(e) => setCheckOut(e.target.value)}
-                  min={getNextDay(checkIn || getFormattedDate(0))}
-                  className="bg-transparent border-none outline-none font-medium text-slate-700 dark:text-slate-300 w-24 [color-scheme:light]"
-                  required
-                />
+            <div className="relative flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded px-2.5 py-1.5 flex-1 hover:border-accent/60 transition-colors cursor-pointer group">
+              <Calendar className="w-3.5 h-3.5 text-accent flex-shrink-0" />
+              <div className="flex flex-col text-left flex-1 min-w-0">
+                <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider">Check Out</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-200 text-xs truncate">
+                  {formatDateDisplay(checkOut)}
+                </span>
               </div>
+              <input
+                type="date"
+                value={checkOut}
+                onChange={(e) => setCheckOut(e.target.value)}
+                min={getNextDay(checkIn || getFormattedDate(0))}
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+                required
+              />
             </div>
 
             {/* Guests */}
@@ -223,25 +238,37 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
               <form onSubmit={handleBookNow} className="space-y-4">
                 {/* Check In & Out */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col text-left bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded p-3">
+                  <div className="relative flex flex-col text-left bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded p-3 hover:border-accent/60 transition-colors cursor-pointer">
                     <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">Check In</label>
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
+                        {formatDateDisplay(checkIn)}
+                      </span>
+                      <Calendar className="w-4 h-4 text-accent" />
+                    </div>
                     <input
                       type="date"
                       value={checkIn}
                       onChange={(e) => handleCheckInChange(e.target.value)}
                       min={getFormattedDate(0)}
-                      className="bg-transparent border-none outline-none font-semibold text-slate-800 dark:text-slate-200 w-full text-sm"
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
                       required
                     />
                   </div>
-                  <div className="flex flex-col text-left bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded p-3">
+                  <div className="relative flex flex-col text-left bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded p-3 hover:border-accent/60 transition-colors cursor-pointer">
                     <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">Check Out</label>
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
+                        {formatDateDisplay(checkOut)}
+                      </span>
+                      <Calendar className="w-4 h-4 text-accent" />
+                    </div>
                     <input
                       type="date"
                       value={checkOut}
                       onChange={(e) => setCheckOut(e.target.value)}
                       min={getNextDay(checkIn || getFormattedDate(0))}
-                      className="bg-transparent border-none outline-none font-semibold text-slate-800 dark:text-slate-200 w-full text-sm"
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
                       required
                     />
                   </div>
@@ -327,35 +354,41 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
         {/* Date Selection Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Check In */}
-          <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/80 rounded px-4 py-3 focus-within:border-accent transition-colors">
+          <div className="relative flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/80 rounded px-4 py-3 focus-within:border-accent hover:border-accent/60 transition-colors cursor-pointer">
             <Calendar className="w-5 h-5 text-accent flex-shrink-0" />
             <div className="flex flex-col text-left flex-1">
               <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Check-In Date</span>
-              <input
-                type="date"
-                value={checkIn}
-                onChange={(e) => handleCheckInChange(e.target.value)}
-                min={getFormattedDate(0)}
-                className="bg-transparent border-none outline-none font-semibold text-slate-750 dark:text-slate-200 w-full text-sm [color-scheme:light]"
-                required
-              />
+              <span className="font-semibold text-slate-750 dark:text-slate-200 text-sm">
+                {formatDateDisplay(checkIn)}
+              </span>
             </div>
+            <input
+              type="date"
+              value={checkIn}
+              onChange={(e) => handleCheckInChange(e.target.value)}
+              min={getFormattedDate(0)}
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+              required
+            />
           </div>
 
           {/* Check Out */}
-          <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/80 rounded px-4 py-3 focus-within:border-accent transition-colors">
+          <div className="relative flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/80 rounded px-4 py-3 focus-within:border-accent hover:border-accent/60 transition-colors cursor-pointer">
             <Calendar className="w-5 h-5 text-accent flex-shrink-0" />
             <div className="flex flex-col text-left flex-1">
               <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Check-Out Date</span>
-              <input
-                type="date"
-                value={checkOut}
-                onChange={(e) => setCheckOut(e.target.value)}
-                min={getNextDay(checkIn || getFormattedDate(0))}
-                className="bg-transparent border-none outline-none font-semibold text-slate-750 dark:text-slate-200 w-full text-sm [color-scheme:light]"
-                required
-              />
+              <span className="font-semibold text-slate-750 dark:text-slate-200 text-sm">
+                {formatDateDisplay(checkOut)}
+              </span>
             </div>
+            <input
+              type="date"
+              value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+              min={getNextDay(checkIn || getFormattedDate(0))}
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+              required
+            />
           </div>
         </div>
 
