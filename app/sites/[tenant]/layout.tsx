@@ -199,11 +199,7 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
             <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-white/40 tracking-wider font-medium">
               <p>© {new Date().getFullYear()} {hotel.name}. All Rights Reserved.</p>
               <p className="flex items-center gap-1">
-                Powered by 
-                <span className="font-semibold text-white/70 tracking-widest uppercase hover:text-accent transition-colors">
-                  FlowStay
-                </span>
-                Booking Engine
+                Official Direct Booking • Best Rate Guaranteed
               </p>
             </div>
           </div>

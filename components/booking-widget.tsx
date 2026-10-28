@@ -73,6 +73,9 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
 
     // Forward the selected stay details to the live FlowStay booking engine.
     const destination = new URL(bookingUrl);
+    if (hotelName) {
+      destination.searchParams.set('hotelName', hotelName);
+    }
     destination.searchParams.set('checkIn', checkIn);
     destination.searchParams.set('checkOut', checkOut);
     destination.searchParams.set('adults', adults);
@@ -218,7 +221,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
         {/* Floating trigger bar */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-950/95 border-t border-slate-200/80 dark:border-slate-800/80 px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] flex items-center justify-between gap-4">
           <div className="text-left">
-            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">FlowStay Booking</p>
+            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{hotelName}</p>
             <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">Guaranteed Best Rates</p>
           </div>
           <button
@@ -362,7 +365,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
           <h3 className="text-lg font-semibold tracking-wide text-slate-800 dark:text-slate-100 font-hotel">
             Book Your Experience
           </h3>
-          <p className="text-xs text-slate-400">Integrated with FlowStay™ Booking Engine</p>
+          <p className="text-xs text-slate-400">Best Rate Guaranteed • Official Direct Reservation</p>
         </div>
 
         {/* Date Selection Row */}
