@@ -11,7 +11,7 @@ interface RoomsSectionProps {
 
 export default function RoomsSection({ rooms, tenantPrefix = '', bookingUrl }: RoomsSectionProps) {
   return (
-    <section id="rooms" className="w-full py-20 md:py-28 bg-slate-50 dark:bg-slate-900/40 text-slate-800 dark:text-slate-200 px-6">
+    <section id="rooms" className="w-full py-20 md:py-28 bg-white text-slate-800 px-6">
       <div className="max-w-7xl mx-auto space-y-12 md:space-y-16">
         
         {/* SECTION HEADER */}

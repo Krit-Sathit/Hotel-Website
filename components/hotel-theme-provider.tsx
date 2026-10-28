@@ -21,17 +21,18 @@ export default function HotelThemeProvider({ theme, children }: HotelThemeProvid
   // Inject CSS variables
   const cssVariables = `
     :root {
+      color-scheme: light;
       --primary-color: ${theme.primary_color || '#0f172a'};
       --secondary-color: ${theme.secondary_color || '#475569'};
       --accent-color: ${theme.accent_color || '#c5a880'};
-      --background-color: ${theme.background_color || '#fafafa'};
+      --background-color: #ffffff;
       --text-color: ${theme.text_color || '#0f172a'};
       --border-radius: ${borderRadius};
       --font-family: '${theme.font_family || 'Inter'}', sans-serif;
     }
     
     body {
-      background-color: var(--background-color) !important;
+      background-color: #ffffff !important;
       color: var(--text-color) !important;
       font-family: var(--font-family) !important;
     }

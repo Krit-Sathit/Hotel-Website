@@ -87,33 +87,44 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
     setIsMobileModalOpen(false);
   };
 
+  const openDatePicker = (e: React.MouseEvent<HTMLInputElement>) => {
+    try {
+      if (typeof e.currentTarget.showPicker === 'function') {
+        e.currentTarget.showPicker();
+      }
+    } catch {
+      // Fallback for browsers that do not support showPicker()
+    }
+  };
+
   // ---------------------------------------------------------------------------
   // 1. STICKY HEADER VARIANT (Desktop horizontal strip)
   // ---------------------------------------------------------------------------
   if (variant === 'sticky-header') {
     return (
-      <div className="hidden lg:block w-full bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 py-3 shadow-sm transition-all duration-300">
+      <div className="hidden lg:block w-full bg-white/95 backdrop-blur-md border-b border-slate-200/70 py-3 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto px-6">
           <form onSubmit={handleBookNow} className="flex items-center justify-between gap-4 text-xs">
             {/* Logo/Name indicator */}
             <div className="flex-shrink-0 mr-2">
-              <span className="font-semibold text-slate-800 dark:text-slate-200 tracking-wider uppercase text-[10px]">
+              <span className="font-semibold text-slate-800 tracking-wider uppercase text-[10px]">
                 Book {hotelName}
               </span>
             </div>
 
             {/* Check-In */}
-            <div className="relative flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded px-2.5 py-1.5 flex-1 hover:border-accent/60 transition-colors cursor-pointer group">
+            <div className="relative flex items-center gap-2 bg-slate-50 border border-slate-200/80 rounded px-2.5 py-1.5 flex-1 hover:border-accent/60 transition-colors cursor-pointer group">
               <Calendar className="w-3.5 h-3.5 text-accent flex-shrink-0" />
               <div className="flex flex-col text-left flex-1 min-w-0">
                 <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider">Check In</span>
-                <span className="font-semibold text-slate-700 dark:text-slate-200 text-xs truncate">
+                <span className="font-semibold text-slate-700 text-xs truncate">
                   {formatDateDisplay(checkIn)}
                 </span>
               </div>
               <input
                 type="date"
                 value={checkIn}
+                onClick={openDatePicker}
                 onChange={(e) => handleCheckInChange(e.target.value)}
                 min={getFormattedDate(0)}
                 className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
@@ -122,17 +133,18 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
             </div>
 
             {/* Check-Out */}
-            <div className="relative flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded px-2.5 py-1.5 flex-1 hover:border-accent/60 transition-colors cursor-pointer group">
+            <div className="relative flex items-center gap-2 bg-slate-50 border border-slate-200/80 rounded px-2.5 py-1.5 flex-1 hover:border-accent/60 transition-colors cursor-pointer group">
               <Calendar className="w-3.5 h-3.5 text-accent flex-shrink-0" />
               <div className="flex flex-col text-left flex-1 min-w-0">
                 <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider">Check Out</span>
-                <span className="font-semibold text-slate-700 dark:text-slate-200 text-xs truncate">
+                <span className="font-semibold text-slate-700 text-xs truncate">
                   {formatDateDisplay(checkOut)}
                 </span>
               </div>
               <input
                 type="date"
                 value={checkOut}
+                onClick={openDatePicker}
                 onChange={(e) => setCheckOut(e.target.value)}
                 min={getNextDay(checkIn || getFormattedDate(0))}
                 className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
@@ -249,6 +261,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
                     <input
                       type="date"
                       value={checkIn}
+                      onClick={openDatePicker}
                       onChange={(e) => handleCheckInChange(e.target.value)}
                       min={getFormattedDate(0)}
                       className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
@@ -266,6 +279,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
                     <input
                       type="date"
                       value={checkOut}
+                      onClick={openDatePicker}
                       onChange={(e) => setCheckOut(e.target.value)}
                       min={getNextDay(checkIn || getFormattedDate(0))}
                       className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
@@ -365,6 +379,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
             <input
               type="date"
               value={checkIn}
+              onClick={openDatePicker}
               onChange={(e) => handleCheckInChange(e.target.value)}
               min={getFormattedDate(0)}
               className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
@@ -384,6 +399,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
             <input
               type="date"
               value={checkOut}
+              onClick={openDatePicker}
               onChange={(e) => setCheckOut(e.target.value)}
               min={getNextDay(checkIn || getFormattedDate(0))}
               className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"

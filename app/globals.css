@@ -1,14 +1,16 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #fafafa;
+  color-scheme: light;
+  --background: #ffffff;
   --foreground: #0f172a;
   
   /* Tenant theme variable defaults (for main platform and fallbacks) */
   --primary-color: #0f172a;
   --secondary-color: #475569;
   --accent-color: #c5a880;
-  --background-color: #fafafa;
+  --background-color: #ffffff;
   --text-color: #0f172a;
   --border-radius: 6px;
   --font-family: 'Inter', sans-serif;
