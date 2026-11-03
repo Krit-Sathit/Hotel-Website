@@ -160,90 +160,77 @@ export default function RoomsSection({
         </div>
       </div>
 
-      {/* ROOM PHOTOS LIGHTBOX MODAL */}
+      {/* ROOM PHOTOS LIGHTBOX MODAL (Matching Gallery Section Lightbox Style) */}
       {lightboxOpen && lightboxPhotos.length > 0 && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 select-none animate-fade-in"
           onClick={() => setLightboxOpen(false)}
         >
-          <div
-            className="relative max-w-4xl w-full flex flex-col items-center"
-            onClick={(e) => e.stopPropagation()}
+          {/* Close Button */}
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-6 right-6 z-55 p-2 bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors border border-white/10 cursor-pointer"
+            aria-label="Close Lightbox"
           >
-            <div className="w-full flex items-center justify-between text-white mb-3">
-              <div className="text-sm font-medium">
-                {lightboxTitle} ({lightboxIdx + 1} / {lightboxPhotos.length})
-              </div>
-              <button
-                type="button"
-                onClick={() => setLightboxOpen(false)}
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white cursor-pointer"
-                aria-label="Close gallery"
-              >
-                <X className="h-5 w-5" />
-              </button>
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Previous Button */}
+          {lightboxPhotos.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIdx(
+                  (lightboxIdx - 1 + lightboxPhotos.length) % lightboxPhotos.length
+                );
+              }}
+              className="absolute left-4 md:left-8 p-2.5 bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors border border-white/10 cursor-pointer"
+              aria-label="Previous Photo"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          )}
+
+          {/* Current Image Container */}
+          <div className="max-w-5xl max-h-[85vh] flex flex-col items-center gap-4 relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightboxPhotos[lightboxIdx]}
+              alt={`${lightboxTitle} Photo ${lightboxIdx + 1}`}
+              className="max-w-full max-h-[80vh] object-contain rounded-md shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {/* Caption */}
+            <div className="text-center text-white/85 text-xs md:text-sm tracking-wide">
+              <span className="text-accent/90 font-bold uppercase tracking-widest text-[10px] mr-2">
+                [ROOMS - {lightboxTitle}]
+              </span>
+              <span className="mr-2">
+                {lightboxTitle} Photo {lightboxIdx + 1}
+              </span>
+              <span className="text-white/40">
+                ({lightboxIdx + 1} of {lightboxPhotos.length})
+              </span>
             </div>
-
-            <div className="relative w-full aspect-[16/10] bg-black rounded-xl overflow-hidden flex items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={lightboxPhotos[lightboxIdx]}
-                alt={`${lightboxTitle} photo ${lightboxIdx + 1}`}
-                className="max-h-full max-w-full object-contain"
-              />
-
-              {lightboxPhotos.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setLightboxIdx(
-                        (lightboxIdx - 1 + lightboxPhotos.length) % lightboxPhotos.length
-                      )
-                    }
-                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white cursor-pointer"
-                    aria-label="Previous photo"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setLightboxIdx((lightboxIdx + 1) % lightboxPhotos.length)
-                    }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white cursor-pointer"
-                    aria-label="Next photo"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </>
-              )}
-            </div>
-
-            {lightboxPhotos.length > 1 && (
-              <div className="mt-3 flex items-center gap-2 overflow-x-auto max-w-full py-1 px-1">
-                {lightboxPhotos.map((photo, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setLightboxIdx(idx)}
-                    className={`relative h-14 w-20 shrink-0 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
-                      idx === lightboxIdx
-                        ? 'border-white opacity-100 scale-105'
-                        : 'border-transparent opacity-50 hover:opacity-80'
-                    }`}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={photo}
-                      alt={`${lightboxTitle} thumbnail ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
+
+          {/* Next Button */}
+          {lightboxPhotos.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIdx((lightboxIdx + 1) % lightboxPhotos.length);
+              }}
+              className="absolute right-4 md:right-8 p-2.5 bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors border border-white/10 cursor-pointer"
+              aria-label="Next Photo"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          )}
         </div>
       )}
     </section>
