@@ -76,15 +76,9 @@ export default async function TenantPage({ params }: TenantPageProps) {
 
   // Compute tenantPrefix for internal navigation links
   const headerList = await headers();
-  const host = headerList.get('host') || '';
-  const normalizedHost = host.toLowerCase().split(':')[0];
-  const customDomain = hotel.custom_domain?.toLowerCase();
-  const isCustomDomain = !!customDomain && (
-    normalizedHost === customDomain || normalizedHost === `www.${customDomain}`
-  );
-  const isMainDomain = !isCustomDomain && (
-    host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant)
-  );
+  const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
+  const host = rawHost.split(',')[0].trim().toLowerCase();
+  const isMainDomain = !host || host.includes('vercel.app') || host.includes('localhost') || host.includes('127.0.0.1');
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
   const bookingUrl = getBookingEngineUrl(hotel.slug, tenantPrefix);
 

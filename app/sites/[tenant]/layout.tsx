@@ -45,17 +45,9 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
 
   // Determine tenant prefix for links based on domain host
   const headerList = await headers();
-  const host = headerList.get('host') || '';
-  const normalizedHost = host.toLowerCase().split(':')[0];
-  const customDomain = hotel.custom_domain?.toLowerCase();
-  const isCustomDomain = !!customDomain && (
-    normalizedHost === customDomain || normalizedHost === `www.${customDomain}`
-  );
-  
-  // If accessing on main platform domain (e.g. vercel.app or localhost without custom tenant domain)
-  const isMainDomain = !isCustomDomain && (
-    host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant)
-  );
+  const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
+  const host = rawHost.split(',')[0].trim().toLowerCase();
+  const isMainDomain = !host || host.includes('vercel.app') || host.includes('localhost') || host.includes('127.0.0.1');
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
   const bookingUrl = getBookingEngineUrl(hotel.slug, tenantPrefix);
 

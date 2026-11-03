@@ -1436,6 +1436,30 @@ export default function HotelBookingEngine({
                 </>
               )}
             </div>
+
+            {lightboxPhotos.length > 1 && (
+              <div className="mt-3 flex items-center gap-2 overflow-x-auto max-w-full py-1 px-1">
+                {lightboxPhotos.map((photo, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setLightboxIdx(idx)}
+                    className={`relative h-14 w-20 shrink-0 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                      idx === lightboxIdx
+                        ? 'border-white opacity-100 scale-105'
+                        : 'border-transparent opacity-50 hover:opacity-80'
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photo}
+                      alt={`${lightboxTitle} thumbnail ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

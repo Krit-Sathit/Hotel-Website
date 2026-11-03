@@ -19,8 +19,9 @@ export default async function PromotionsPage({ params }: PromotionsPageProps) {
   }
 
   const headerList = await headers();
-  const host = headerList.get('host') || '';
-  const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
+  const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
+  const host = rawHost.split(',')[0].trim().toLowerCase();
+  const isMainDomain = !host || host.includes('vercel.app') || host.includes('localhost') || host.includes('127.0.0.1');
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
 
   const promotions = await getPromotions(hotel.id);

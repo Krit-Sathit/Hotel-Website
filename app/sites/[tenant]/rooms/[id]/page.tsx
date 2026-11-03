@@ -7,6 +7,7 @@ import { ChevronLeft, Maximize2, Users, BedDouble, Check, ArrowRight } from 'luc
 import { getHotelBySlug, getRoomById } from '@/lib/db/mock-data';
 import BookingWidget from '@/components/booking-widget';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
+import RoomDetailGallery from '@/components/sections/room-detail-gallery';
 import { getBookingEngineUrl } from '@/lib/booking-engine';
 
 interface RoomDetailPageProps {
@@ -28,8 +29,9 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
 
   // Compute tenantPrefix for internal navigation links
   const headerList = await headers();
-  const host = headerList.get('host') || '';
-  const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
+  const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
+  const host = rawHost.split(',')[0].trim().toLowerCase();
+  const isMainDomain = !host || host.includes('vercel.app') || host.includes('localhost') || host.includes('127.0.0.1');
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
 
   return (
@@ -64,23 +66,7 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
             </div>
 
             {/* Room Image Gallery Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {room.gallery.map((img, index) => (
-                <div 
-                  key={index} 
-                  className={`relative rounded-hotel overflow-hidden shadow-sm bg-slate-200 border border-slate-200/20 ${
-                    index === 0 && room.gallery.length % 2 !== 0 ? 'md:col-span-2 aspect-[21/9]' : 'aspect-[4/3]'
-                  }`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={img} 
-                    alt={`${room.name} gallery ${index + 1}`} 
-                    className="w-full h-full object-cover hover:scale-103 transition-transform duration-500"
-                  />
-                </div>
-              ))}
-            </div>
+            <RoomDetailGallery gallery={room.gallery} roomName={room.name} />
 
             {/* Room Description */}
             <div className="space-y-4 pt-4">
