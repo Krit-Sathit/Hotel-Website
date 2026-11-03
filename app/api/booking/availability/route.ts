@@ -6,6 +6,46 @@ const FLOWSTAY_API_BASE =
   process.env.NEXT_PUBLIC_FLOWSTAY_URL ||
   'https://flowstay.live';
 
+const AMENITY_LABELS_EN: Record<string, string> = {
+  free_wifi: 'Free WiFi',
+  air_conditioning: 'Air Conditioning',
+  minibar: 'Minibar',
+  private_bathroom: 'Private Bathroom',
+  shower: 'Shower',
+  hairdryer: 'Hairdryer',
+  towels: 'Towels',
+  flat_screen_tv: 'Flat-screen TV',
+  satellite_channels: 'Satellite Channels',
+  telephone: 'Telephone',
+  socket_near_bed: 'Socket Near Bed',
+  wake_up_service: 'Wake-up Service',
+  alarm_clock: 'Alarm Clock',
+  clothes_rack: 'Clothes Rack',
+  desk: 'Desk',
+  balcony: 'Balcony',
+  garden_view: 'Garden View',
+  pool_view: 'Pool View',
+  sea_view: 'Sea View',
+  city_view: 'City View',
+  mountain_view: 'Mountain View',
+  sitting_area: 'Sitting Area',
+  linens: 'Linens',
+  interconnecting_rooms: 'Interconnecting Rooms',
+  outdoor_furniture: 'Outdoor Furniture',
+  ironing_facilities: 'Ironing Facilities',
+  bathtub: 'Bathtub',
+  toiletries: 'Free Toiletries',
+  bathrobe: 'Bathrobe',
+  slippers: 'Slippers',
+  no_smoking: 'No Smoking',
+  electric_kettle: 'Electric Kettle',
+  tea_coffee_maker: 'Tea/Coffee Maker',
+  refrigerator: 'Refrigerator',
+  dining_area: 'Dining Area',
+  safe: 'Safe',
+  wardrobe: 'Wardrobe',
+};
+
 function normalizeSlugForFlowStay(slug: string): string {
   const clean = (slug || '').trim().toLowerCase();
   if (clean === 'the-par-phuket' || clean === 'hotel-1784206393534') {
@@ -21,7 +61,29 @@ function rewriteStorageUrl(url: string | null | undefined): string {
     .replace(/^http:\/\/flowstay\.live\//i, 'https://flowstay.live/');
 }
 
-async function fetchTrpcQuery(procedure: string, inputObj: Record<string, unknown>, timeoutMs = 6000) {
+function parseStringArray(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw.map((item) => String(item)).filter(Boolean);
+  }
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed || trimmed === 'NULL') return [];
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item)).filter(Boolean);
+      }
+    } catch {
+      return trimmed
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+}
+
+async function fetchTrpcQuery(procedure: string, inputObj: Record<string, unknown>, timeoutMs = 8000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -75,7 +137,9 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  if (detail && detail.id) {
+  const rawRooms = detail?.roomDetails || detail?.roomTypes;
+
+  if (detail && detail.id && Array.isArray(rawRooms)) {
     const [addOnsData, promoValidation] = await Promise.all([
       fetchTrpcQuery('addOn.active', { hotelId: detail.id }),
       promoCode
@@ -85,11 +149,13 @@ export async function GET(request: NextRequest) {
 
     const validCodePromo = promoValidation?.valid ? promoValidation.promotion : null;
 
-    const roomTypes = (detail.roomTypes || []).map((room: any) => {
-      const images = Array.isArray(room.images)
-        ? room.images.map((img: string) => rewriteStorageUrl(img)).filter(Boolean)
-        : [];
+    const roomTypes = rawRooms.map((room: any) => {
+      const parsedImages = parseStringArray(room.images);
+      const images = parsedImages.map((img) => rewriteStorageUrl(img)).filter(Boolean);
       const imageUrl = rewriteStorageUrl(room.imageUrl) || images[0] || '';
+
+      const rawAmenities = parseStringArray(room.amenities);
+      const amenities = rawAmenities.map((a) => AMENITY_LABELS_EN[a] || a);
 
       let ratePlans = Array.isArray(room.ratePlans) ? [...room.ratePlans] : [];
 
@@ -142,6 +208,10 @@ export async function GET(request: NextRequest) {
         ...room,
         imageUrl,
         images: images.length > 0 ? images : imageUrl ? [imageUrl] : [],
+        amenities,
+        maxOccupancy: Number(room.maxAdults || room.maxOccupancy || 2),
+        sizeSqm: room.roomSize || room.sizeSqm || null,
+        available: Number(room.available ?? room.totalRooms ?? 5),
         ratePlans,
       };
     });

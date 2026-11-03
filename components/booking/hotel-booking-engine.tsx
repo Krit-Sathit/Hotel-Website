@@ -485,19 +485,29 @@ export default function HotelBookingEngine({
             </div>
 
             {/* Check-in */}
-            <label className="flex-1 flex items-center gap-2.5 border border-slate-200 rounded-xl px-3.5 py-2 cursor-pointer hover:border-slate-300 transition-colors bg-white">
+            <div className="relative flex-1 flex items-center gap-2.5 border border-slate-200 rounded-xl px-3.5 py-2 cursor-pointer hover:border-slate-300 transition-colors bg-white">
               <CalendarDays className="h-4 w-4 text-slate-400 shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="text-[10px] text-slate-400 leading-tight">Check-in</div>
-                <input
-                  type="date"
-                  value={checkIn}
-                  min={new Date().toISOString().slice(0, 10)}
-                  onChange={(e) => handleCheckInChange(e.target.value)}
-                  className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none w-full cursor-pointer"
-                />
+                <div className="text-xs font-semibold text-slate-800 truncate">
+                  {formatDisplayDate(checkIn)}
+                </div>
               </div>
-            </label>
+              <input
+                type="date"
+                value={checkIn}
+                min={new Date().toISOString().slice(0, 10)}
+                onClick={(e) => {
+                  try {
+                    if (typeof e.currentTarget.showPicker === 'function') {
+                      e.currentTarget.showPicker();
+                    }
+                  } catch {}
+                }}
+                onChange={(e) => handleCheckInChange(e.target.value)}
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+              />
+            </div>
 
             {/* Nights indicator */}
             <div className="text-center text-[11px] text-slate-400 font-medium shrink-0 px-1">
@@ -505,23 +515,33 @@ export default function HotelBookingEngine({
             </div>
 
             {/* Check-out */}
-            <label className="flex-1 flex items-center gap-2.5 border border-slate-200 rounded-xl px-3.5 py-2 cursor-pointer hover:border-slate-300 transition-colors bg-white">
+            <div className="relative flex-1 flex items-center gap-2.5 border border-slate-200 rounded-xl px-3.5 py-2 cursor-pointer hover:border-slate-300 transition-colors bg-white">
               <CalendarDays className="h-4 w-4 text-slate-400 shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="text-[10px] text-slate-400 leading-tight">Check-out</div>
-                <input
-                  type="date"
-                  value={checkOut}
-                  min={
-                    checkIn
-                      ? new Date(new Date(checkIn).getTime() + 86400000).toISOString().slice(0, 10)
-                      : undefined
-                  }
-                  onChange={(e) => setCheckOut(e.target.value)}
-                  className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none w-full cursor-pointer"
-                />
+                <div className="text-xs font-semibold text-slate-800 truncate">
+                  {formatDisplayDate(checkOut)}
+                </div>
               </div>
-            </label>
+              <input
+                type="date"
+                value={checkOut}
+                min={
+                  checkIn
+                    ? new Date(new Date(checkIn).getTime() + 86400000).toISOString().slice(0, 10)
+                    : undefined
+                }
+                onClick={(e) => {
+                  try {
+                    if (typeof e.currentTarget.showPicker === 'function') {
+                      e.currentTarget.showPicker();
+                    }
+                  } catch {}
+                }}
+                onChange={(e) => setCheckOut(e.target.value)}
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+              />
+            </div>
 
             {/* Guests & Rooms selector */}
             <div className="relative flex-1">
