@@ -20,6 +20,7 @@ import {
   updateMediaItemCategory,
   deleteMediaItem,
   saveMediaOrder,
+  clearFlowStayCache,
   Hotel, 
   HotelTheme,
   Room,
@@ -27,9 +28,15 @@ import {
   HeroSlide
 } from './mock-data';
 
-function refreshHotelContent() {
-  updateTag('hotel-content');
-  revalidatePath('/', 'layout');
+function refreshHotelContent(hotelId?: string) {
+  clearFlowStayCache(hotelId);
+  try {
+    updateTag('hotel-content');
+  } catch {
+    // ignore if outside Server Action context
+  }
+  revalidatePath('/dashboard', 'layout');
+  revalidatePath('/sites', 'layout');
 }
 
 // -----------------------------------------------------------------------------
@@ -291,6 +298,7 @@ export async function saveMediaOrderAction(ids: string[]) {
 export async function associatePhotoWithRoomAction(hotelId: string, photoUrl: string, roomId: string | null) {
   try {
     const roomsList = await getRooms(hotelId);
+    const savePromises: Promise<Room>[] = [];
     
     for (const room of roomsList) {
       let changed = false;
@@ -309,10 +317,13 @@ export async function associatePhotoWithRoomAction(hotelId: string, photoUrl: st
       }
       
       if (changed) {
-        await saveRoom(hotelId, room);
+        savePromises.push(saveRoom(hotelId, room));
       }
     }
-    refreshHotelContent();
+    if (savePromises.length > 0) {
+      await Promise.all(savePromises);
+    }
+    refreshHotelContent(hotelId);
     return { success: true };
   } catch (error: any) {
     console.error('associatePhotoWithRoomAction error:', error);

@@ -140,7 +140,7 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
             <BookingWidget 
               hotelId={hotel.id} 
               hotelName={hotel.name} 
-              bookingUrl={getBookingEngineUrl(hotel.slug)}
+              bookingUrl={getBookingEngineUrl(hotel.slug, tenantPrefix)}
               variant="inline" 
             />
 

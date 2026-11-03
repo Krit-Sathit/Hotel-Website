@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { Calendar, Users, Home, Tag, ArrowRight } from 'lucide-react';
 
 interface BookingWidgetProps {
@@ -11,6 +12,9 @@ interface BookingWidgetProps {
 }
 
 export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant = 'inline' }: BookingWidgetProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+
   // Initialize dates: tomorrow and day after tomorrow
   const getFormattedDate = (daysAhead = 0) => {
     const date = new Date();
@@ -71,24 +75,38 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
       console.error('Failed to log analytics event:', err);
     }
 
-    // Forward the selected stay details to the live FlowStay booking engine.
-    const destination = new URL(bookingUrl);
-    if (hotelName) {
-      destination.searchParams.set('hotelName', hotelName);
-    }
-    destination.searchParams.set('checkIn', checkIn);
-    destination.searchParams.set('checkOut', checkOut);
-    destination.searchParams.set('adults', adults);
-    destination.searchParams.set('children', children);
-    destination.searchParams.set('rooms', rooms);
+    // Navigate to the native in-site booking engine on the hotel's own domain (no redirect to flowstay.live)
+    const params = new URLSearchParams();
+    params.set('checkIn', checkIn);
+    params.set('checkOut', checkOut);
+    params.set('adults', adults);
+    params.set('children', children);
+    params.set('rooms', rooms);
     if (promoCode.trim()) {
-      destination.searchParams.set('promoCode', promoCode.trim());
+      params.set('promoCode', promoCode.trim());
     }
 
-    // Open booking engine in a new tab
-    window.open(destination.toString(), '_blank', 'noopener,noreferrer');
+    let basePath = '/book';
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/sites/')) {
+      const tenantSeg = window.location.pathname.split('/')[2];
+      if (tenantSeg) {
+        basePath = `/sites/${tenantSeg}/book`;
+      }
+    } else if (bookingUrl && bookingUrl.startsWith('/')) {
+      basePath = bookingUrl;
+    }
+
+    router.push(`${basePath}?${params.toString()}`);
     setIsMobileModalOpen(false);
   };
+
+  // Hide sticky header/bottom bar when already on the booking or confirmation page
+  if (
+    (variant === 'sticky-header' || variant === 'sticky-bottom') &&
+    (pathname?.endsWith('/book') || pathname?.includes('/booking/'))
+  ) {
+    return null;
+  }
 
   const openDatePicker = (e: React.MouseEvent<HTMLInputElement>) => {
     try {

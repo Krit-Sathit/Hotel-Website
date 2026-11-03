@@ -36,7 +36,8 @@ export default function BuilderPage() {
   useEffect(() => {
     const getActiveLayout = async () => {
       try {
-        const res = await fetch('/api/admin/data');
+        setIsLoading(true);
+        const res = await fetch('/api/admin/data?include=hotel', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch data');
         const data = await res.json();
         const hotel = data.hotel;
@@ -76,6 +77,8 @@ export default function BuilderPage() {
     };
 
     getActiveLayout();
+    window.addEventListener('active-hotel-changed', getActiveLayout);
+    return () => window.removeEventListener('active-hotel-changed', getActiveLayout);
   }, []);
 
   const toggleBlock = (index: number) => {

@@ -106,9 +106,13 @@ export default function PromotionsSection({ promotions, bookingUrl }: Promotions
                   )}
 
                   <a 
-                    href={promo.cta_link === '#booking' ? bookingUrl : (promo.cta_link || bookingUrl)}
-                    target={promo.cta_link === '#booking' ? '_blank' : undefined}
-                    rel={promo.cta_link === '#booking' ? 'noopener noreferrer' : undefined}
+                    href={
+                      !promo.cta_link ||
+                      promo.cta_link === '#booking' ||
+                      promo.cta_link.includes('flowstay.live')
+                        ? `${bookingUrl}${promo.promo_code ? `?promoCode=${encodeURIComponent(promo.promo_code)}` : ''}`
+                        : promo.cta_link
+                    }
                     className="w-full bg-primary hover:bg-primary/95 text-white font-bold text-xs tracking-wider uppercase py-3.5 px-6 rounded-hotel transition-all shadow-sm flex items-center justify-center gap-2"
                   >
                     {promo.cta_text}

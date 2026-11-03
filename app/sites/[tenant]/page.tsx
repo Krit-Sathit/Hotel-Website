@@ -86,7 +86,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
     host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant)
   );
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
-  const bookingUrl = getBookingEngineUrl(hotel.slug);
+  const bookingUrl = getBookingEngineUrl(hotel.slug, tenantPrefix);
 
   // Fetch all content concurrently
   const [slides, dbSections, rooms, promotions, gallery] = await Promise.all([

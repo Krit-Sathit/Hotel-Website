@@ -85,14 +85,12 @@ export default function RoomsSection({ rooms, tenantPrefix = '', bookingUrl }: R
                     <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
                   </Link>
 
-                  <a 
+                  <Link 
                     href={bookingUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="bg-primary hover:bg-primary/95 text-white font-semibold text-[10px] md:text-xs tracking-[0.15em] uppercase py-3 px-6 rounded-hotel transition-all shadow-sm flex items-center gap-1.5"
                   >
                     Reserve
-                  </a>
+                  </Link>
                 </div>
               </div>
 

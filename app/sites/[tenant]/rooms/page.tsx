@@ -39,7 +39,7 @@ export default async function RoomsPage({ params }: RoomsPageProps) {
   return (
     <div className="pt-8 bg-slate-50 dark:bg-slate-900/40">
       <PageViewTracker hotelId={hotel.id} pagePath="/rooms" />
-      <RoomsSection rooms={rooms} tenantPrefix={tenantPrefix} bookingUrl={getBookingEngineUrl(hotel.slug)} />
+      <RoomsSection rooms={rooms} tenantPrefix={tenantPrefix} bookingUrl={getBookingEngineUrl(hotel.slug, tenantPrefix)} />
     </div>
   );
 }

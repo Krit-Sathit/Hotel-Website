@@ -42,7 +42,6 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
   }
 
   const { theme } = hotel;
-  const bookingUrl = getBookingEngineUrl(hotel.slug);
 
   // Determine tenant prefix for links based on domain host
   const headerList = await headers();
@@ -58,6 +57,7 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
     host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant)
   );
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
+  const bookingUrl = getBookingEngineUrl(hotel.slug, tenantPrefix);
 
   // Curated list of navigation links with tenant-aware hrefs
   const navLinks = [

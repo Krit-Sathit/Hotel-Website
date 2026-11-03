@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Folder, 
   FolderPlus, 
@@ -16,7 +16,6 @@ import {
   Loader2
 } from 'lucide-react';
 import { 
-  getMediaItemsAction, 
   saveMediaItemAction, 
   updateMediaItemCategoryAction, 
   deleteMediaItemAction,
@@ -127,7 +126,7 @@ export default function MediaLibraryPage() {
 
         // The selected hotel is stored in a cookie, so this request must always
         // bypass browser caches and read the cookie that was just updated.
-        const res = await fetch('/api/admin/data', { cache: 'no-store' });
+        const res = await fetch('/api/admin/data?include=rooms,media', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch data');
         const data = await res.json();
         const hotel = data.hotel;
@@ -148,12 +147,8 @@ export default function MediaLibraryPage() {
             }
           }
 
-          // Load media items from database
-          const dbResult = await getMediaItemsAction(hotel.id);
-          if (cancelled || loadId !== mediaLoadId.current) return;
-
-          if (dbResult.success) {
-            const filtered = dbResult.items.filter((item: MediaFile) => !deletedIds.includes(item.id));
+          if (Array.isArray(data.media)) {
+            const filtered = data.media.filter((item: MediaFile) => !deletedIds.includes(item.id));
             setFiles(filtered);
           } else {
             setLibraryError('Media Library could not be loaded. Check the selected hotel and persistent storage settings.');
@@ -467,7 +462,7 @@ export default function MediaLibraryPage() {
     try {
       const res = await associatePhotoWithRoomAction(hotelId, fileUrl, roomId || null);
       if (res.success) {
-        const dataRes = await fetch('/api/admin/data');
+        const dataRes = await fetch('/api/admin/data?include=rooms', { cache: 'no-store' });
         if (dataRes.ok) {
           const data = await dataRes.json();
           setRooms(data.rooms || []);
@@ -477,6 +472,12 @@ export default function MediaLibraryPage() {
       console.error('Failed to change room association:', err);
     }
   };
+
+  const fileIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    files.forEach((f, idx) => map.set(f.id, idx));
+    return map;
+  }, [files]);
 
   // Filter logic
   const filteredFiles = files.filter(file => {
@@ -713,31 +714,33 @@ export default function MediaLibraryPage() {
           {/* FILES GRID */}
           {filteredFiles.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {filteredFiles.map(file => (
+              {filteredFiles.map(file => {
+                const fileIdx = fileIndexMap.get(file.id) ?? -1;
+                return (
                 <div
                   key={file.id}
                   onClick={() => setSelectedFile(file)}
                   draggable={true}
                   onDragStart={(e) => {
-                    const idx = files.findIndex(f => f.id === file.id);
-                    handleDragStart(e, idx);
+                    handleDragStart(e, fileIdx);
                   }}
                   onDragOver={handleDragOver}
                   onDrop={(e) => {
-                    const idx = files.findIndex(f => f.id === file.id);
-                    handleDrop(e, idx);
+                    handleDrop(e, fileIdx);
                   }}
                   onDragEnd={handleDragEnd}
                   className={`group relative aspect-square bg-slate-950 rounded-xl overflow-hidden cursor-move border-2 transition-all ${
                     selectedFile?.id === file.id || selectedFileIds.includes(file.id)
                       ? 'border-accent shadow-lg'
                       : 'border-slate-850 hover:border-slate-700'
-                  } ${draggedIndex === files.findIndex(f => f.id === file.id) ? 'opacity-40 scale-95 border-dashed border-accent' : ''}`}
+                  } ${draggedIndex === fileIdx ? 'opacity-40 scale-95 border-dashed border-accent' : ''}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     src={file.url} 
                     alt={file.altText} 
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
                   />
                   {/* Folder Indicator Tag */}
@@ -766,7 +769,8 @@ export default function MediaLibraryPage() {
                     <p className="text-[8px] text-slate-400 font-mono">{file.size} / WebP</p>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           ) : (
             <div className="py-28 bg-slate-900 border border-slate-800/60 rounded-xl text-center text-slate-450">

@@ -9,8 +9,8 @@ export default async function DashboardPage() {
   const cookieStore = await cookies();
   let activeHotelId = cookieStore.get('active_hotel_id')?.value;
   
-  if (!activeHotelId) {
-    activeHotelId = '11111111-1111-1111-1111-111111111111'; // Hotel A ID
+  if (!activeHotelId || activeHotelId === 'hotel-1784206393534') {
+    activeHotelId = 'theparphuket'; // Default to The Par Phuket consistently across dashboard
   }
 
   const hotel = await getHotelBySlug(activeHotelId);

@@ -38,7 +38,7 @@ export default function proxy(request: NextRequest) {
       return NextResponse.redirect(url, 308);
     }
 
-    if (pathname.startsWith(`/sites/${slug}`)) {
+    if (pathname.startsWith('/sites/')) {
       return NextResponse.next();
     }
 
@@ -55,6 +55,6 @@ export default function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+    '/((?!api|storage|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
   ],
 };

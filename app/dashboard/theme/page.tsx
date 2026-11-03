@@ -28,7 +28,8 @@ export default function ThemePage() {
   useEffect(() => {
     const getActiveTheme = async () => {
       try {
-        const res = await fetch('/api/admin/data');
+        setIsLoading(true);
+        const res = await fetch('/api/admin/data?include=hotel', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch data');
         const data = await res.json();
         const hotel = data.hotel;
@@ -44,6 +45,8 @@ export default function ThemePage() {
     };
 
     getActiveTheme();
+    window.addEventListener('active-hotel-changed', getActiveTheme);
+    return () => window.removeEventListener('active-hotel-changed', getActiveTheme);
   }, []);
 
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -37,17 +37,20 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     redirect('/auth/login');
   }
   
-  if (!activeHotelId) {
-    activeHotelId = 'hotel-1784206393534'; // The Par Phuket default ID
+  if (!activeHotelId || activeHotelId === 'hotel-1784206393534') {
+    activeHotelId = 'theparphuket'; // The Par Phuket canonical FlowStay slug
   }
 
-  const hotel = await getHotelBySlug(activeHotelId);
+  const [hotel, allHotels] = await Promise.all([
+    getHotelBySlug(activeHotelId),
+    getAllHotels(),
+  ]);
   if (!hotel) {
     // Fallback if not found
     redirect('/auth/login');
   }
 
-  const hotelsList = (await getAllHotels()).map(h => ({ id: h.id, name: h.name }));
+  const hotelsList = allHotels.map(h => ({ id: h.id, name: h.name }));
 
   // Sidebar navigation menu items
   const menuItems = [

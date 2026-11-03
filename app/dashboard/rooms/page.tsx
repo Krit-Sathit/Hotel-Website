@@ -82,7 +82,7 @@ export default function RoomsManagerPage() {
 
   const fetchRoomsList = async () => {
     try {
-      const res = await fetch('/api/admin/data');
+      const res = await fetch('/api/admin/data?include=rooms', { cache: 'no-store' });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setRooms(data.rooms || []);
@@ -94,7 +94,8 @@ export default function RoomsManagerPage() {
   useEffect(() => {
     const getActiveRooms = async () => {
       try {
-        const res = await fetch('/api/admin/data');
+        setIsLoading(true);
+        const res = await fetch('/api/admin/data?include=rooms', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch data');
         const data = await res.json();
         const hotel = data.hotel;
@@ -110,6 +111,8 @@ export default function RoomsManagerPage() {
     };
 
     getActiveRooms();
+    window.addEventListener('active-hotel-changed', getActiveRooms);
+    return () => window.removeEventListener('active-hotel-changed', getActiveRooms);
   }, []);
 
   const openAddModal = () => {
@@ -271,6 +274,8 @@ export default function RoomsManagerPage() {
                 <img 
                   src={room.gallery[0] || 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=600&q=80'} 
                   alt={room.name} 
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover" 
                 />
                 {room.price && (

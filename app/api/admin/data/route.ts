@@ -6,8 +6,8 @@ export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
     let activeHotelId = cookieStore.get('active_hotel_id')?.value;
-    if (!activeHotelId) {
-      activeHotelId = '11111111-1111-1111-1111-111111111111'; // Default Hotel A
+    if (!activeHotelId || activeHotelId === 'hotel-1784206393534') {
+      activeHotelId = 'theparphuket'; // Default to The Par Phuket consistently across dashboard
     }
 
     const hotel = await getHotelBySlug(activeHotelId);
@@ -15,13 +15,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Hotel not found' }, { status: 404 });
     }
 
-    const slides = await getHeroSlides(hotel.id);
-    const rooms = await getRooms(hotel.id);
-    const sections = await getHomepageSections(hotel.id);
-    const media = await getMediaItems(hotel.id);
-    
-    // Fetch all promotions for this hotel (both active and inactive)
-    const promotions = await getAllPromotions(hotel.id);
+    const includeParam = request.nextUrl.searchParams.get('include');
+    const requested = includeParam
+      ? new Set(includeParam.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean))
+      : null;
+
+    const shouldFetch = (key: string) => !requested || requested.has(key);
+
+    const [slides, rooms, sections, media, promotions] = await Promise.all([
+      shouldFetch('slides') ? getHeroSlides(hotel.id) : Promise.resolve([]),
+      shouldFetch('rooms') ? getRooms(hotel.id) : Promise.resolve([]),
+      shouldFetch('sections') ? getHomepageSections(hotel.id) : Promise.resolve([]),
+      shouldFetch('media') ? getMediaItems(hotel.id) : Promise.resolve([]),
+      shouldFetch('promotions') ? getAllPromotions(hotel.id) : Promise.resolve([]),
+    ]);
 
     return NextResponse.json({
       hotel,
@@ -29,10 +36,10 @@ export async function GET(request: NextRequest) {
       rooms,
       sections,
       media,
-      promotions
+      promotions,
     });
   } catch (error) {
     console.error('Admin data fetch error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 550 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

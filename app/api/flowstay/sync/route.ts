@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath, updateTag } from 'next/cache';
+import { clearFlowStayCache } from '@/lib/db/mock-data';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +16,12 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const { hotelId, slug } = body || {};
+
+    clearFlowStayCache(slug || hotelId);
+    if (hotelId && slug) {
+      clearFlowStayCache(String(hotelId));
+      clearFlowStayCache(`hotel-${hotelId}`);
+    }
 
     try {
       updateTag('hotel-content');

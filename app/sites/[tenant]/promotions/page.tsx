@@ -1,5 +1,6 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import { getHotelBySlug, getPromotions } from '@/lib/db/mock-data';
 import PromotionsSection from '@/components/sections/promotions-section';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
@@ -17,13 +18,18 @@ export default async function PromotionsPage({ params }: PromotionsPageProps) {
     notFound();
   }
 
+  const headerList = await headers();
+  const host = headerList.get('host') || '';
+  const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
+  const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
+
   const promotions = await getPromotions(hotel.id);
 
   return (
     <div className="pt-8 bg-slate-50 dark:bg-slate-900/40">
       <PageViewTracker hotelId={hotel.id} pagePath="/promotions" />
       {promotions.length > 0 ? (
-        <PromotionsSection promotions={promotions} bookingUrl={getBookingEngineUrl(hotel.slug)} />
+        <PromotionsSection promotions={promotions} bookingUrl={getBookingEngineUrl(hotel.slug, tenantPrefix)} />
       ) : (
         <div className="py-24 text-center text-slate-400">
           <p className="text-lg">No active promotions at this time.</p>

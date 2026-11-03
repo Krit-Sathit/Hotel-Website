@@ -35,7 +35,8 @@ export default function AboutSectionEditorPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const response = await fetch('/api/admin/data');
+        setIsLoading(true);
+        const response = await fetch('/api/admin/data?include=sections,media', { cache: 'no-store' });
         if (!response.ok) throw new Error('Unable to load the About section.');
         const data = await response.json();
         const about = data.sections?.find((section: { section_type: string }) => section.section_type === 'about');
@@ -49,6 +50,8 @@ export default function AboutSectionEditorPage() {
       }
     };
     load();
+    window.addEventListener('active-hotel-changed', load);
+    return () => window.removeEventListener('active-hotel-changed', load);
   }, []);
 
   const mediaOptions = useMemo(() => media

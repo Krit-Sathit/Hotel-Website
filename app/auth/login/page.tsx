@@ -21,7 +21,7 @@ export default function LoginPage() {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      const res = await fetch('/api/admin/users');
+      const res = await fetch('/api/admin/users?scope=auth');
       const data = await res.json();
       const users: any[] = data.users || [];
 
@@ -45,11 +45,12 @@ export default function LoginPage() {
       // For Super Admin (Sathit), allow full hotel switching access (default to The Par Phuket or current cookie)
       // For Hotel Admin, lock active_hotel_id to their specific assigned hotel
       if (role === 'super_admin') {
-        if (!document.cookie.includes('active_hotel_id=')) {
-          document.cookie = `active_hotel_id=hotel-1784206393534; path=/; max-age=31536000; SameSite=Lax`;
+        if (!document.cookie.includes('active_hotel_id=') || document.cookie.includes('active_hotel_id=hotel-1784206393534')) {
+          document.cookie = `active_hotel_id=theparphuket; path=/; max-age=31536000; SameSite=Lax`;
         }
       } else if (assignedHotelId) {
-        document.cookie = `active_hotel_id=${assignedHotelId}; path=/; max-age=31536000; SameSite=Lax`;
+        const cleanHotelId = assignedHotelId === 'hotel-1784206393534' ? 'theparphuket' : assignedHotelId;
+        document.cookie = `active_hotel_id=${cleanHotelId}; path=/; max-age=31536000; SameSite=Lax`;
       }
 
       // Save session cookies
@@ -57,9 +58,7 @@ export default function LoginPage() {
       document.cookie = `user_role=${role}; path=/; max-age=31536000; SameSite=Lax`;
       document.cookie = `user_email=${normalizedEmail}; path=/; max-age=31536000; SameSite=Lax`;
 
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 800);
+      router.push('/dashboard');
     } catch (err) {
       setIsSubmitting(false);
       setErrorMsg('Authentication server error. Please try again.');

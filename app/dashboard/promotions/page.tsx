@@ -18,7 +18,7 @@ export default function PromotionsManagerPage() {
 
   const fetchPromotionsList = async () => {
     try {
-      const res = await fetch('/api/admin/data');
+      const res = await fetch('/api/admin/data?include=promotions', { cache: 'no-store' });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setPromotions(data.promotions || []);
@@ -30,7 +30,8 @@ export default function PromotionsManagerPage() {
   useEffect(() => {
     const getActivePromotions = async () => {
       try {
-        const res = await fetch('/api/admin/data');
+        setIsLoading(true);
+        const res = await fetch('/api/admin/data?include=promotions', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch data');
         const data = await res.json();
         const hotel = data.hotel;
@@ -46,6 +47,8 @@ export default function PromotionsManagerPage() {
     };
 
     getActivePromotions();
+    window.addEventListener('active-hotel-changed', getActivePromotions);
+    return () => window.removeEventListener('active-hotel-changed', getActivePromotions);
   }, []);
 
   const openAddModal = () => {
@@ -200,6 +203,8 @@ export default function PromotionsManagerPage() {
                 <img 
                   src={promo.image_url || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80'} 
                   alt={promo.title} 
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover" 
                 />
                 

@@ -4,17 +4,32 @@ import { getUsers, createUser, deleteUser, getAllHotels } from '@/lib/db/mock-da
 
 export async function GET(request: Request) {
   try {
+    const scope = new URL(request.url).searchParams.get('scope');
     const users = await getUsers();
+
+    // Fast path for login authentication check: skip fetching external hotels list
+    if (scope === 'auth') {
+      return NextResponse.json({
+        success: true,
+        users,
+      });
+    }
+
     const hotels = await getAllHotels();
 
     // The access-management screen is scoped to the currently selected hotel.
     // The unscoped response remains available to the login flow, which needs to
     // locate the account before an active hotel has been chosen.
-    const scope = new URL(request.url).searchParams.get('scope');
     if (scope === 'active') {
       const cookieStore = await cookies();
-      const activeHotelId = cookieStore.get('active_hotel_id')?.value || 'hotel-1784206393534';
-      const activeHotel = hotels.find((hotel) => hotel.id === activeHotelId);
+      const rawActiveId = cookieStore.get('active_hotel_id')?.value;
+      const activeHotelId = !rawActiveId || rawActiveId === 'hotel-1784206393534' ? 'theparphuket' : rawActiveId;
+      const activeHotel = hotels.find(
+        (hotel) =>
+          hotel.id === activeHotelId ||
+          hotel.slug === activeHotelId ||
+          hotel.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === activeHotelId.toLowerCase().replace(/[^a-z0-9]/g, '')
+      );
 
       if (!activeHotel) {
         return NextResponse.json({ success: false, error: 'Selected hotel was not found' }, { status: 404 });
@@ -22,7 +37,13 @@ export async function GET(request: Request) {
 
       return NextResponse.json({
         success: true,
-        users: users.filter((user) => user.hotel_id === activeHotelId),
+        users: users.filter(
+          (user) =>
+            user.hotel_id === activeHotel.id ||
+            user.hotel_id === activeHotel.slug ||
+            (activeHotel.slug === 'theparphuket' &&
+              (user.hotel_id === 'hotel-1784206393534' || user.hotel_id === 'the-par-phuket'))
+        ),
         hotels: [{ id: activeHotel.id, name: activeHotel.name, slug: activeHotel.slug }],
         activeHotel: { id: activeHotel.id, name: activeHotel.name }
       });

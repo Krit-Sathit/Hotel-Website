@@ -81,7 +81,8 @@ export default function SettingsPage() {
   useEffect(() => {
     const getActiveHotel = async () => {
       try {
-        const res = await fetch('/api/admin/data');
+        setIsLoading(true);
+        const res = await fetch('/api/admin/data?include=hotel', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch data');
         const data = await res.json();
         const hotel = data.hotel;
@@ -108,6 +109,8 @@ export default function SettingsPage() {
     };
 
     getActiveHotel();
+    window.addEventListener('active-hotel-changed', getActiveHotel);
+    return () => window.removeEventListener('active-hotel-changed', getActiveHotel);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

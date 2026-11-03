@@ -270,7 +270,10 @@ export async function trackSupabaseAnalyticsEvent(
 
 export async function getSupabaseAnalyticsOverview(hotelId: string) {
   try {
-    const events = await supabaseFetch(`/analytics_events?hotel_id=eq.${hotelId}&select=*`) as AnalyticsEvent[];
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const events = await supabaseFetch(
+      `/analytics_events?hotel_id=eq.${encodeURIComponent(hotelId)}&created_at=gte.${encodeURIComponent(sevenDaysAgo)}&select=event_type,page_path,created_at&limit=5000`
+    ) as AnalyticsEvent[];
     if (!events) throw new Error('No analytics data');
     
     const pageViews = events.filter(e => e.event_type === 'page_view');
