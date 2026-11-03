@@ -105,13 +105,22 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             
             {/* BRAND LOGO / NAME */}
-            <Link href={tenantPrefix || '/'} className="flex flex-col text-left group">
-              <span className="text-lg md:text-xl font-bold tracking-widest text-primary font-hotel uppercase group-hover:text-accent transition-colors">
-                {hotel.name}
-              </span>
-              <span className="text-[9px] tracking-widest font-semibold uppercase text-slate-400 -mt-0.5">
-                Bespoke Retreat
-              </span>
+            <Link href={tenantPrefix || '/'} className="flex items-center gap-3 text-left group">
+              {hotel.logo_url && (
+                <img
+                  src={hotel.logo_url}
+                  alt={hotel.name}
+                  className="h-10 w-10 md:h-11 md:w-11 object-contain rounded-md bg-white/80 p-0.5 border border-slate-200/60 shrink-0"
+                />
+              )}
+              <div className="flex flex-col">
+                <span className="text-lg md:text-xl font-bold tracking-widest text-primary font-hotel uppercase group-hover:text-accent transition-colors">
+                  {hotel.name}
+                </span>
+                <span className="text-[9px] tracking-widest font-semibold uppercase text-slate-400 -mt-0.5">
+                  Official Hotel Website
+                </span>
+              </div>
             </Link>
 
             {/* NAVIGATION LINKS */}

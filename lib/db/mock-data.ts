@@ -701,10 +701,135 @@ export function saveDb(state: DatabaseState): void {
 }
 
 // -----------------------------------------------------------------------------
+// FLOWSTAY LIVE AUTO-PROVISIONING & SYNC CLIENT
+// -----------------------------------------------------------------------------
+
+const FLOWSTAY_API_BASE = (
+  process.env.FLOWSTAY_API_URL ||
+  process.env.NEXT_PUBLIC_FLOWSTAY_URL ||
+  'https://flowstay.live'
+).replace(/\/+$/, '');
+
+interface FlowStayWebsiteBundle {
+  hotel: Hotel & {
+    flowstay_hotel_id?: number;
+    hero_image_url?: string | null;
+    description?: string;
+    star_rating?: number;
+    check_in_time?: string;
+    check_out_time?: string;
+    currency?: string;
+    amenities?: string[];
+    latitude?: string | null;
+    longitude?: string | null;
+    website_url?: string;
+    booking_url?: string;
+  };
+  slides: HeroSlide[];
+  sections: HomepageSection[];
+  rooms: Room[];
+  promotions: Promotion[];
+  gallery: GalleryPhoto[];
+  media: any[];
+}
+
+const FLOWSTAY_CACHE_TTL_MS = 5000;
+const flowStayBundleCache = new Map<string, { expiresAt: number; data: FlowStayWebsiteBundle | null }>();
+const flowStayInFlight = new Map<string, Promise<FlowStayWebsiteBundle | null>>();
+
+function cacheFlowStayBundle(requestedKey: string, bundle: FlowStayWebsiteBundle | null) {
+  const entry = {
+    expiresAt: Date.now() + FLOWSTAY_CACHE_TTL_MS,
+    data: bundle,
+  };
+  flowStayBundleCache.set(requestedKey.toLowerCase(), entry);
+  if (bundle?.hotel) {
+    if (bundle.hotel.id) flowStayBundleCache.set(String(bundle.hotel.id).toLowerCase(), entry);
+    if (bundle.hotel.slug) flowStayBundleCache.set(String(bundle.hotel.slug).toLowerCase(), entry);
+    if (bundle.hotel.flowstay_hotel_id) {
+      flowStayBundleCache.set(String(bundle.hotel.flowstay_hotel_id), entry);
+      flowStayBundleCache.set(`hotel-${bundle.hotel.flowstay_hotel_id}`, entry);
+    }
+  }
+}
+
+export async function fetchFlowStayWebsiteBundle(slugOrId: string): Promise<FlowStayWebsiteBundle | null> {
+  if (!slugOrId) return null;
+  const key = String(slugOrId).trim().toLowerCase();
+  if (!key) return null;
+
+  const cached = flowStayBundleCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+
+  const existingPromise = flowStayInFlight.get(key);
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  const fetchPromise = (async (): Promise<FlowStayWebsiteBundle | null> => {
+    try {
+      const res = await fetch(
+        `${FLOWSTAY_API_BASE}/api/public/hotel-website/${encodeURIComponent(key)}`,
+        {
+          cache: 'no-store',
+          headers: { Accept: 'application/json' },
+        }
+      );
+      if (!res.ok) {
+        cacheFlowStayBundle(key, null);
+        return null;
+      }
+      const data = (await res.json()) as FlowStayWebsiteBundle;
+      if (!data || !data.hotel) {
+        cacheFlowStayBundle(key, null);
+        return null;
+      }
+      cacheFlowStayBundle(key, data);
+      return data;
+    } catch (err) {
+      console.warn('[FlowStay Sync] Failed to fetch hotel bundle for', key, err);
+      return null;
+    } finally {
+      flowStayInFlight.delete(key);
+    }
+  })();
+
+  flowStayInFlight.set(key, fetchPromise);
+  return fetchPromise;
+}
+
+export async function fetchFlowStayAllHotels(): Promise<Hotel[]> {
+  try {
+    const res = await fetch(`${FLOWSTAY_API_BASE}/api/public/hotel-websites`, {
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (data && Array.isArray(data.hotels)) {
+      return data.hotels as Hotel[];
+    }
+    return [];
+  } catch (err) {
+    console.warn('[FlowStay Sync] Failed to fetch all hotels from FlowStay:', err);
+    return [];
+  }
+}
+
+// -----------------------------------------------------------------------------
 // DATA ACCESS LAYER (DAL) METHODS
 // -----------------------------------------------------------------------------
 
 export async function getHotelBySlug(slug: string): Promise<Hotel | null> {
+  // 1. Primary Source: Live FlowStay Hotel Data (auto-generates website for any hotel in FlowStay)
+  const flowstayBundle = await fetchFlowStayWebsiteBundle(slug);
+  if (flowstayBundle?.hotel) {
+    return flowstayBundle.hotel;
+  }
+
+  // 2. Secondary Source: Supabase (if configured)
   if (isSupabaseConfigured) {
     try {
       const hotel = await getSupabaseHotelBySlug(slug);
@@ -713,6 +838,8 @@ export async function getHotelBySlug(slug: string): Promise<Hotel | null> {
       console.error('getHotelBySlug Supabase error:', e);
     }
   }
+
+  // 3. Fallback: Local / Mock Database
   const db = getDb();
   const normalizedSlug = slug ? slug.toLowerCase() : '';
   const found = db.hotels.find(h => 
@@ -722,9 +849,6 @@ export async function getHotelBySlug(slug: string): Promise<Hotel | null> {
   );
   const fallbackHotel = found || db.hotels.find(h => h.slug === 'the-par-phuket') || db.hotels[0] || defaultHotelTheParPhuket;
 
-  // Dashboard sessions created before the Supabase migration store legacy IDs
-  // such as "hotel-1784206393534". Resolve those IDs through the matching
-  // slug so the rest of the CMS consistently receives Supabase's UUID.
   if (isSupabaseConfigured && fallbackHotel?.slug) {
     try {
       const migratedHotel = await getSupabaseHotelBySlug(fallbackHotel.slug);
@@ -739,6 +863,20 @@ export async function getHotelBySlug(slug: string): Promise<Hotel | null> {
 
 export async function getHotelByDomain(domain: string): Promise<Hotel | null> {
   const normalized = domain.toLowerCase().split(':')[0].replace(/^www\./, '');
+
+  // 1. Check FlowStay by custom domain or subdomain prefix
+  const flowstayByDomain = await fetchFlowStayWebsiteBundle(normalized);
+  if (flowstayByDomain?.hotel) {
+    return flowstayByDomain.hotel;
+  }
+  const firstPart = normalized.split('.')[0];
+  if (firstPart && firstPart !== normalized) {
+    const flowstayBySubdomain = await fetchFlowStayWebsiteBundle(firstPart);
+    if (flowstayBySubdomain?.hotel) {
+      return flowstayBySubdomain.hotel;
+    }
+  }
+
   if (isSupabaseConfigured) {
     try {
       const hotel = (await getSupabaseHotelByDomain(normalized)) || (await getSupabaseHotelByDomain(domain));
@@ -754,13 +892,17 @@ export async function getHotelByDomain(domain: string): Promise<Hotel | null> {
     return cd === normalized;
   });
   if (!hotel) {
-    const firstPart = normalized.split('.')[0];
     hotel = db.hotels.find(h => h.slug.toLowerCase() === firstPart);
   }
   return hotel || null;
 }
 
 export async function getHeroSlides(hotelId: string): Promise<HeroSlide[]> {
+  const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
+  if (flowstayBundle?.slides && flowstayBundle.slides.length > 0) {
+    return flowstayBundle.slides;
+  }
+
   if (isSupabaseConfigured) {
     try {
       const slides = await getSupabaseHeroSlides(hotelId);
@@ -776,6 +918,11 @@ export async function getHeroSlides(hotelId: string): Promise<HeroSlide[]> {
 }
 
 export async function getHomepageSections(hotelId: string): Promise<HomepageSection[]> {
+  const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
+  if (flowstayBundle?.sections && flowstayBundle.sections.length > 0) {
+    return flowstayBundle.sections;
+  }
+
   if (isSupabaseConfigured) {
     try {
       const sections = await getSupabaseHomepageSections(hotelId);
@@ -819,6 +966,11 @@ export async function saveHomepageSection(
 }
 
 export async function getRooms(hotelId: string): Promise<Room[]> {
+  const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
+  if (flowstayBundle && Array.isArray(flowstayBundle.rooms)) {
+    return flowstayBundle.rooms;
+  }
+
   if (isSupabaseConfigured) {
     try {
       const rooms = await getSupabaseRooms(hotelId);
@@ -834,6 +986,23 @@ export async function getRooms(hotelId: string): Promise<Room[]> {
 }
 
 export async function getRoomById(id: string): Promise<Room | null> {
+  // Check FlowStay room endpoint first
+  try {
+    const res = await fetch(
+      `${FLOWSTAY_API_BASE}/api/public/hotel-website-room/${encodeURIComponent(id)}`,
+      {
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.room) return data.room as Room;
+    }
+  } catch (err) {
+    console.warn('[FlowStay Sync] Failed to fetch room by id', id, err);
+  }
+
   if (isSupabaseConfigured) {
     try {
       const room = await getSupabaseRoomById(id);
@@ -847,6 +1016,11 @@ export async function getRoomById(id: string): Promise<Room | null> {
 }
 
 export async function getPromotions(hotelId: string): Promise<Promotion[]> {
+  const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
+  if (flowstayBundle && Array.isArray(flowstayBundle.promotions)) {
+    return flowstayBundle.promotions;
+  }
+
   if (isSupabaseConfigured) {
     try {
       const promos = await getSupabasePromotions(hotelId);
@@ -860,6 +1034,11 @@ export async function getPromotions(hotelId: string): Promise<Promotion[]> {
 }
 
 export async function getGalleryPhotos(hotelId: string): Promise<GalleryPhoto[]> {
+  const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
+  if (flowstayBundle && Array.isArray(flowstayBundle.gallery) && flowstayBundle.gallery.length > 0) {
+    return flowstayBundle.gallery;
+  }
+
   if (isSupabaseConfigured) {
     try {
       const items = await getSupabaseMediaItems(hotelId);
@@ -1094,11 +1273,37 @@ export async function getAnalyticsOverview(hotelId: string) {
 }
 
 export async function getAllHotels(): Promise<Hotel[]> {
+  const flowstayHotels = await fetchFlowStayAllHotels();
+  let localHotels: Hotel[] = [];
   if (isSupabaseConfigured) {
-    return getSupabaseAllHotels();
+    try {
+      localHotels = await getSupabaseAllHotels();
+    } catch {
+      localHotels = getDb().hotels;
+    }
+  } else {
+    localHotels = getDb().hotels;
   }
-  const db = getDb();
-  return db.hotels;
+
+  if (flowstayHotels.length === 0) {
+    return localHotels;
+  }
+
+  // Merge FlowStay hotels first, avoiding duplicate slugs
+  const seenSlugs = new Set<string>();
+  const merged: Hotel[] = [];
+
+  for (const h of flowstayHotels) {
+    seenSlugs.add(h.slug.toLowerCase());
+    merged.push(h);
+  }
+  for (const h of localHotels) {
+    if (!seenSlugs.has(h.slug.toLowerCase())) {
+      seenSlugs.add(h.slug.toLowerCase());
+      merged.push(h);
+    }
+  }
+  return merged;
 }
 
 // -----------------------------------------------------------------------------
@@ -1106,6 +1311,11 @@ export async function getAllHotels(): Promise<Hotel[]> {
 // -----------------------------------------------------------------------------
 
 export async function getAllPromotions(hotelId: string): Promise<Promotion[]> {
+  const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
+  if (flowstayBundle && Array.isArray(flowstayBundle.promotions)) {
+    return flowstayBundle.promotions;
+  }
+
   if (isSupabaseConfigured) {
     return getSupabaseAllPromotions(hotelId);
   }
@@ -1304,6 +1514,11 @@ export async function deleteHotel(hotelId: string): Promise<void> {
 }
 
 export async function getMediaItems(hotelId: string): Promise<any[]> {
+  const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
+  if (flowstayBundle && Array.isArray(flowstayBundle.media) && flowstayBundle.media.length > 0) {
+    return flowstayBundle.media;
+  }
+
   if (isSupabaseConfigured) {
     return getSupabaseMediaItems(hotelId);
   }

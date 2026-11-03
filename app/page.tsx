@@ -2,8 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { Sparkles, ArrowRight, Layers, Layout, Compass, Flame, ArrowUpRight, CheckCircle2 } from 'lucide-react';
-import { getHotelByDomain } from '@/lib/db/mock-data';
+import { Sparkles, ArrowRight, Layers, Layout, Compass, Flame, ArrowUpRight, CheckCircle2, Globe, MapPin } from 'lucide-react';
+import { getHotelByDomain, getAllHotels } from '@/lib/db/mock-data';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -28,12 +28,18 @@ export default async function PlatformLandingPage() {
     redirect(`/sites/${matchedSlug}`);
   }
 
-  // Any non-localhost/non-platform domain should go to the primary hotel
-  if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+  // Any custom hotel domain (not localhost and not the shared vercel platform host) routes directly to that hotel
+  const isPlatformHost =
+    !host ||
+    host.includes('localhost') ||
+    host.includes('127.0.0.1') ||
+    host.includes('hotel-website-gamma-five.vercel.app');
+
+  if (!isPlatformHost) {
     if (host.includes('phuketairport') || host.includes('airportvilla') || host.includes('phuketairvilla')) {
       redirect('/sites/phuket-airport-villa');
     }
-    if (host.includes('thepar') || host.includes('the-par') || host.includes('hotel-website-gamma-five')) {
+    if (host.includes('thepar') || host.includes('the-par')) {
       redirect('/sites/the-par-phuket');
     }
     const hotel = await getHotelByDomain(host);
@@ -41,6 +47,8 @@ export default async function PlatformLandingPage() {
       redirect(`/sites/${hotel.slug}`);
     }
   }
+
+  const allHotels = await getAllHotels();
   const features = [
     {
       icon: <Layers className="w-5 h-5 text-accent" />,
@@ -137,72 +145,60 @@ export default async function PlatformLandingPage() {
 
       </section>
 
-      {/* MULTI-TENANT LIVE SAMPLES (The most impressive part) */}
+      {/* MULTI-TENANT LIVE WEBSITES SYNCED FROM FLOWSTAY */}
       <section className="max-w-7xl mx-auto px-6 py-12 relative z-10 border-t border-slate-900">
         <div className="text-center space-y-3 mb-12">
-          <span className="text-[10px] tracking-[0.3em] font-bold text-accent uppercase">Architecture Proof</span>
+          <span className="text-[10px] tracking-[0.3em] font-bold text-accent uppercase">Auto-Provisioned from FlowStay</span>
           <h3 className="text-xl md:text-2xl font-light tracking-wide text-white">
-            Browse Mapped Tenant Websites
+            All Active Hotel Websites ({allHotels.length})
           </h3>
-          <p className="text-xs text-slate-405 max-w-md mx-auto">
-            These live sites run on the exact same codebase, loading custom domains, themes, and rooms instantly from Supabase.
+          <p className="text-xs text-slate-405 max-w-xl mx-auto">
+            Every property in FlowStay automatically receives a dedicated hotel website with synced photos, room types, facilities, promotions, and direct booking engine integration.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          
-          {/* Sample Site 1 */}
-          <a 
-            href="http://hotel-a.localhost:3000" 
-            target="_blank" 
-            rel="noreferrer"
-            className="group bg-slate-900 border border-slate-800/60 rounded-2xl p-6 text-left flex flex-col justify-between hover:border-accent/40 hover:shadow-xl transition-all relative"
-          >
-            <div className="absolute top-4 right-4 text-slate-500 group-hover:text-accent transition-colors">
-              <ArrowUpRight className="w-5 h-5" />
-            </div>
-            <div className="space-y-3">
-              <span className="text-[9px] tracking-widest font-bold uppercase text-accent/80 bg-accent/5 px-2.5 py-1 rounded border border-accent/10">
-                Classic Luxury / Serif
-              </span>
-              <h4 className="text-lg font-bold text-white font-sans uppercase tracking-wider group-hover:text-accent transition-colors">
-                The Grand Horizon Resort & Spa
-              </h4>
-              <p className="text-xs text-slate-455 leading-relaxed font-light">
-                Simulation of a high-end Malibu oceanfront retreat. Featuring warm luxury gold/cream theme colors, Cormorant Garamond typography, and classic square borders.
-              </p>
-            </div>
-            <div className="flex items-center gap-1.5 pt-4 text-xs font-bold text-slate-400 group-hover:text-white transition-colors border-t border-slate-850 mt-4 uppercase tracking-wider text-[10px]">
-              Open Mapped Domain: <code className="font-mono text-accent">hotel-a.localhost:3000</code>
-            </div>
-          </a>
-
-          {/* Sample Site 2 */}
-          <a 
-            href="http://hotel-b.localhost:3000" 
-            target="_blank" 
-            rel="noreferrer"
-            className="group bg-slate-900 border border-slate-800/60 rounded-2xl p-6 text-left flex flex-col justify-between hover:border-accent/40 hover:shadow-xl transition-all relative"
-          >
-            <div className="absolute top-4 right-4 text-slate-500 group-hover:text-accent transition-colors">
-              <ArrowUpRight className="w-5 h-5" />
-            </div>
-            <div className="space-y-3">
-              <span className="text-[9px] tracking-widest font-bold uppercase text-accent/80 bg-accent/5 px-2.5 py-1 rounded border border-accent/10">
-                Boutique Modern / Sans-Serif
-              </span>
-              <h4 className="text-lg font-bold text-white font-sans uppercase tracking-wider group-hover:text-accent transition-colors">
-                Urban Nest Hotel
-              </h4>
-              <p className="text-xs text-slate-455 leading-relaxed font-light">
-                Simulation of an industrial-chic Soho sanctuary in Manhattan. Featuring cold charcoal/teal theme colors, Outfit sans-serif typography, and sleek pill-shaped buttons.
-              </p>
-            </div>
-            <div className="flex items-center gap-1.5 pt-4 text-xs font-bold text-slate-400 group-hover:text-white transition-colors border-t border-slate-850 mt-4 uppercase tracking-wider text-[10px]">
-              Open Mapped Domain: <code className="font-mono text-accent">hotel-b.localhost:3000</code>
-            </div>
-          </a>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {allHotels.map((h) => (
+            <Link
+              key={h.id}
+              href={`/sites/${h.slug}`}
+              className="group bg-slate-900 border border-slate-800/60 rounded-2xl p-6 text-left flex flex-col justify-between hover:border-accent/40 hover:shadow-xl transition-all relative"
+            >
+              <div className="absolute top-4 right-4 text-slate-500 group-hover:text-accent transition-colors">
+                <ArrowUpRight className="w-5 h-5" />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2.5">
+                  {h.logo_url ? (
+                    <img
+                      src={h.logo_url}
+                      alt={h.name}
+                      className="h-9 w-9 rounded-lg object-contain bg-white p-0.5 border border-slate-700"
+                    />
+                  ) : (
+                    <div className="h-9 w-9 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
+                      <Globe className="w-4 h-4" />
+                    </div>
+                  )}
+                  <span className="text-[9px] tracking-widest font-bold uppercase text-accent/80 bg-accent/5 px-2.5 py-1 rounded border border-accent/10">
+                    Auto-Synced Website
+                  </span>
+                </div>
+                <h4 className="text-base font-bold text-white font-sans uppercase tracking-wider group-hover:text-accent transition-colors pr-6">
+                  {h.name}
+                </h4>
+                {h.address && (
+                  <p className="text-xs text-slate-400 leading-relaxed font-light flex items-start gap-1.5 line-clamp-2">
+                    <MapPin className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
+                    <span>{h.address}</span>
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 pt-4 text-xs font-bold text-slate-400 group-hover:text-white transition-colors border-t border-slate-850 mt-4 uppercase tracking-wider text-[10px]">
+                View Website: <code className="font-mono text-accent truncate">/sites/{h.slug}</code>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 
