@@ -142,6 +142,13 @@ function formatDisplayDate(dateStr: string) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function formatDeadlineBeforeCheckIn(checkInStr: string, refundDays: number) {
+  const baseDate = checkInStr ? new Date(checkInStr + 'T00:00:00') : new Date(Date.now() + 86400000);
+  if (Number.isNaN(baseDate.getTime())) return '';
+  const deadline = new Date(baseDate.getTime() - refundDays * 86400000);
+  return deadline.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 export default function HotelBookingEngine({
   tenantSlug,
   hotelName,
@@ -473,7 +480,7 @@ export default function HotelBookingEngine({
 
   return (
     <div className="min-h-screen bg-[#fafafa] pb-28 pt-6 text-slate-900">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* TOP SEARCH BAR ("Change Your Stay" matching Screenshot 2) */}
         <form
           onSubmit={handleSearchSubmit}
@@ -708,10 +715,10 @@ export default function HotelBookingEngine({
                       }`}
                     >
                       <div className="flex flex-col md:flex-row">
-                        {/* Left Column: Room Image */}
+                        {/* Left Column: Square Room Image */}
                         <div
                           onClick={() => openRoomLightbox(room)}
-                          className="md:w-[34%] bg-slate-100 relative min-h-[240px] md:min-h-[280px] cursor-pointer group overflow-hidden shrink-0"
+                          className="w-full aspect-square md:w-[360px] lg:w-[440px] bg-slate-100 relative cursor-pointer group overflow-hidden shrink-0"
                         >
                           {mainPhoto ? (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -734,7 +741,7 @@ export default function HotelBookingEngine({
                         </div>
 
                         {/* Right Column: Room Details + Rate Plans */}
-                        <div className="md:w-[66%] p-5 sm:p-6 flex flex-col justify-between">
+                        <div className="flex-1 min-w-0 p-5 sm:p-6 flex flex-col justify-between">
                           <div>
                             <div className="flex items-start justify-between gap-2">
                               <div>
@@ -809,6 +816,18 @@ export default function HotelBookingEngine({
                                 const otherUsed = getRoomQtyUsed(room.id, selectionKey);
                                 const maxForPlan = Math.max(0, (room.available ?? 5) - otherUsed);
 
+                                const rawPlanTitle = plan.nameEn || plan.name || '';
+                                const cleanPlanTitle =
+                                  rawPlanTitle
+                                    .replace(/\s*[-–—]?\s*non[\s-]?refundable\s*/gi, '')
+                                    .replace(/\s*\(\s*non[\s-]?refundable\s*\)\s*/gi, '')
+                                    .trim() || rawPlanTitle;
+                                const isNonRefundable =
+                                  cancelPolicy?.type === 'non_refundable' ||
+                                  /non[\s-]?refundable/i.test(`${plan.name || ''} ${plan.nameEn || ''}`);
+                                const refundDays = Number(cancelPolicy?.refundDays ?? 14) || 14;
+                                const deadlineDateStr = formatDeadlineBeforeCheckIn(checkIn, refundDays);
+
                                 return (
                                   <div
                                     key={plan.optionKey || plan.id}
@@ -822,7 +841,7 @@ export default function HotelBookingEngine({
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center gap-2 flex-wrap">
                                         <span className="font-medium text-slate-900 text-sm">
-                                          {plan.nameEn || plan.name}
+                                          {cleanPlanTitle}
                                         </span>
                                         {hasDiscount && (
                                           <span className="text-[11px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded font-semibold">
@@ -837,23 +856,19 @@ export default function HotelBookingEngine({
                                         </p>
                                       )}
 
-                                      {cancelPolicy && (
-                                        <p
-                                          className={`text-xs mt-0.5 ${
-                                            cancelPolicy.type === 'non_refundable'
-                                              ? 'text-slate-400'
-                                              : 'text-emerald-600 font-medium'
-                                          }`}
-                                        >
-                                          {cancelPolicy.type === 'non_refundable'
-                                            ? 'Non-refundable'
-                                            : cancelPolicy.type === 'free'
-                                              ? 'Free cancellation'
-                                              : cancelPolicy.refundDays
-                                                ? `Free cancellation ${cancelPolicy.refundDays}d before`
-                                                : cancelPolicy.name || ''}
-                                        </p>
-                                      )}
+                                      <p
+                                        className={`text-xs mt-0.5 ${
+                                          isNonRefundable
+                                            ? 'text-slate-500'
+                                            : 'text-emerald-600 font-medium'
+                                        }`}
+                                      >
+                                        {isNonRefundable
+                                          ? 'Non-Refundable'
+                                          : deadlineDateStr
+                                            ? `Free cancellation before ${deadlineDateStr}`
+                                            : 'Free cancellation'}
+                                      </p>
                                     </div>
 
                                     {/* Right: Price & Room Quantity Selector */}
@@ -1321,7 +1336,7 @@ export default function HotelBookingEngine({
       {/* STICKY BOTTOM BAR WHEN ROOMS ARE SELECTED IN STEP 1 */}
       {step === 'rooms' && totalSelectedRooms > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-900 text-white">
