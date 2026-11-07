@@ -237,11 +237,21 @@ export default function HotelBookingEngine({
         });
         if (res.ok) {
           const data = await res.json();
-          setHotelData(data.hotel || null);
-          setRoomTypes(Array.isArray(data.roomTypes) ? data.roomTypes : []);
+          const fetchedHotel = data.hotel || null;
+          const fetchedRooms = Array.isArray(data.roomTypes) ? data.roomTypes : [];
+          setHotelData(fetchedHotel);
+          setRoomTypes(fetchedRooms);
           setAddOns(Array.isArray(data.addOns) ? data.addOns : []);
           setPromoCodeValid(data.promoCodeValid ?? null);
           setSelectedRooms({});
+          if (! new URLSearchParams(window.location.search).get('adults')) {
+            const isHostelProperty =
+              /hostel|โฮสเทล/i.test(`${fetchedHotel?.name || ''} ${fetchedHotel?.nameTh || ''} ${fetchedHotel?.slug || ''} ${tenantSlug}`) ||
+              fetchedRooms.some((r: any) => /dorm|bunk/i.test(`${r.name || ''} ${r.nameEn || ''} ${r.bedType || ''}`));
+            if (isHostelProperty) {
+              setAdults(1);
+            }
+          }
         }
       } catch (err) {
         console.error('Failed to load room availability:', err);

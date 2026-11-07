@@ -28,7 +28,9 @@ export default async function TenantBookPage({ params, searchParams }: BookPageP
     notFound();
   }
 
-  const initialAdults = Math.max(1, parseInt(query.adults || '2', 10) || 2);
+  const isHostel = /hostel|โฮสเทล/i.test(`${hotel.name || ''} ${hotel.slug || ''} ${tenant}`);
+  const defaultAdults = isHostel ? 1 : 2;
+  const initialAdults = Math.max(1, parseInt(query.adults || String(defaultAdults), 10) || defaultAdults);
   const initialChildren = Math.max(0, parseInt(query.children || '0', 10) || 0);
   const initialRooms = Math.max(1, parseInt(query.rooms || '1', 10) || 1);
 
