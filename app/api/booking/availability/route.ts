@@ -238,6 +238,7 @@ export async function GET(request: NextRequest) {
         contactPhone: detail.contactPhone || '',
         address: detail.addressEn || detail.address || '',
         heroImageUrl: rewriteStorageUrl(detail.heroImageUrl),
+        paymentModel: detail.paymentModel || 'option2_booking_engine',
       },
       roomTypes,
       addOns: Array.isArray(addOnsData) ? addOnsData : [],

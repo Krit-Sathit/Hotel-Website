@@ -369,6 +369,7 @@ export default function HotelBookingEngine({
   const serviceChargeAmount = Math.round(netBeforeTax * (serviceChargeRate / 100));
   const taxAmount = Math.round(grandTotal - netBeforeTax - serviceChargeAmount);
 
+  const isFullPayment = hotelData?.paymentModel === 'option1_full_service';
   const depositAmount = Math.round(grandTotal * 0.05 * 100) / 100;
   const balanceAtHotel = Math.round((grandTotal - depositAmount) * 100) / 100;
 
@@ -1190,17 +1191,29 @@ export default function HotelBookingEngine({
                     </button>
                   </div>
 
-                  {/* 5% Deposit Guarantee Info */}
-                  <div className="rounded-xl bg-emerald-50/90 border border-emerald-200 p-4 space-y-1.5 text-xs">
-                    <div className="font-semibold text-emerald-900 flex items-center gap-1.5 text-sm">
-                      <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-                      Pay Only 5% Deposit Today to Guarantee Your Room
+                  {/* Payment Guarantee Info */}
+                  {isFullPayment ? (
+                    <div className="rounded-xl bg-emerald-50/90 border border-emerald-200 p-4 space-y-1.5 text-xs">
+                      <div className="font-semibold text-emerald-900 flex items-center gap-1.5 text-sm">
+                        <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                        Pay Full Amount Online (100%) to Confirm Your Room
+                      </div>
+                      <p className="text-emerald-800 leading-relaxed">
+                        Pay <strong>{formatPrice(grandTotal)}</strong> (100% full payment) securely online via Stripe to confirm your reservation. No room balance is due at the hotel upon check-in.
+                      </p>
                     </div>
-                    <p className="text-emerald-800 leading-relaxed">
-                      Pay only <strong>{formatPrice(depositAmount)}</strong> (5% deposit) online now to lock in your direct booking rate. The remaining balance of{' '}
-                      <strong>{formatPrice(balanceAtHotel)}</strong> (95%) is payable directly at the hotel upon check-in.
-                    </p>
-                  </div>
+                  ) : (
+                    <div className="rounded-xl bg-emerald-50/90 border border-emerald-200 p-4 space-y-1.5 text-xs">
+                      <div className="font-semibold text-emerald-900 flex items-center gap-1.5 text-sm">
+                        <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                        Pay Only 5% Deposit Today to Guarantee Your Room
+                      </div>
+                      <p className="text-emerald-800 leading-relaxed">
+                        Pay only <strong>{formatPrice(depositAmount)}</strong> (5% deposit) online now to lock in your direct booking rate. The remaining balance of{' '}
+                        <strong>{formatPrice(balanceAtHotel)}</strong> (95%) is payable directly at the hotel upon check-in.
+                      </p>
+                    </div>
+                  )}
 
                   {submitError && (
                     <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-700 font-medium">
@@ -1220,7 +1233,9 @@ export default function HotelBookingEngine({
                       </>
                     ) : (
                       <>
-                        Confirm & Pay 5% Deposit ({formatPrice(depositAmount)})
+                        {isFullPayment
+                          ? `Confirm & Pay Full Amount (${formatPrice(grandTotal)})`
+                          : `Confirm & Pay 5% Deposit (${formatPrice(depositAmount)})`}
                         <ArrowRight className="h-4 w-4" />
                       </>
                     )}
@@ -1327,15 +1342,30 @@ export default function HotelBookingEngine({
                     <span>{formatPrice(grandTotal)}</span>
                   </div>
 
-                  <div className="mt-3 rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex justify-between items-center text-emerald-800 font-bold">
-                    <span>Pay Now (5% Deposit)</span>
-                    <span className="text-sm">{formatPrice(depositAmount)}</span>
-                  </div>
+                  {isFullPayment ? (
+                    <>
+                      <div className="mt-3 rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex justify-between items-center text-emerald-800 font-bold">
+                        <span>Pay Online Now (100%)</span>
+                        <span className="text-sm">{formatPrice(grandTotal)}</span>
+                      </div>
+                      <div className="rounded-xl bg-emerald-50/60 border border-emerald-200/70 p-3 flex justify-between items-center text-emerald-800 font-semibold">
+                        <span>Balance at Hotel</span>
+                        <span>{formatPrice(0)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mt-3 rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex justify-between items-center text-emerald-800 font-bold">
+                        <span>Pay Now (5% Deposit)</span>
+                        <span className="text-sm">{formatPrice(depositAmount)}</span>
+                      </div>
 
-                  <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 flex justify-between items-center text-amber-900 font-semibold">
-                    <span>Balance at Hotel (95%)</span>
-                    <span>{formatPrice(balanceAtHotel)}</span>
-                  </div>
+                      <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 flex justify-between items-center text-amber-900 font-semibold">
+                        <span>Balance at Hotel (95%)</span>
+                        <span>{formatPrice(balanceAtHotel)}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
