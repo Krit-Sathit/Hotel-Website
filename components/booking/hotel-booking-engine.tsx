@@ -604,8 +604,7 @@ export default function HotelBookingEngine({
                   <div>
                     <div className="text-[10px] text-slate-400 leading-tight">Guests</div>
                     <div className="text-xs font-semibold text-slate-800">
-                      {adults + children} {adults + children === 1 ? 'guest' : 'guests'} - {roomsCount}{' '}
-                      {roomsCount === 1 ? 'room' : 'rooms'}
+                      {adults + children} {adults + children === 1 ? 'guest' : 'guests'}
                     </div>
                   </div>
                 </div>
@@ -652,26 +651,6 @@ export default function HotelBookingEngine({
                       <button
                         type="button"
                         onClick={() => setChildren(Math.min(6, children + 1))}
-                        className="h-7 w-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-700">Rooms</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleTopRoomsChange(roomsCount - 1)}
-                        className="h-7 w-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50"
-                      >
-                        -
-                      </button>
-                      <span className="w-5 text-center text-xs font-semibold">{roomsCount}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleTopRoomsChange(roomsCount + 1)}
                         className="h-7 w-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50"
                       >
                         +

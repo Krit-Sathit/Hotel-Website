@@ -81,7 +81,6 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
     params.set('checkOut', checkOut);
     params.set('adults', adults);
     params.set('children', children);
-    params.set('rooms', rooms);
     if (promoCode.trim()) {
       params.set('promoCode', promoCode.trim());
     }
@@ -187,17 +186,6 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
                     {[0, 1, 2, 3, 4].map(n => <option key={n} value={n} className="dark:bg-slate-900">{n} Ch</option>)}
                   </select>
                 </div>
-              </div>
-            </div>
-
-            {/* Rooms */}
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded px-2 py-1.5">
-              <Home className="w-3.5 h-3.5 text-accent" />
-              <div className="flex flex-col text-left">
-                <span className="text-[9px] text-slate-400 font-medium uppercase">Rooms</span>
-                <select value={rooms} onChange={(e) => setRooms(e.target.value)} className="bg-transparent border-none outline-none font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
-                  {[1, 2, 3, 4, 5].map(n => <option key={n} value={n} className="dark:bg-slate-900">{n} Rm</option>)}
-                </select>
               </div>
             </div>
 
@@ -333,28 +321,16 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
                   </div>
                 </div>
 
-                {/* Rooms & Promo */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col text-left bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded p-3">
-                    <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">Rooms</label>
-                    <select
-                      value={rooms}
-                      onChange={(e) => setRooms(e.target.value)}
-                      className="bg-transparent border-none outline-none font-semibold text-slate-850 dark:text-slate-150 text-sm cursor-pointer"
-                    >
-                      {[1, 2, 3, 4, 5].map(n => <option key={n} value={n} className="dark:bg-slate-900">{n} Room{n > 1 ? 's' : ''}</option>)}
-                    </select>
-                  </div>
-                  <div className="flex flex-col text-left bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded p-3">
-                    <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">Promo Code</label>
-                    <input
-                      type="text"
-                      placeholder="Optional"
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
-                      className="bg-transparent border-none outline-none font-semibold text-slate-800 dark:text-slate-200 text-sm w-full uppercase"
-                    />
-                  </div>
+                {/* Promo */}
+                <div className="flex flex-col text-left bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded p-3">
+                  <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">Promo Code</label>
+                  <input
+                    type="text"
+                    placeholder="Optional"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    className="bg-transparent border-none outline-none font-semibold text-slate-800 dark:text-slate-200 text-sm w-full uppercase"
+                  />
                 </div>
 
                 {/* Book Button */}
@@ -429,8 +405,8 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
           </div>
         </div>
 
-        {/* Guest and Room Selection Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Guest Selection Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Adults */}
           <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/80 rounded px-4 py-3">
             <Users className="w-5 h-5 text-accent flex-shrink-0" />
@@ -457,21 +433,6 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
                 className="bg-transparent border-none outline-none font-semibold text-slate-750 dark:text-slate-200 w-full text-sm cursor-pointer"
               >
                 {[0, 1, 2, 3, 4].map(n => <option key={n} value={n} className="dark:bg-slate-900">{n} Child{n !== 1 ? 'ren' : ''}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {/* Rooms */}
-          <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/80 rounded px-4 py-3">
-            <Home className="w-5 h-5 text-accent flex-shrink-0" />
-            <div className="flex flex-col text-left flex-1">
-              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Rooms</span>
-              <select
-                value={rooms}
-                onChange={(e) => setRooms(e.target.value)}
-                className="bg-transparent border-none outline-none font-semibold text-slate-750 dark:text-slate-200 w-full text-sm cursor-pointer"
-              >
-                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n} className="dark:bg-slate-900">{n} Room{n > 1 ? 's' : ''}</option>)}
               </select>
             </div>
           </div>
