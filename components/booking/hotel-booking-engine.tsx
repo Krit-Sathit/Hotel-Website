@@ -301,8 +301,27 @@ export default function HotelBookingEngine({
       } else {
         next[key] = { room, plan, quantity: clamped };
       }
+      const nextTotal = Object.values(next).reduce((s, item) => s + item.quantity, 0);
+      if (nextTotal > 0) {
+        setRoomsCount(nextTotal);
+      }
       return next;
     });
+  };
+
+  const handleTopRoomsChange = (newRoomsCount: number) => {
+    const clampedCount = Math.max(1, Math.min(10, newRoomsCount));
+    setRoomsCount(clampedCount);
+    const entries = Object.entries(selectedRooms);
+    if (entries.length === 1) {
+      const [key, item] = entries[0];
+      const maxAvail = Math.max(1, item.room.available ?? 5);
+      const targetQty = Math.min(clampedCount, maxAvail);
+      setRoomsCount(targetQty);
+      setSelectedRooms({
+        [key]: { ...item, quantity: targetQty },
+      });
+    }
   };
 
   const selectedList = useMemo(() => Object.values(selectedRooms), [selectedRooms]);
@@ -503,7 +522,8 @@ export default function HotelBookingEngine({
   return (
     <div className="min-h-screen bg-[#fafafa] pb-28 pt-6 text-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* TOP SEARCH BAR ("Change Your Stay" matching Screenshot 2) */}
+        {/* TOP SEARCH BAR ("Change Your Stay" — only shown on Room Selection step so users cannot alter search params mid-checkout) */}
+        {step === 'rooms' && (
         <form
           onSubmit={handleSearchSubmit}
           className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 mb-8"
@@ -643,7 +663,7 @@ export default function HotelBookingEngine({
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setRoomsCount(Math.max(1, roomsCount - 1))}
+                        onClick={() => handleTopRoomsChange(roomsCount - 1)}
                         className="h-7 w-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50"
                       >
                         -
@@ -651,7 +671,7 @@ export default function HotelBookingEngine({
                       <span className="w-5 text-center text-xs font-semibold">{roomsCount}</span>
                       <button
                         type="button"
-                        onClick={() => setRoomsCount(Math.min(10, roomsCount + 1))}
+                        onClick={() => handleTopRoomsChange(roomsCount + 1)}
                         className="h-7 w-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50"
                       >
                         +
@@ -696,6 +716,7 @@ export default function HotelBookingEngine({
             </div>
           )}
         </form>
+        )}
 
         {/* STEP 1: ROOM TYPES & RATE PLANS (Exact UI from Screenshot 2) */}
         {step === 'rooms' && (
@@ -951,7 +972,13 @@ export default function HotelBookingEngine({
                                             type="button"
                                             disabled={currentQty >= maxForPlan}
                                             onClick={() =>
-                                              updateRoomSelection(room, plan, currentQty + 1)
+                                              updateRoomSelection(
+                                                room,
+                                                plan,
+                                                currentQty === 0 && totalSelectedRooms === 0
+                                                  ? Math.min(roomsCount, maxForPlan)
+                                                  : currentQty + 1
+                                              )
                                             }
                                             className="h-8 w-8 rounded-lg border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
                                           >
