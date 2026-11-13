@@ -263,8 +263,10 @@ export default function HotelBookingEngine({
   );
 
   useEffect(() => {
-    fetchAvailability(defaultDates.checkIn, defaultDates.checkOut, initialPromoCode);
-  }, [fetchAvailability, defaultDates.checkIn, defaultDates.checkOut, initialPromoCode]);
+    if (checkIn && checkOut && checkOut > checkIn) {
+      fetchAvailability(checkIn, checkOut, promoCode);
+    }
+  }, [fetchAvailability, checkIn, checkOut]);
 
   const handleCheckInChange = (val: string) => {
     setCheckIn(val);
@@ -317,8 +319,10 @@ export default function HotelBookingEngine({
 
   const roomSubtotal = useMemo(() => {
     return selectedList.reduce((sum, item) => {
+      const hasMatchingNights =
+        Array.isArray(item.plan.perNightPrices) && item.plan.perNightPrices.length === nights;
       const planTotal =
-        item.plan.totalPrice !== undefined
+        hasMatchingNights && item.plan.totalPrice !== undefined
           ? Number(item.plan.totalPrice)
           : Number(item.plan.price) * nights;
       return sum + planTotal * item.quantity;
@@ -327,8 +331,10 @@ export default function HotelBookingEngine({
 
   const roomOriginalTotal = useMemo(() => {
     return selectedList.reduce((sum, item) => {
+      const hasMatchingNights =
+        Array.isArray(item.plan.perNightPrices) && item.plan.perNightPrices.length === nights;
       const origTotal =
-        item.plan.totalOriginalPrice !== undefined
+        hasMatchingNights && item.plan.totalOriginalPrice !== undefined
           ? Number(item.plan.totalOriginalPrice)
           : Number(item.plan.originalPrice || item.plan.price) * nights;
       return sum + origTotal * item.quantity;
@@ -396,14 +402,19 @@ export default function HotelBookingEngine({
     try {
       const primaryItem = selectedList[0];
       const roomItemsPayload = selectedList.map((item) => {
+        const hasMatchingNights =
+          Array.isArray(item.plan.perNightPrices) && item.plan.perNightPrices.length === nights;
         const itemTotal =
-          item.plan.totalPrice !== undefined
+          hasMatchingNights && item.plan.totalPrice !== undefined
             ? Number(item.plan.totalPrice) * item.quantity
             : Number(item.plan.price) * nights * item.quantity;
         const itemOrigTotal =
-          item.plan.totalOriginalPrice !== undefined
+          hasMatchingNights && item.plan.totalOriginalPrice !== undefined
             ? Number(item.plan.totalOriginalPrice) * item.quantity
             : Number(item.plan.originalPrice || item.plan.price) * nights * item.quantity;
+        const perNightPrices = hasMatchingNights
+          ? item.plan.perNightPrices
+          : Array.from({ length: nights }, () => Number(item.plan.price));
         return {
           roomTypeId: Number(item.room.id),
           roomTypeName: item.room.name,
@@ -419,7 +430,7 @@ export default function HotelBookingEngine({
           mealPlan: item.plan.mealPlan || 'room_only',
           promotionId: item.plan.promotionId ?? null,
           promotionName: item.plan.promoNameEn || item.plan.promoName || null,
-          perNightPrices: item.plan.perNightPrices,
+          perNightPrices,
         };
       });
 
@@ -458,7 +469,7 @@ export default function HotelBookingEngine({
           guestEmail: guestEmail.trim(),
           guestPhone: guestPhone.trim() || undefined,
           specialRequests: specialRequests.trim() || undefined,
-          roomTotal: String(roomSubtotal),
+          roomTotal: String(roomOriginalTotal),
           addOnsTotal: String(addOnsTotal),
           discountAmount: String(totalDiscount),
           taxAmount: String(taxAmount),
