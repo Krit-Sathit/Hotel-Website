@@ -8,6 +8,7 @@ import { getHotelBySlug } from '@/lib/db/mock-data';
 import HotelThemeProvider from '@/components/hotel-theme-provider';
 import BookingWidget from '@/components/booking-widget';
 import MobileNavigation from '@/components/mobile-navigation';
+import TenantChromeGuard from '@/components/templates/tenant-chrome-guard';
 import { getBookingEngineUrl } from '@/lib/booking-engine';
 
 interface TenantLayoutProps {
@@ -57,10 +58,8 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
     { label: 'Contact', href: `${tenantPrefix}/contact` },
   ];
 
-  return (
-    <HotelThemeProvider theme={theme}>
-      <div className="flex flex-col min-h-screen font-sans selection:bg-accent/30 selection:text-primary">
-        
+  const subpageHeader = (
+    <>
         {/* TOP UTILITY HEADER (Desktop only) */}
         <div className="hidden lg:block w-full bg-primary text-white/80 border-b border-white/10 py-2 text-[11px] font-medium tracking-wider">
           <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
@@ -212,13 +211,10 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
           {/* DESKTOP STICKY BOOKING BAR (Injected directly under the navigation header) */}
           <BookingWidget hotelId={hotel.id} hotelName={hotel.name} bookingUrl={bookingUrl} variant="sticky-header" />
         </header>
+    </>
+  );
 
-        {/* MAIN PAGE CONTENT */}
-        <main className="flex-grow pb-16 lg:pb-0">
-          {children}
-        </main>
-
-        {/* FOOTER */}
+  const subpageFooter = (
         <footer className="bg-primary text-white/90 pt-16 pb-24 lg:pb-16 border-t border-white/5">
           <div className="max-w-7xl mx-auto px-6">
             {theme.footer_layout === 'luxury' ? (
@@ -328,10 +324,25 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
             </div>
           </div>
         </footer>
+  );
 
-        {/* MOBILE STICKY BOTTOM BAR (Always visible at the bottom on touch devices) */}
-        <BookingWidget hotelId={hotel.id} hotelName={hotel.name} bookingUrl={bookingUrl} variant="sticky-bottom" />
-      </div>
+  return (
+    <HotelThemeProvider theme={theme}>
+      <TenantChromeGuard
+        tenant={tenant}
+        header={subpageHeader}
+        footer={subpageFooter}
+        mobileBottomBar={
+          <BookingWidget
+            hotelId={hotel.id}
+            hotelName={hotel.name}
+            bookingUrl={bookingUrl}
+            variant="sticky-bottom"
+          />
+        }
+      >
+        {children}
+      </TenantChromeGuard>
     </HotelThemeProvider>
   );
 }

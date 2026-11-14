@@ -29,7 +29,7 @@ interface SidebarNavProps {
 const MENU_ITEMS = [
   { label: 'Analytics Overview', href: '/dashboard', icon: BarChart3 },
   { label: 'General Settings', href: '/dashboard/settings', icon: Settings },
-  { label: 'Design & Theme', href: '/dashboard/theme', icon: Palette },
+  { label: 'Website Templates', href: '/dashboard/theme', icon: Palette },
   { label: 'Homepage Builder', href: '/dashboard/builder', icon: Grid },
   { label: 'Hero Slides', href: '/dashboard/hero', icon: Layers },
   { label: 'Rooms Manager', href: '/dashboard/rooms', icon: HotelIcon },

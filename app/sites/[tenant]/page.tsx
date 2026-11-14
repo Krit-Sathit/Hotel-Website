@@ -2,40 +2,34 @@ import React from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
-import { 
-  getHotelBySlug, 
-  getHeroSlides, 
-  getHomepageSections, 
-  getRooms, 
-  getPromotions, 
-  getGalleryPhotos
+import {
+  getHotelBySlug,
+  getHeroSlides,
+  getHomepageSections,
+  getRooms,
+  getPromotions,
+  getGalleryPhotos,
 } from '@/lib/db/mock-data';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
-
-// Import our beautiful section components
-import HeroSlider from '@/components/sections/hero-slider';
-import AboutSection from '@/components/sections/about-section';
-import RoomsSection from '@/components/sections/rooms-section';
-import FacilitiesSection from '@/components/sections/facilities-section';
-import PromotionsSection from '@/components/sections/promotions-section';
-import GallerySection from '@/components/sections/gallery-section';
-import TestimonialsSection from '@/components/sections/testimonials-section';
-import AwardsSection from '@/components/sections/awards-section';
-import LocationSection from '@/components/sections/location-section';
-import ContactSection from '@/components/sections/contact-section';
+import HotelTemplateHome from '@/components/templates/hotel-template-home';
+import { HOTEL_WEBSITE_TEMPLATES } from '@/lib/hotel-templates';
 import { getBookingEngineUrl } from '@/lib/booking-engine';
 
 interface TenantPageProps {
   params: Promise<{ tenant: string }>;
+  searchParams: Promise<{ preview_template?: string }>;
 }
 
-export async function generateMetadata({ params }: TenantPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: Pick<TenantPageProps, 'params'>): Promise<Metadata> {
   const { tenant } = await params;
 
   if (tenant === 'the-par-phuket') {
     return {
       title: 'The Par Phuket – Luxury Boutique Hotel | ที่พักหรูภูเก็ต',
-      description: 'The Par Phuket – โรงแรมบูติคสุดหรูในภูเก็ต ประเทศไทย สัมผัสประสบการณ์ความหรูหราท่ามกลางธรรมชาติ',
+      description:
+        'The Par Phuket – โรงแรมบูติคสุดหรูในภูเก็ต ประเทศไทย สัมผัสประสบการณ์ความหรูหราท่ามกลางธรรมชาติ',
       alternates: {
         canonical: 'https://theparphuket.com',
       },
@@ -49,7 +43,8 @@ export async function generateMetadata({ params }: TenantPageProps): Promise<Met
   if (tenant === 'phuket-airport-villa') {
     return {
       title: 'Phuket Airport Villa – Luxury Villa & Resort | ที่พักใกล้สนามบินภูเก็ต',
-      description: 'Phuket Airport Villa – วิลล่าหรูส่วนตัวใกล้สนามบินภูเก็ต สัมผัสการพักผ่อนอันเงียบสงบและสะดวกสบาย',
+      description:
+        'Phuket Airport Villa – วิลล่าหรูส่วนตัวใกล้สนามบินภูเก็ต สัมผัสการพักผ่อนอันเงียบสงบและสะดวกสบาย',
       alternates: {
         canonical: 'https://phuketairportvilla.com',
       },
@@ -63,141 +58,53 @@ export async function generateMetadata({ params }: TenantPageProps): Promise<Met
   return {};
 }
 
-export default async function TenantPage({ params }: TenantPageProps) {
-  const { tenant } = await params;
+export default async function TenantPage({ params, searchParams }: TenantPageProps) {
+  const [{ tenant }, query] = await Promise.all([params, searchParams]);
   const hotel = await getHotelBySlug(tenant);
 
   if (!hotel || hotel.status !== 'active') {
     notFound();
   }
 
-  // Compute tenantPrefix for internal navigation links
   const headerList = await headers();
   const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
   const host = rawHost.split(',')[0].trim().toLowerCase();
-  const isMainDomain = !host || host.includes('vercel.app') || host.includes('localhost') || host.includes('127.0.0.1');
+  const isMainDomain =
+    !host ||
+    host.includes('vercel.app') ||
+    host.includes('localhost') ||
+    host.includes('127.0.0.1');
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
   const bookingUrl = getBookingEngineUrl(hotel.slug, tenantPrefix);
 
-  // Fetch all content concurrently
   const [slides, dbSections, rooms, promotions, gallery] = await Promise.all([
     getHeroSlides(hotel.id),
     getHomepageSections(hotel.id),
     getRooms(hotel.id),
     getPromotions(hotel.id),
-    getGalleryPhotos(hotel.id)
+    getGalleryPhotos(hotel.id),
   ]);
 
-  // Helper to extract content for a specific section type
-  const getSectionContent = (type: string) => {
-    const s = dbSections.find((sec) => sec.section_type === type);
-    return s && s.is_enabled ? s.content : null;
-  };
-
-  // Render a specific block based on its key in homepage_layout
-  const renderSection = (sectionType: string) => {
-    switch (sectionType) {
-      case 'hero':
-        return slides.length > 0 ? (
-          <HeroSlider key="hero" slides={slides} hotelId={hotel.id} bookingUrl={bookingUrl} />
-        ) : null;
-        
-      case 'about':
-        const aboutContent = getSectionContent('about');
-        return aboutContent ? (
-          <AboutSection key="about" content={aboutContent} />
-        ) : null;
-        
-      case 'rooms':
-        return rooms.length > 0 ? (
-          <RoomsSection key="rooms" rooms={rooms} tenantPrefix={tenantPrefix} bookingUrl={bookingUrl} />
-        ) : null;
-        
-      case 'facilities':
-        // If there is no database override, render default premium facilities
-        const facilitiesContent = getSectionContent('facilities') || {
-          title: 'World-Class Offerings',
-          subtitle: 'Designed for Exquisite Pleasures',
-          items: [
-            { title: 'The Wellness Spa', desc: 'Holistic massage and therapeutic hydro-treatments.', icon: 'spa' },
-            { title: 'Michelin Star Dining', desc: 'Culinary arts crafted with organic local ingredients.', icon: 'dining' },
-            { title: 'Heated Plunge Pools', desc: 'Panoramic temperature-regulated swimming decks.', icon: 'pool' },
-            { title: '24/7 Butler Service', desc: 'Personalized service to anticipate your every requirement.', icon: 'service' }
-          ]
-        };
-        return (
-          <FacilitiesSection key="facilities" content={facilitiesContent} />
-        );
-        
-      case 'promotions':
-        return promotions.length > 0 ? (
-          <PromotionsSection key="promotions" promotions={promotions} bookingUrl={bookingUrl} />
-        ) : null;
-        
-      case 'gallery':
-        return gallery.length > 0 ? (
-          <GallerySection key="gallery" photos={gallery} limit={6} />
-        ) : null;
-        
-      case 'testimonials':
-        const testimonialContent = getSectionContent('testimonials') || {
-          title: 'Guest Diaries',
-          subtitle: 'Unforgettable Journeys in Their Own Words',
-          items: [
-            { guest: 'Lady Eleanor Carter', text: 'An absolute masterpiece of hospitality. The ocean vistas, the intuitive staff, and the culinary artistry left us entirely restored.', location: 'London, UK' },
-            { guest: 'Julian Vance', text: 'Minimalist design perfection. A peaceful haven in NYC with hyper-fast fiber and the best rooftop cocktails in Soho.', location: 'San Francisco, CA' }
-          ]
-        };
-        return (
-          <TestimonialsSection key="testimonials" content={testimonialContent} />
-        );
-        
-      case 'awards':
-        const awardsContent = getSectionContent('awards') || {
-          title: 'Distinguished Accolades',
-          subtitle: 'Our Legacy of Excellence Recognized Globally',
-          items: [
-            { name: 'Condé Nast Traveler', detail: 'Gold List - Best Luxury Resorts' },
-            { name: 'Travel + Leisure', detail: 'World Best Awards - Top 10 Boutique Hotels' },
-            { name: 'Michelin Guide', detail: 'Three Michelin Keys - Extraordinary Experience' }
-          ]
-        };
-        return (
-          <AwardsSection key="awards" content={awardsContent} />
-        );
-        
-      case 'location':
-        return (
-          <LocationSection 
-            key="location" 
-            hotelName={hotel.name}
-            address={hotel.address} 
-            mapUrl={hotel.google_map_url} 
-          />
-        );
-        
-      case 'contact':
-        return (
-          <ContactSection 
-            key="contact" 
-            hotelId={hotel.id}
-            email={hotel.email} 
-            phone={hotel.phone} 
-            address={hotel.address} 
-            socials={hotel.social_links}
-          />
-        );
-        
-      default:
-        return null;
-    }
-  };
+  // Support live preview query override (?preview_template=<id>)
+  const previewTpl = query?.preview_template
+    ? HOTEL_WEBSITE_TEMPLATES.find((t) => t.id === query.preview_template)
+    : undefined;
 
   return (
-    <div className="flex flex-col w-full overflow-hidden">
+    <>
       <PageViewTracker hotelId={hotel.id} pagePath="/" />
-      {/* Loop through and render each homepage block in the layout array */}
-      {hotel.homepage_layout.map((sectionType) => renderSection(sectionType))}
-    </div>
+      <HotelTemplateHome
+        hotel={hotel}
+        themeOverride={previewTpl ? previewTpl.theme : undefined}
+        templateOverride={previewTpl}
+        slides={slides}
+        sections={dbSections}
+        rooms={rooms}
+        promotions={promotions}
+        gallery={gallery}
+        tenantPrefix={tenantPrefix}
+        bookingUrl={bookingUrl}
+      />
+    </>
   );
 }
