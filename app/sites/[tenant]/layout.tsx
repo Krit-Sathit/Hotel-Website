@@ -90,43 +90,124 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
         </div>
 
         {/* MAIN HEADER / NAVIGATION */}
-        <header className="sticky top-0 z-40 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-250/30 dark:border-slate-800/30 transition-all duration-300">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            
-            {/* BRAND LOGO / NAME */}
-            <Link href={tenantPrefix || '/'} className="flex items-center gap-3 text-left group">
-              {hotel.logo_url && (
-                <img
-                  src={hotel.logo_url}
-                  alt={hotel.name}
-                  className="h-10 w-10 md:h-11 md:w-11 object-contain rounded-md bg-white/80 p-0.5 border border-slate-200/60 shrink-0"
-                />
-              )}
-              <div className="flex flex-col">
-                <span className="text-lg md:text-xl font-bold tracking-widest text-primary font-hotel uppercase group-hover:text-accent transition-colors">
-                  {hotel.name}
-                </span>
-                <span className="text-[9px] tracking-widest font-semibold uppercase text-slate-400 -mt-0.5">
-                  Official Hotel Website
-                </span>
-              </div>
-            </Link>
-
-            {/* NAVIGATION LINKS */}
-            <nav className="hidden md:flex items-center gap-8 text-xs font-semibold tracking-widest uppercase text-slate-600 dark:text-slate-350">
-              {navLinks.map((link) => (
-                <Link 
-                  key={link.href} 
-                  href={link.href}
-                  className="hover:text-accent border-b-2 border-transparent hover:border-accent/50 pb-1 transition-all duration-200"
+        <header
+          className={`sticky top-0 z-40 backdrop-blur-md transition-all duration-300 ${
+            theme.header_layout === 'luxury'
+              ? 'bg-primary text-white border-b border-accent/25'
+              : theme.dark_mode
+              ? 'bg-slate-950/90 text-white border-b border-slate-800/60'
+              : 'bg-white/95 border-b border-slate-250/30'
+          }`}
+        >
+          {theme.header_layout === 'centered' ? (
+            <div className="max-w-7xl mx-auto px-6 py-4">
+              <div className="flex items-center justify-between md:justify-center relative">
+                <Link
+                  href={tenantPrefix || '/'}
+                  className="flex flex-col items-start md:items-center text-left md:text-center group"
                 >
-                  {link.label}
+                  {hotel.logo_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={hotel.logo_url}
+                      alt={hotel.name}
+                      className="h-10 w-10 object-contain rounded-md bg-white/80 p-0.5 border border-slate-200/60 mb-1.5"
+                    />
+                  )}
+                  <span
+                    className={`text-xl md:text-2xl font-bold tracking-[0.22em] font-hotel uppercase group-hover:text-accent transition-colors ${
+                      theme.dark_mode ? 'text-white' : 'text-primary'
+                    }`}
+                  >
+                    {hotel.name}
+                  </span>
+                  <span className="text-[9px] tracking-[0.28em] font-semibold uppercase text-accent mt-0.5">
+                    Official Hotel Website
+                  </span>
                 </Link>
-              ))}
-            </nav>
+                <div className="md:hidden">
+                  <MobileNavigation links={navLinks} />
+                </div>
+              </div>
 
-            <MobileNavigation links={navLinks} />
-          </div>
+              <nav
+                className={`hidden md:flex items-center justify-center gap-9 pt-3 mt-3 border-t text-[11px] font-semibold tracking-[0.2em] uppercase ${
+                  theme.dark_mode
+                    ? 'border-white/10 text-slate-300'
+                    : 'border-slate-100 text-slate-600'
+                }`}
+              >
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="hover:text-accent border-b-2 border-transparent hover:border-accent/60 pb-1 transition-all duration-200"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          ) : (
+            <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+              {/* BRAND LOGO / NAME */}
+              <Link href={tenantPrefix || '/'} className="flex items-center gap-3 text-left group">
+                {hotel.logo_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={hotel.logo_url}
+                    alt={hotel.name}
+                    className="h-10 w-10 md:h-11 md:w-11 object-contain rounded-md bg-white/80 p-0.5 border border-slate-200/60 shrink-0"
+                  />
+                )}
+                <div className="flex flex-col">
+                  <span
+                    className={`text-lg md:text-xl font-bold tracking-widest font-hotel uppercase group-hover:text-accent transition-colors ${
+                      theme.header_layout === 'luxury'
+                        ? 'text-accent'
+                        : theme.dark_mode
+                        ? 'text-white'
+                        : 'text-primary'
+                    }`}
+                  >
+                    {hotel.name}
+                  </span>
+                  <span
+                    className={`text-[9px] tracking-widest font-semibold uppercase -mt-0.5 ${
+                      theme.header_layout === 'luxury'
+                        ? 'text-white/65'
+                        : 'text-slate-400'
+                    }`}
+                  >
+                    Official Hotel Website
+                  </span>
+                </div>
+              </Link>
+
+              {/* NAVIGATION LINKS */}
+              <nav
+                className={`hidden md:flex items-center gap-8 text-xs font-semibold tracking-widest uppercase ${
+                  theme.header_layout === 'luxury'
+                    ? 'text-white/85'
+                    : theme.dark_mode
+                    ? 'text-slate-300'
+                    : 'text-slate-600'
+                }`}
+              >
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="hover:text-accent border-b-2 border-transparent hover:border-accent/50 pb-1 transition-all duration-200"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+
+              <MobileNavigation links={navLinks} />
+            </div>
+          )}
 
           {/* DESKTOP STICKY BOOKING BAR (Injected directly under the navigation header) */}
           <BookingWidget hotelId={hotel.id} hotelName={hotel.name} bookingUrl={bookingUrl} variant="sticky-header" />
@@ -140,58 +221,103 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
         {/* FOOTER */}
         <footer className="bg-primary text-white/90 pt-16 pb-24 lg:pb-16 border-t border-white/5">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-8 pb-12 border-b border-white/10">
-              
-              {/* Hotel Intro */}
-              <div className="md:col-span-2 space-y-4">
-                <h3 className="text-md font-bold tracking-widest uppercase text-accent font-hotel">
-                  {hotel.name}
-                </h3>
-                <p className="text-xs text-white/60 max-w-sm leading-relaxed">
-                  Experience a sanctuary where timeless luxury intersects with local soul. Our dedicated staff is committed to curating an unforgettable stay tailored to your every desire.
-                </p>
-                <div className="flex gap-4 pt-2">
-                  {Object.entries(hotel.social_links).map(([platform, url]) => {
-                    if (!url) return null;
-                    return (
-                      <a 
-                        key={platform} 
-                        href={url} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="text-white/40 hover:text-accent transition-colors capitalize text-xs tracking-wider"
-                      >
-                        {platform}
-                      </a>
-                    );
-                  })}
+            {theme.footer_layout === 'luxury' ? (
+              <div className="text-center space-y-6 pb-12 border-b border-white/10">
+                <div className="space-y-2">
+                  <p className="text-[10px] tracking-[0.35em] uppercase text-accent/80">
+                    Official Sanctuary
+                  </p>
+                  <h3 className="text-2xl md:text-3xl font-bold tracking-[0.22em] uppercase text-accent font-hotel">
+                    {hotel.name}
+                  </h3>
+                </div>
+                <div className="w-16 h-[1px] bg-accent/50 mx-auto" />
+                {hotel.address && (
+                  <p className="text-xs text-white/65 max-w-md mx-auto leading-relaxed">
+                    {hotel.address}
+                  </p>
+                )}
+                <div className="flex flex-wrap justify-center gap-6 text-xs text-white/80 tracking-widest uppercase pt-2">
+                  {navLinks.map((link) => (
+                    <Link key={link.href} href={link.href} className="hover:text-accent transition-colors">
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+                <div className="flex flex-wrap justify-center gap-6 text-xs text-white/60 pt-1">
+                  {hotel.phone && <a href={`tel:${hotel.phone}`} className="hover:text-accent">{hotel.phone}</a>}
+                  {hotel.email && <a href={`mailto:${hotel.email}`} className="hover:text-accent">{hotel.email}</a>}
                 </div>
               </div>
-
-              {/* Navigation Links Column */}
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Explore</h4>
-                <ul className="space-y-2.5 text-xs text-white/70">
+            ) : theme.footer_layout === 'simple' ? (
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 pb-10 border-b border-white/10">
+                <div className="space-y-1.5">
+                  <h3 className="text-lg font-bold tracking-widest uppercase text-accent font-hotel">
+                    {hotel.name}
+                  </h3>
+                  {hotel.address && <p className="text-xs text-white/60">{hotel.address}</p>}
+                </div>
+                <div className="flex flex-wrap gap-6 text-xs font-semibold tracking-widest uppercase text-white/75">
                   {navLinks.map((link) => (
-                    <li key={link.href}>
-                      <Link href={link.href} className="hover:text-accent transition-colors">
-                        {link.label}
-                      </Link>
-                    </li>
+                    <Link key={link.href} href={link.href} className="hover:text-accent transition-colors">
+                      {link.label}
+                    </Link>
                   ))}
-                </ul>
+                </div>
               </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-8 pb-12 border-b border-white/10">
+                {/* Hotel Intro */}
+                <div className="md:col-span-2 space-y-4">
+                  <h3 className="text-md font-bold tracking-widest uppercase text-accent font-hotel">
+                    {hotel.name}
+                  </h3>
+                  <p className="text-xs text-white/60 max-w-sm leading-relaxed">
+                    Experience a sanctuary where timeless luxury intersects with local soul. Our dedicated staff is committed to curating an unforgettable stay tailored to your every desire.
+                  </p>
+                  <div className="flex gap-4 pt-2">
+                    {Object.entries(hotel.social_links).map(([platform, url]) => {
+                      if (!url) return null;
+                      return (
+                        <a
+                          key={platform}
+                          href={url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-white/40 hover:text-accent transition-colors capitalize text-xs tracking-wider"
+                        >
+                          {platform}
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
 
-              {/* Contact Info Column */}
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Inquiries</h4>
-                <ul className="space-y-2.5 text-xs text-white/75">
-                  {hotel.phone && <li>Call: <a href={`tel:${hotel.phone}`} className="hover:text-accent transition-colors">{hotel.phone}</a></li>}
-                  {hotel.email && <li>Email: <a href={`mailto:${hotel.email}`} className="hover:text-accent transition-colors">{hotel.email}</a></li>}
-                  {hotel.address && <li className="text-white/55 leading-relaxed">Visit: {hotel.address}</li>}
-                </ul>
+                {/* Navigation Links Column */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Explore</h4>
+                  <ul className="space-y-2.5 text-xs text-white/70">
+                    {navLinks.map((link) => (
+                      <li key={link.href}>
+                        <Link href={link.href} className="hover:text-accent transition-colors">
+                          {link.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Contact Info Column */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold tracking-widest uppercase text-white/50">Inquiries</h4>
+                  <ul className="space-y-2.5 text-xs text-white/75">
+                    {hotel.phone && <li>Call: <a href={`tel:${hotel.phone}`} className="hover:text-accent transition-colors">{hotel.phone}</a></li>}
+                    {hotel.email && <li>Email: <a href={`mailto:${hotel.email}`} className="hover:text-accent transition-colors">{hotel.email}</a></li>}
+                    {hotel.address && <li className="text-white/55 leading-relaxed">Visit: {hotel.address}</li>}
+                  </ul>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Copyright Statement */}
             <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-white/40 tracking-wider font-medium">

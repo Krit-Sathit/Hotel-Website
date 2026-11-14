@@ -7,55 +7,74 @@ interface HotelThemeProviderProps {
 }
 
 export default function HotelThemeProvider({ theme, children }: HotelThemeProviderProps) {
-  // Map font families to Google Fonts import names
-  const fontImportName = theme.font_family ? theme.font_family.replace(/ /g, '+') : 'Inter';
-  
-  // Resolve button border radius based on style setting
-  const borderRadius = 
-    theme.button_style === 'square' 
-      ? '0px' 
-      : theme.button_style === 'pill' 
-        ? '9999px' 
-        : theme.border_radius || '6px';
+  const fontFamily = theme.font_family || 'Inter';
+  const fontImportName = fontFamily.replace(/ /g, '+');
 
-  // Inject CSS variables
+  const borderRadius =
+    theme.button_style === 'square'
+      ? '0px'
+      : theme.button_style === 'pill'
+      ? '9999px'
+      : theme.border_radius || '8px';
+
+  const isDark = Boolean(theme.dark_mode);
+  const bgColor = theme.background_color || (isDark ? '#0b0f19' : '#ffffff');
+  const textColor = theme.text_color || (isDark ? '#f8fafc' : '#0f172a');
+
   const cssVariables = `
     :root {
-      color-scheme: light;
+      color-scheme: ${isDark ? 'dark' : 'light'};
       --primary-color: ${theme.primary_color || '#0f172a'};
       --secondary-color: ${theme.secondary_color || '#475569'};
       --accent-color: ${theme.accent_color || '#c5a880'};
-      --background-color: #ffffff;
-      --text-color: ${theme.text_color || '#0f172a'};
+      --background-color: ${bgColor};
+      --text-color: ${textColor};
       --border-radius: ${borderRadius};
-      --font-family: '${theme.font_family || 'Inter'}', sans-serif;
+      --font-family: '${fontFamily}', sans-serif;
     }
-    
+
     body {
-      background-color: #ffffff !important;
-      color: var(--text-color) !important;
-      font-family: var(--font-family) !important;
+      background-color: ${bgColor} !important;
+      color: ${textColor} !important;
+      font-family: var(--font-family), sans-serif !important;
+    }
+
+    ${
+      isDark
+        ? `
+      .tenant-theme-root section.bg-white,
+      .tenant-theme-root section.bg-slate-50 {
+        background-color: ${bgColor} !important;
+        color: ${textColor} !important;
+      }
+      .tenant-theme-root .text-slate-800,
+      .tenant-theme-root .text-slate-900 {
+        color: ${textColor} !important;
+      }
+      .tenant-theme-root .text-slate-600,
+      .tenant-theme-root .text-slate-500 {
+        color: rgba(248, 250, 252, 0.72) !important;
+      }
+    `
+        : ''
     }
   `;
 
   return (
-    <>
-      {/* Preconnect to Google Fonts CDN for speed */}
+    <div className={`tenant-theme-root ${isDark ? 'dark' : ''}`}>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      
-      {/* Load Google Font dynamically */}
-      {theme.font_family && (
-        <link 
-          rel="stylesheet" 
+
+      {fontFamily && (
+        <link
+          rel="stylesheet"
           href={`https://fonts.googleapis.com/css2?family=${fontImportName}:wght@300;400;500;600;700&display=swap`}
         />
       )}
-      
-      {/* Inject Style Block containing active theme variables */}
+
       <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
-      
+
       {children}
-    </>
+    </div>
   );
 }

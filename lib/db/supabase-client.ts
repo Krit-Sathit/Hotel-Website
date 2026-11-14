@@ -220,13 +220,83 @@ export async function updateSupabaseHotelGeneralSettings(hotelId: string, data: 
   }
 }
 
-export async function updateSupabaseHotelTheme(hotelId: string, theme: any): Promise<any | null> {
+export async function updateSupabaseHotelTheme(
+  hotelId: string,
+  theme: any,
+  fallbackHotel?: Hotel | null
+): Promise<any | null> {
   try {
-    const res = await supabaseFetch(`/hotels?id=eq.${hotelId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ theme })
-    });
-    return (res && res.length > 0) ? res[0].theme : null;
+    if (isUuid(hotelId)) {
+      const res = await supabaseFetch(`/hotels?id=eq.${hotelId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ theme }),
+      });
+      if (res && res.length > 0) return res[0].theme;
+    }
+
+    const slug = fallbackHotel?.slug?.trim();
+    if (slug) {
+      const bySlug = await supabaseFetch(
+        `/hotels?slug=eq.${encodeURIComponent(slug)}&select=id`,
+        { method: 'GET' }
+      );
+      let targetUuid: string | null =
+        bySlug && bySlug.length > 0 ? bySlug[0].id : null;
+
+      if (!targetUuid) {
+        const allRows = await supabaseFetch('/hotels?select=id,slug', {
+          method: 'GET',
+        });
+        const normSlug = slug.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const matched = (allRows || []).find(
+          (r: any) =>
+            r.slug &&
+            r.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === normSlug
+        );
+        if (matched) targetUuid = matched.id;
+      }
+
+      if (targetUuid) {
+        const patched = await supabaseFetch(`/hotels?id=eq.${targetUuid}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ theme }),
+        });
+        if (patched && patched.length > 0) return patched[0].theme;
+      } else if (fallbackHotel) {
+        const inserted = await supabaseFetch('/hotels', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: fallbackHotel.name,
+            slug: fallbackHotel.slug,
+            custom_domain: fallbackHotel.custom_domain || null,
+            status: fallbackHotel.status || 'active',
+            logo_url: fallbackHotel.logo_url || null,
+            favicon_url: fallbackHotel.favicon_url || null,
+            email: fallbackHotel.email || '',
+            phone: fallbackHotel.phone || '',
+            address: fallbackHotel.address || '',
+            google_map_url: fallbackHotel.google_map_url || '',
+            social_links: fallbackHotel.social_links || {
+              facebook: '',
+              instagram: '',
+              whatsapp: '',
+              twitter: '',
+            },
+            theme,
+            homepage_layout: fallbackHotel.homepage_layout || [
+              'hero',
+              'about',
+              'rooms',
+              'facilities',
+              'contact',
+            ],
+          }),
+        });
+        if (inserted && inserted.length > 0) return inserted[0].theme;
+      }
+    }
+
+    return null;
   } catch (e) {
     console.error('updateSupabaseHotelTheme error:', e);
     return null;

@@ -39,6 +39,7 @@ import {
 
 // Define TS Interfaces for our database schema
 export interface HotelTheme {
+  template_id?: string;
   primary_color: string;
   secondary_color: string;
   accent_color: string;
@@ -845,7 +846,13 @@ export function normalizeFlowStayIdentifier(slugOrId: string): string {
   return FLOWSTAY_LEGACY_ALIASES[clean] || clean;
 }
 
+let hotelCustomizationCache: {
+  expiresAt: number;
+  byNormalizedSlug: Map<string, Partial<Hotel>>;
+} | null = null;
+
 export function clearFlowStayCache(slugOrId?: string) {
+  hotelCustomizationCache = null;
   if (!slugOrId) {
     flowStayBundleCache.clear();
     flowStayAllHotelsCache = null;
@@ -856,6 +863,64 @@ export function clearFlowStayCache(slugOrId?: string) {
   flowStayBundleCache.delete(rawKey);
   flowStayBundleCache.delete(key);
   flowStayAllHotelsCache = null;
+}
+
+async function getHotelCustomizationMap(): Promise<Map<string, Partial<Hotel>>> {
+  if (hotelCustomizationCache && hotelCustomizationCache.expiresAt > Date.now()) {
+    return hotelCustomizationCache.byNormalizedSlug;
+  }
+
+  const map = new Map<string, Partial<Hotel>>();
+  const norm = (s: string) => (s || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  // Local db overrides first
+  try {
+    const db = getDb();
+    for (const h of db.hotels || []) {
+      const k = norm(h.slug);
+      if (k && h.theme) {
+        map.set(k, { theme: h.theme, homepage_layout: h.homepage_layout });
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  // Supabase overrides take highest priority
+  if (isSupabaseConfigured) {
+    try {
+      const sbHotels = await getSupabaseAllHotels();
+      for (const h of sbHotels || []) {
+        const k = norm(h.slug);
+        if (k && h.theme) {
+          map.set(k, { theme: h.theme, homepage_layout: h.homepage_layout });
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  hotelCustomizationCache = {
+    expiresAt: Date.now() + FLOWSTAY_CACHE_TTL_MS,
+    byNormalizedSlug: map,
+  };
+  return map;
+}
+
+async function applyHotelThemeOverride(hotel: Hotel): Promise<Hotel> {
+  const normSlug = (hotel.slug || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!normSlug) return hotel;
+  const map = await getHotelCustomizationMap();
+  const override = map.get(normSlug);
+  if (!override?.theme) return hotel;
+  return {
+    ...hotel,
+    theme: {
+      ...hotel.theme,
+      ...override.theme,
+    },
+  };
 }
 
 function cacheFlowStayBundle(requestedKey: string, bundle: FlowStayWebsiteBundle | null) {
@@ -992,7 +1057,7 @@ export async function getHotelBySlug(slug: string): Promise<Hotel | null> {
   // 1. Primary Source: Live FlowStay Hotel Data (auto-generates website for any hotel in FlowStay)
   const flowstayBundle = await fetchFlowStayWebsiteBundle(slug);
   if (flowstayBundle?.hotel) {
-    return flowstayBundle.hotel;
+    return applyHotelThemeOverride(flowstayBundle.hotel);
   }
 
   // 2. Secondary Source: Supabase (for non-FlowStay custom hotels)
@@ -1046,13 +1111,13 @@ export async function getHotelByDomain(domain: string): Promise<Hotel | null> {
   // 1. Check FlowStay by custom domain or subdomain prefix
   const flowstayByDomain = await fetchFlowStayWebsiteBundle(normalized);
   if (flowstayByDomain?.hotel) {
-    return flowstayByDomain.hotel;
+    return applyHotelThemeOverride(flowstayByDomain.hotel);
   }
   const firstPart = normalized.split('.')[0];
   if (firstPart && firstPart !== normalized) {
     const flowstayBySubdomain = await fetchFlowStayWebsiteBundle(firstPart);
     if (flowstayBySubdomain?.hotel) {
-      return flowstayBySubdomain.hotel;
+      return applyHotelThemeOverride(flowstayBySubdomain.hotel);
     }
   }
 
@@ -1347,20 +1412,51 @@ export async function saveContactMessage(hotelId: string, data: Omit<ContactMess
 }
 
 export async function updateHotelTheme(hotelId: string, theme: Partial<HotelTheme>): Promise<HotelTheme> {
-  if (isSupabaseConfigured) {
-    const updated = await updateSupabaseHotelTheme(hotelId, theme);
-    if (updated) return updated;
-  }
-  const db = getDb();
-  const hotelIndex = db.hotels.findIndex(h => h.id === hotelId);
-  if (hotelIndex === -1) throw new Error('Hotel not found');
-  
-  db.hotels[hotelIndex].theme = {
-    ...db.hotels[hotelIndex].theme,
-    ...theme
+  const currentHotel = await getHotelBySlug(hotelId);
+  const mergedTheme: HotelTheme = {
+    primary_color: '#0f172a',
+    secondary_color: '#475569',
+    accent_color: '#c5a880',
+    background_color: '#ffffff',
+    text_color: '#0f172a',
+    button_style: 'rounded',
+    border_radius: '8px',
+    font_family: 'Inter',
+    dark_mode: false,
+    header_layout: 'minimal',
+    footer_layout: 'simple',
+    animation_style: 'fade',
+    ...(currentHotel?.theme || {}),
+    ...theme,
   };
+
+  if (isSupabaseConfigured) {
+    const updated = await updateSupabaseHotelTheme(hotelId, mergedTheme, currentHotel);
+    if (updated) {
+      hotelCustomizationCache = null;
+      return updated;
+    }
+  }
+
+  const db = getDb();
+  const normSlug = (currentHotel?.slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const hotelIndex = db.hotels.findIndex(
+    (h) =>
+      h.id === hotelId ||
+      (normSlug && h.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === normSlug)
+  );
+
+  if (hotelIndex !== -1) {
+    db.hotels[hotelIndex].theme = mergedTheme;
+  } else if (currentHotel) {
+    db.hotels.push({
+      ...currentHotel,
+      theme: mergedTheme,
+    });
+  }
   saveDb(db);
-  return db.hotels[hotelIndex].theme;
+  hotelCustomizationCache = null;
+  return mergedTheme;
 }
 
 export async function updateHotelGeneralSettings(hotelId: string, data: Partial<Omit<Hotel, 'id' | 'theme' | 'homepage_layout' | 'slug'>>): Promise<Hotel> {
