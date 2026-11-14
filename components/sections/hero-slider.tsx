@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, MousePointerClick } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { HeroSlide } from '@/lib/db/mock-data';
 
 interface HeroSliderProps {
@@ -10,7 +10,7 @@ interface HeroSliderProps {
   bookingUrl: string;
 }
 
-export default function HeroSlider({ slides, hotelId, bookingUrl }: HeroSliderProps) {
+export default function HeroSlider({ slides }: HeroSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
 
@@ -49,19 +49,8 @@ export default function HeroSlider({ slides, hotelId, bookingUrl }: HeroSliderPr
 
   if (!slides || slides.length === 0) return null;
 
-  const currentSlide = slides[currentIndex];
-
-  // Helper to convert hex overlay color to rgb/rgba
-  const getOverlayStyle = (hex: string, opacity: number) => {
-    return {
-      backgroundColor: hex || '#000000',
-      opacity: opacity !== undefined ? opacity : 0.4,
-    };
-  };
-
   return (
     <section className="relative w-full h-auto aspect-video md:h-[92vh] md:aspect-auto overflow-hidden bg-slate-900 select-none">
-      
       {/* BACKGROUND SLIDES */}
       {slides.map((slide, index) => (
         <div
@@ -93,52 +82,6 @@ export default function HeroSlider({ slides, hotelId, bookingUrl }: HeroSliderPr
               />
             </>
           ) : null}
-
-          {/* Color Overlay */}
-          <div
-            className="absolute inset-0 transition-opacity duration-1000"
-            style={getOverlayStyle(slide.overlay_color, slide.overlay_opacity)}
-          />
-
-          {/* CONTENT CARD (Centering on the screen) */}
-          <div className="absolute inset-0 z-20 flex items-center justify-center text-center px-6">
-            <div className="max-w-4xl space-y-4 md:space-y-6 flex flex-col items-center">
-              
-              {/* Animated Subtitle */}
-              {slide.subheadline && (
-                <p className="text-xs md:text-sm tracking-[0.3em] font-semibold text-white/80 uppercase animate-fade-in font-sans">
-                  {slide.subheadline}
-                </p>
-              )}
-
-              {/* Animated Headline */}
-              {slide.headline && (
-                <h1 className="text-3xl md:text-6xl font-light tracking-widest text-white leading-tight font-hotel capitalize">
-                  {slide.headline}
-                </h1>
-              )}
-
-              {/* Decorative Divider */}
-              <div className="w-12 h-[1px] bg-accent/80 my-2" />
-
-              {/* Action Button */}
-              {slide.button_text && (
-                <a
-                  href={
-                    !slide.button_link ||
-                    slide.button_link === '#booking' ||
-                    slide.button_link.includes('flowstay.live')
-                      ? bookingUrl
-                      : slide.button_link
-                  }
-                  className="hidden md:inline-flex items-center gap-2 border border-white/30 bg-white/5 hover:bg-white text-white hover:text-primary transition-all duration-300 font-semibold text-[10px] md:text-xs tracking-[0.2em] uppercase py-3.5 px-8 rounded-hotel mt-4 shadow-lg backdrop-blur-sm"
-                >
-                  {slide.button_text}
-                  <MousePointerClick className="w-3.5 h-3.5" />
-                </a>
-              )}
-            </div>
-          </div>
         </div>
       ))}
 
@@ -148,7 +91,7 @@ export default function HeroSlider({ slides, hotelId, bookingUrl }: HeroSliderPr
           {/* Left Arrow */}
           <button
             onClick={prevSlide}
-            className="absolute left-6 top-1/2 -translate-y-1/2 z-30 p-2 border border-white/20 bg-black/10 hover:bg-white hover:text-primary text-white rounded-full transition-all duration-300 backdrop-blur-sm"
+            className="absolute left-6 top-1/2 -translate-y-1/2 z-30 p-2 border border-white/30 bg-black/25 hover:bg-white hover:text-primary text-white rounded-full transition-all duration-300 backdrop-blur-sm cursor-pointer"
             aria-label="Previous Slide"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -157,7 +100,7 @@ export default function HeroSlider({ slides, hotelId, bookingUrl }: HeroSliderPr
           {/* Right Arrow */}
           <button
             onClick={nextSlide}
-            className="absolute right-6 top-1/2 -translate-y-1/2 z-30 p-2 border border-white/20 bg-black/10 hover:bg-white hover:text-primary text-white rounded-full transition-all duration-300 backdrop-blur-sm"
+            className="absolute right-6 top-1/2 -translate-y-1/2 z-30 p-2 border border-white/30 bg-black/25 hover:bg-white hover:text-primary text-white rounded-full transition-all duration-300 backdrop-blur-sm cursor-pointer"
             aria-label="Next Slide"
           >
             <ChevronRight className="w-5 h-5" />
@@ -172,8 +115,8 @@ export default function HeroSlider({ slides, hotelId, bookingUrl }: HeroSliderPr
                   setPreviousIndex(currentIndex);
                   setCurrentIndex(index);
                 }}
-                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                  index === currentIndex ? 'bg-accent w-6' : 'bg-white/40'
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  index === currentIndex ? 'bg-accent w-6' : 'bg-white/60'
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
