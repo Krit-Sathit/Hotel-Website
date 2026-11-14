@@ -394,7 +394,9 @@ export default function HotelBookingEngine({
   const serviceChargeAmount = Math.round(netBeforeTax * (serviceChargeRate / 100));
   const taxAmount = Math.round(grandTotal - netBeforeTax - serviceChargeAmount);
 
-  const isFullPayment = hotelData?.paymentModel === 'option1_full_service';
+  const isFullPayment =
+    hotelData?.paymentModel === 'option1_full_service' ||
+    hotelData?.paymentModel === 'option3_flowstay_collect_90_10';
   const depositAmount = Math.round(grandTotal * 0.05 * 100) / 100;
   const balanceAtHotel = Math.round((grandTotal - depositAmount) * 100) / 100;
 

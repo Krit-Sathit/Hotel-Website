@@ -116,6 +116,7 @@ export default function BookingConfirmationView({ bookingId }: BookingConfirmati
   const currency = booking.currency || 'THB';
   const formatPrice = (val: number) => `${currency} ${Math.round(val).toLocaleString()}`;
   const totalAmount = Number(booking.totalAmount) || 0;
+  const isFullPayment = Number(booking.hotelPayoutAmount) > 0;
   const deposit = Math.round(totalAmount * 0.05 * 100) / 100;
   const remaining = Math.round((totalAmount - deposit) * 100) / 100;
 
@@ -279,15 +280,31 @@ export default function BookingConfirmationView({ bookingId }: BookingConfirmati
               <span>{formatPrice(totalAmount)}</span>
             </div>
 
-            <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex justify-between items-center font-semibold text-emerald-800">
-              <span>✓ 5% Deposit (Online)</span>
-              <span>{formatPrice(deposit)}</span>
-            </div>
+            {isFullPayment ? (
+              <>
+                <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex justify-between items-center font-semibold text-emerald-800">
+                  <span>✓ 100% Full Payment (Paid Online)</span>
+                  <span>{formatPrice(totalAmount)}</span>
+                </div>
 
-            <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 flex justify-between items-center font-bold text-amber-900">
-              <span>Balance Due at Hotel (at check-in)</span>
-              <span className="text-sm">{formatPrice(remaining)}</span>
-            </div>
+                <div className="rounded-xl bg-emerald-50/60 border border-emerald-200/70 p-3 flex justify-between items-center font-bold text-emerald-900">
+                  <span>Balance Due at Hotel (at check-in)</span>
+                  <span className="text-sm">{formatPrice(0)}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex justify-between items-center font-semibold text-emerald-800">
+                  <span>✓ 5% Deposit (Online)</span>
+                  <span>{formatPrice(deposit)}</span>
+                </div>
+
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 flex justify-between items-center font-bold text-amber-900">
+                  <span>Balance Due at Hotel (at check-in)</span>
+                  <span className="text-sm">{formatPrice(remaining)}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
