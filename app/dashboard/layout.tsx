@@ -50,7 +50,10 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     redirect('/auth/login');
   }
 
-  const hotelsList = allHotels.map(h => ({ id: h.id, name: h.name }));
+  const hotelsList =
+    userRole === 'super_admin'
+      ? allHotels.map(h => ({ id: h.id, name: h.name }))
+      : [{ id: hotel.id, name: hotel.name }];
 
   // Sidebar navigation menu items
   const menuItems = [
@@ -91,12 +94,14 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
         {/* Dynamic Tenant Selector Dropdown */}
         <div className="p-4 border-b border-slate-100 space-y-2">
           <TenantSelector currentHotelId={hotel.id} currentHotelName={hotel.name} hotels={hotelsList} />
-          <Link
-            href="/auth/signup"
-            className="flex items-center justify-center gap-1.5 w-full py-2 border border-dashed border-slate-200 hover:border-accent hover:bg-accent/5 text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-accent rounded-lg transition-all"
-          >
-            <span>+ Add Another Hotel</span>
-          </Link>
+          {userRole === 'super_admin' && (
+            <Link
+              href="/auth/signup"
+              className="flex items-center justify-center gap-1.5 w-full py-2 border border-dashed border-slate-200 hover:border-accent hover:bg-accent/5 text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-accent rounded-lg transition-all"
+            >
+              <span>+ Add Another Hotel</span>
+            </Link>
+          )}
         </div>
 
         {/* Sidebar Nav items */}
