@@ -281,17 +281,10 @@ export default function BookingConfirmationView({ bookingId }: BookingConfirmati
             </div>
 
             {isFullPayment ? (
-              <>
-                <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex justify-between items-center font-semibold text-emerald-800">
-                  <span>✓ 100% Full Payment (Paid Online)</span>
-                  <span>{formatPrice(totalAmount)}</span>
-                </div>
-
-                <div className="rounded-xl bg-emerald-50/60 border border-emerald-200/70 p-3 flex justify-between items-center font-bold text-emerald-900">
-                  <span>Balance Due at Hotel (at check-in)</span>
-                  <span className="text-sm">{formatPrice(0)}</span>
-                </div>
-              </>
+              <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex justify-between items-center font-semibold text-emerald-800">
+                <span>✓ 100% Full Payment (Paid Online)</span>
+                <span>{formatPrice(totalAmount)}</span>
+              </div>
             ) : (
               <>
                 <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex justify-between items-center font-semibold text-emerald-800">

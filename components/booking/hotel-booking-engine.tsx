@@ -1362,16 +1362,10 @@ export default function HotelBookingEngine({
                   </div>
 
                   {isFullPayment ? (
-                    <>
-                      <div className="mt-3 rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex justify-between items-center text-emerald-800 font-bold">
-                        <span>Pay Online Now (100%)</span>
-                        <span className="text-sm">{formatPrice(grandTotal)}</span>
-                      </div>
-                      <div className="rounded-xl bg-emerald-50/60 border border-emerald-200/70 p-3 flex justify-between items-center text-emerald-800 font-semibold">
-                        <span>Balance at Hotel</span>
-                        <span>{formatPrice(0)}</span>
-                      </div>
-                    </>
+                    <div className="mt-3 rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex justify-between items-center text-emerald-800 font-bold">
+                      <span>Pay Online Now (100%)</span>
+                      <span className="text-sm">{formatPrice(grandTotal)}</span>
+                    </div>
                   ) : (
                     <>
                       <div className="mt-3 rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex justify-between items-center text-emerald-800 font-bold">
