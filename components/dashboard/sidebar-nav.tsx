@@ -16,7 +16,11 @@ import {
   Loader2,
 } from 'lucide-react';
 import type { Hotel } from '@/lib/db/mock-data';
-import { seedAdminHotel, loadAdminBundle } from '@/lib/admin-client-cache';
+import {
+  seedAdminHotel,
+  loadAdminBundle,
+  getActiveHotelCookieId,
+} from '@/lib/admin-client-cache';
 
 interface SidebarNavProps {
   initialHotel: Hotel;
@@ -40,6 +44,14 @@ export default function SidebarNav({ initialHotel }: SidebarNavProps) {
 
   // Seed initial hotel synchronously in effect and warm up full admin bundle
   useEffect(() => {
+    const cookieId = getActiveHotelCookieId();
+    if (
+      cookieId !== initialHotel.id &&
+      cookieId !== initialHotel.slug &&
+      !(cookieId === 'theparphuket' && initialHotel.slug === 'theparphuket')
+    ) {
+      return;
+    }
     seedAdminHotel(initialHotel);
     const timer = setTimeout(() => {
       void loadAdminBundle({ hotelId: initialHotel.id });
