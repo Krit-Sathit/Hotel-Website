@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { Maximize2 } from 'lucide-react';
 import { GalleryPhoto } from '@/lib/db/mock-data';
+import { SwipeablePhotoSlider, SwipeableLightbox } from '@/components/ui/swipeable-photo-slider';
 
 interface GallerySectionProps {
   photos: GalleryPhoto[];
@@ -13,6 +14,7 @@ interface GallerySectionProps {
 
 export default function GallerySection({ photos, limit, showFilters = true, rooms = [] }: GallerySectionProps) {
   const [activeCategory, setActiveCategory] = useState('All');
+  const [mobileSliderIdx, setMobileSliderIdx] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   // Helper to determine if alt text is a user-entered description vs auto-generated filename / machine ID
@@ -185,8 +187,56 @@ export default function GallerySection({ photos, limit, showFilters = true, room
           </div>
         )}
 
+        {/* MOBILE FEATURED FINGER-SWIPEABLE CAROUSEL (< sm) */}
+        {displayedPhotos.length > 1 && (
+          <div className="sm:hidden space-y-2.5">
+            <div className="aspect-[4/3] rounded-hotel overflow-hidden shadow-md bg-slate-200">
+              <SwipeablePhotoSlider
+                photos={displayedPhotos.map((p) => p.image_url)}
+                alt={`${activeCategory} Gallery`}
+                className="w-full h-full"
+                controlledIndex={mobileSliderIdx % displayedPhotos.length}
+                onIndexChange={setMobileSliderIdx}
+                arrowsMode="none"
+                showCounter={true}
+                counterPositionClass="top-3 right-3"
+                onTapPhoto={(idx) => {
+                  const target = displayedPhotos[idx];
+                  if (target) openLightbox(target.id);
+                }}
+              />
+            </div>
+            <div
+              className="flex items-center gap-2 overflow-x-auto py-1"
+              style={{ touchAction: 'pan-x', scrollbarWidth: 'none' }}
+            >
+              {displayedPhotos.map((photo, idx) => (
+                <button
+                  key={photo.id}
+                  type="button"
+                  onClick={() => setMobileSliderIdx(idx)}
+                  className={`w-16 h-12 rounded-md overflow-hidden shrink-0 cursor-pointer transition-all ${
+                    idx === mobileSliderIdx % displayedPhotos.length
+                      ? 'ring-2 ring-primary opacity-100'
+                      : 'opacity-55'
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo.image_url}
+                    alt=""
+                    loading="lazy"
+                    draggable={false}
+                    className="w-full h-full object-cover pointer-events-none"
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* PHOTOS GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayedPhotos.map((photo) => {
             const roomTypeName = photo.category.toLowerCase() === 'rooms' ? getPhotoRoomTypeName(photo.image_url) : null;
             return (
@@ -222,68 +272,34 @@ export default function GallerySection({ photos, limit, showFilters = true, room
           })}
         </div>
 
-        {/* LIGHTBOX MODAL */}
-        {lightboxIndex !== null && (() => {
-          const currentPhoto = filteredPhotos[lightboxIndex];
-          const roomTypeName = currentPhoto.category.toLowerCase() === 'rooms' ? getPhotoRoomTypeName(currentPhoto.image_url) : null;
-          return (
-            <div 
-              className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 select-none animate-fade-in"
-              onClick={closeLightbox}
-            >
-              {/* Close Button */}
-              <button
-                onClick={closeLightbox}
-                className="absolute top-6 right-6 z-55 p-2 bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors border border-white/10"
-                aria-label="Close Lightbox"
-              >
-                <X className="w-6 h-6" />
-              </button>
-
-              {/* Previous Button */}
-              <button
-                onClick={prevPhoto}
-                className="absolute left-4 md:left-8 p-2.5 bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors border border-white/10"
-                aria-label="Previous Photo"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-
-              {/* Current Image Container */}
-              <div className="max-w-5xl max-h-[85vh] flex flex-col items-center gap-4 relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={currentPhoto.image_url}
-                  alt={isValidAltText(currentPhoto.alt_text) ? currentPhoto.alt_text : `${currentPhoto.category} Photo`}
-                  className="max-w-full max-h-[80vh] object-contain rounded-md shadow-2xl"
-                  onClick={(e) => e.stopPropagation()} // Prevent closing
-                />
-                
-                {/* Caption */}
-                <div className="text-center text-white/85 text-xs md:text-sm tracking-wide">
-                  <span className="text-accent/90 font-bold uppercase tracking-widest text-[10px] mr-2">
-                    [{currentPhoto.category}{roomTypeName ? ` - ${roomTypeName}` : ''}]
-                  </span>
-                  {isValidAltText(currentPhoto.alt_text) && (
-                    <span className="mr-2">{currentPhoto.alt_text}</span>
-                  )}
-                  <span className="text-white/40">
-                    ({lightboxIndex + 1} of {filteredPhotos.length})
-                  </span>
-                </div>
-              </div>
-
-              {/* Next Button */}
-              <button
-                onClick={nextPhoto}
-                className="absolute right-4 md:right-8 p-2.5 bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors border border-white/10"
-                aria-label="Next Photo"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            </div>
-          );
-        })()}
+        {/* SWIPEABLE LIGHTBOX MODAL */}
+        <SwipeableLightbox
+          open={lightboxIndex !== null && filteredPhotos.length > 0}
+          photos={filteredPhotos.map((p) => p.image_url)}
+          index={lightboxIndex ?? 0}
+          title={activeCategory === 'All' ? 'Gallery' : activeCategory}
+          renderCaption={(idx) => {
+            const currentPhoto = filteredPhotos[idx];
+            if (!currentPhoto) return null;
+            const roomTypeName =
+              currentPhoto.category.toLowerCase() === 'rooms'
+                ? getPhotoRoomTypeName(currentPhoto.image_url)
+                : null;
+            return (
+              <>
+                <span className="text-accent/90 font-bold uppercase tracking-widest text-[10px] mr-2">
+                  [{currentPhoto.category}
+                  {roomTypeName ? ` - ${roomTypeName}` : ''}]
+                </span>
+                {isValidAltText(currentPhoto.alt_text) && (
+                  <span className="mr-2">{currentPhoto.alt_text}</span>
+                )}
+              </>
+            );
+          }}
+          onIndexChange={(idx) => setLightboxIndex(idx)}
+          onClose={closeLightbox}
+        />
 
       </div>
     </section>

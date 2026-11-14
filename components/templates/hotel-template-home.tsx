@@ -34,6 +34,7 @@ import {
   type HotelWebsiteTemplate,
 } from '@/lib/hotel-templates';
 import { deriveSurfacePalette, withAlpha } from '@/lib/color-utils';
+import { SwipeablePhotoSlider, SwipeableLightbox } from '@/components/ui/swipeable-photo-slider';
 import TemplateBookingForm from './template-booking-form';
 import PromotionsSection from '@/components/sections/promotions-section';
 import LocationSection from '@/components/sections/location-section';
@@ -83,6 +84,7 @@ export default function HotelTemplateHome({
   const template = templateOverride || getTemplateByTheme(activeTheme);
 
   const [slideIdx, setSlideIdx] = useState(0);
+  const [galleryIdx, setGalleryIdx] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
@@ -119,17 +121,38 @@ export default function HotelTemplateHome({
     }
     for (const g of gallery) {
       const u = cleanImg(g.image_url);
-      if (u && !list.includes(u) && list.length < 10) list.push(u);
+      if (u && !list.includes(u) && list.length < 12) list.push(u);
     }
     for (const r of rooms) {
       for (const img of r.gallery || []) {
         const u = cleanImg(img);
-        if (u && !list.includes(u) && list.length < 10) list.push(u);
+        if (u && !list.includes(u) && list.length < 12) list.push(u);
       }
     }
     if (list.length === 0) list.push(template.fallbackHeroImage);
     return list;
   }, [slides, gallery, rooms, template.fallbackHeroImage]);
+
+  // Expanded gallery pool for Property Gallery carousel & Lightbox
+  const galleryPhotosPool = useMemo(() => {
+    const list: string[] = [];
+    for (const g of gallery) {
+      const u = cleanImg(g.image_url);
+      if (u && !list.includes(u) && list.length < 24) list.push(u);
+    }
+    for (const s of slides) {
+      const u = cleanImg(s.image_url);
+      if (u && !list.includes(u) && list.length < 24) list.push(u);
+    }
+    for (const r of rooms) {
+      for (const img of r.gallery || []) {
+        const u = cleanImg(img);
+        if (u && !list.includes(u) && list.length < 24) list.push(u);
+      }
+    }
+    if (list.length === 0) return heroPhotos;
+    return list;
+  }, [gallery, slides, rooms, heroPhotos]);
 
   const currentHeroImg = heroPhotos[slideIdx % heroPhotos.length] || template.fallbackHeroImage;
 
@@ -723,7 +746,7 @@ export default function HotelTemplateHome({
   };
 
   // =========================================================================
-  // 16 DISTINCT HERO COMPOSITIONS (100% Container-Query Mobile Responsive)
+  // 16 DISTINCT HERO COMPOSITIONS (100% Container-Query Mobile + Touch Finger-Swipe)
   // =========================================================================
   const renderHero = () => {
     switch (template.heroLayout) {
@@ -732,34 +755,19 @@ export default function HotelTemplateHome({
         return (
           <section className="w-full border-b" style={{ borderColor: cardBorder }}>
             <div className="max-w-7xl mx-auto grid grid-cols-1 @5xl:grid-cols-12 @5xl:min-h-[560px]">
-              {/* Photo first on mobile, right 50% on desktop */}
+              {/* Photo first on mobile (Swipeable with finger!), right 50% on desktop */}
               <div className="@5xl:col-span-6 @5xl:order-2 relative h-[260px] @3xl:h-[380px] @5xl:h-auto overflow-hidden bg-slate-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={currentHeroImg}
+                <SwipeablePhotoSlider
+                  photos={heroPhotos}
                   alt={hotel.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full"
+                  controlledIndex={slideIdx}
+                  onIndexChange={setSlideIdx}
+                  arrowsMode="bottom-right"
+                  showCounter={heroPhotos.length > 1}
+                  counterPositionClass="top-3 right-3"
+                  onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
                 />
-                {heroPhotos.length > 1 && (
-                  <div className="absolute bottom-4 right-4 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSlideIdx((p) => (p - 1 + heroPhotos.length) % heroPhotos.length)
-                      }
-                      className="p-2 bg-white/90 text-slate-900 rounded-lg shadow-md cursor-pointer"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSlideIdx((p) => (p + 1) % heroPhotos.length)}
-                      className="p-2 bg-white/90 text-slate-900 rounded-lg shadow-md cursor-pointer"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
               </div>
 
               {/* Left 50%: Editorial Typography + Direct Booking Card */}
@@ -800,11 +808,17 @@ export default function HotelTemplateHome({
           <section className="px-3 @3xl:px-8 pt-3 @3xl:pt-4 pb-8 @3xl:pb-12">
             <div className="max-w-7xl mx-auto relative">
               <div className="relative h-[260px] @3xl:h-[520px] rounded-[22px] @3xl:rounded-[28px] overflow-hidden shadow-xl bg-slate-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={currentHeroImg}
+                <SwipeablePhotoSlider
+                  photos={heroPhotos}
                   alt={hotel.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full"
+                  controlledIndex={slideIdx}
+                  onIndexChange={setSlideIdx}
+                  arrowsMode="desktop-hover"
+                  dotsBottomClass="bottom-9 @3xl:bottom-12"
+                  showCounter={heroPhotos.length > 1}
+                  counterPositionClass="top-3 right-3"
+                  onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
                 />
               </div>
               <div className="-mt-6 @3xl:-mt-10 relative z-20 px-2 @3xl:px-4">
@@ -839,11 +853,16 @@ export default function HotelTemplateHome({
                   className="col-span-12 @3xl:col-span-8 relative overflow-hidden shadow-xl border-2"
                   style={{ borderColor: withAlpha(accentColor, 0.45) }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={currentHeroImg}
+                  <SwipeablePhotoSlider
+                    photos={heroPhotos}
                     alt={hotel.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full"
+                    controlledIndex={slideIdx}
+                    onIndexChange={setSlideIdx}
+                    arrowsMode="desktop-hover"
+                    showCounter={heroPhotos.length > 1}
+                    counterPositionClass="top-3 right-3"
+                    onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
                   />
                 </div>
                 <div className="hidden @3xl:block col-span-2 overflow-hidden opacity-85">
@@ -911,17 +930,17 @@ export default function HotelTemplateHome({
               </button>
             </div>
 
-            {/* Mobile: 1 Hero + 2 Sub-Thumbs | Desktop (@3xl+): 5-Photo Collage Grid */}
+            {/* Mobile: Swipeable Hero + 2 Sub-Thumbs | Desktop (@3xl+): 5-Photo Collage Grid */}
             <div className="grid grid-cols-2 @3xl:grid-cols-4 gap-2 @3xl:gap-2.5 @3xl:h-[460px] rounded-2xl overflow-hidden">
-              <div
-                onClick={() => openLightbox(heroPhotos, 0, hotel.name)}
-                className="col-span-2 @3xl:row-span-2 h-52 @3xl:h-full relative overflow-hidden cursor-pointer group bg-slate-200"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={heroPhotos[0]}
+              <div className="col-span-2 @3xl:row-span-2 h-56 @3xl:h-full relative overflow-hidden bg-slate-200">
+                <SwipeablePhotoSlider
+                  photos={heroPhotos}
                   alt={hotel.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full"
+                  arrowsMode="desktop-hover"
+                  showCounter={heroPhotos.length > 1}
+                  counterPositionClass="top-3 right-3"
+                  onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
                 />
               </div>
               {[1, 2, 3, 4].map((offset) => (
@@ -959,11 +978,16 @@ export default function HotelTemplateHome({
                 <span style={{ color: accentColor }}>Sanctuary of Calm</span>
               </div>
               <div className="flex-1 h-[260px] @3xl:h-[500px] overflow-hidden bg-slate-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={currentHeroImg}
+                <SwipeablePhotoSlider
+                  photos={heroPhotos}
                   alt={hotel.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full"
+                  controlledIndex={slideIdx}
+                  onIndexChange={setSlideIdx}
+                  arrowsMode="desktop-hover"
+                  showCounter={heroPhotos.length > 1}
+                  counterPositionClass="top-3 right-3"
+                  onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
                 />
               </div>
             </div>
@@ -983,11 +1007,17 @@ export default function HotelTemplateHome({
         return (
           <section className="pb-6 @3xl:pb-10">
             <div className="relative h-[280px] @3xl:h-[520px] w-full overflow-hidden rounded-b-[32px] @3xl:rounded-b-[80px] shadow-lg bg-slate-200">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={currentHeroImg}
+              <SwipeablePhotoSlider
+                photos={heroPhotos}
                 alt={hotel.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full"
+                controlledIndex={slideIdx}
+                onIndexChange={setSlideIdx}
+                arrowsMode="desktop-hover"
+                dotsBottomClass="bottom-9 @3xl:bottom-12"
+                showCounter={heroPhotos.length > 1}
+                counterPositionClass="top-3 right-3"
+                onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
               />
             </div>
             <div className="-mt-6 @3xl:-mt-9 relative z-20 px-4 @3xl:px-6">
@@ -1009,15 +1039,21 @@ export default function HotelTemplateHome({
           <section className="p-4 @3xl:p-10 space-y-5 @3xl:space-y-6">
             <div className="grid grid-cols-1 @5xl:grid-cols-12 gap-3 @3xl:gap-4 h-auto @5xl:h-[460px]">
               <div className="@5xl:col-span-8 h-[250px] @3xl:h-[340px] @5xl:h-full overflow-hidden bg-slate-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={heroPhotos[0]}
+                <SwipeablePhotoSlider
+                  photos={heroPhotos}
                   alt={hotel.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full"
+                  arrowsMode="desktop-hover"
+                  showCounter={heroPhotos.length > 1}
+                  counterPositionClass="top-3 right-3"
+                  onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
                 />
               </div>
               <div className="@5xl:col-span-4 grid grid-cols-2 @5xl:grid-cols-1 gap-3 @3xl:gap-4 h-full">
-                <div className="h-28 @3xl:h-40 @5xl:h-full overflow-hidden bg-slate-200">
+                <div
+                  onClick={() => openLightbox(heroPhotos, 1 % heroPhotos.length, hotel.name)}
+                  className="h-28 @3xl:h-40 @5xl:h-full overflow-hidden bg-slate-200 cursor-pointer"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={heroPhotos[1 % heroPhotos.length]}
@@ -1025,7 +1061,10 @@ export default function HotelTemplateHome({
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="h-28 @3xl:h-40 @5xl:h-full overflow-hidden bg-slate-200">
+                <div
+                  onClick={() => openLightbox(heroPhotos, 2 % heroPhotos.length, hotel.name)}
+                  className="h-28 @3xl:h-40 @5xl:h-full overflow-hidden bg-slate-200 cursor-pointer"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={heroPhotos[2 % heroPhotos.length]}
@@ -1052,8 +1091,15 @@ export default function HotelTemplateHome({
           <section className="max-w-7xl mx-auto px-4 @3xl:px-6 py-5 @3xl:py-8 space-y-6 @3xl:space-y-8">
             <div className="grid grid-cols-1 @5xl:grid-cols-12 gap-5 @3xl:gap-6 items-stretch">
               <div className="order-1 @5xl:order-2 @5xl:col-span-6 h-[260px] @3xl:h-[420px] @5xl:h-[480px] overflow-hidden bg-slate-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={heroPhotos[0]} alt={hotel.name} className="w-full h-full object-cover" />
+                <SwipeablePhotoSlider
+                  photos={heroPhotos}
+                  alt={hotel.name}
+                  className="w-full h-full"
+                  arrowsMode="desktop-hover"
+                  showCounter={heroPhotos.length > 1}
+                  counterPositionClass="top-3 right-3"
+                  onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
+                />
               </div>
 
               <div
@@ -1074,7 +1120,10 @@ export default function HotelTemplateHome({
                     {aboutData.description}
                   </p>
                 </div>
-                <div className="h-36 overflow-hidden bg-slate-200">
+                <div
+                  onClick={() => openLightbox(heroPhotos, 1 % heroPhotos.length, hotel.name)}
+                  className="h-36 overflow-hidden bg-slate-200 cursor-pointer"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={heroPhotos[1 % heroPhotos.length]} alt="" className="w-full h-full object-cover" />
                 </div>
@@ -1084,7 +1133,10 @@ export default function HotelTemplateHome({
                 className="order-3 @5xl:col-span-3 flex flex-col justify-between border-y py-4 @3xl:py-5 text-left space-y-4"
                 style={{ borderColor: cardBorder }}
               >
-                <div className="h-36 overflow-hidden bg-slate-200">
+                <div
+                  onClick={() => openLightbox(heroPhotos, 2 % heroPhotos.length, hotel.name)}
+                  className="h-36 overflow-hidden bg-slate-200 cursor-pointer"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={heroPhotos[2 % heroPhotos.length]} alt="" className="w-full h-full object-cover" />
                 </div>
@@ -1120,11 +1172,21 @@ export default function HotelTemplateHome({
       case 'booking-card-hero':
         return (
           <section className="w-full">
-            {/* Mobile (< @5xl): Clean Hero Banner + Booking Card neatly stacked below */}
+            {/* Mobile (< @5xl): Finger-Swipeable Hero Banner + Booking Card neatly stacked below */}
             <div className="@5xl:hidden">
               <div className="h-[260px] w-full overflow-hidden bg-slate-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={currentHeroImg} alt={hotel.name} className="w-full h-full object-cover" />
+                <SwipeablePhotoSlider
+                  photos={heroPhotos}
+                  alt={hotel.name}
+                  className="w-full h-full"
+                  controlledIndex={slideIdx}
+                  onIndexChange={setSlideIdx}
+                  arrowsMode="desktop-hover"
+                  dotsBottomClass="bottom-10"
+                  showCounter={heroPhotos.length > 1}
+                  counterPositionClass="top-3 right-3"
+                  onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
+                />
               </div>
               <div className="px-4 -mt-8 relative z-10 pb-4">
                 <TemplateBookingForm
@@ -1140,15 +1202,19 @@ export default function HotelTemplateHome({
 
             {/* Desktop (@5xl+): Full Hero with Right Floating Vertical Check-In Card */}
             <div className="hidden @5xl:flex relative w-full min-h-[540px] items-center py-12 px-6 overflow-hidden bg-slate-900">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={currentHeroImg}
-                alt={hotel.name}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              <div className="relative z-10 max-w-7xl mx-auto w-full grid grid-cols-12 gap-8 items-center">
+              <div className="absolute inset-0">
+                <SwipeablePhotoSlider
+                  photos={heroPhotos}
+                  alt={hotel.name}
+                  className="w-full h-full"
+                  controlledIndex={slideIdx}
+                  onIndexChange={setSlideIdx}
+                  arrowsMode="always"
+                />
+              </div>
+              <div className="relative z-10 max-w-7xl mx-auto w-full grid grid-cols-12 gap-8 items-center pointer-events-none">
                 <div className="col-span-7" />
-                <div className="col-span-5">
+                <div className="col-span-5 pointer-events-auto">
                   <TemplateBookingForm
                     hotelId={hotel.id}
                     hotelName={hotel.name}
@@ -1167,26 +1233,40 @@ export default function HotelTemplateHome({
       case 'arched-courtyard':
         return (
           <section className="max-w-7xl mx-auto px-4 @3xl:px-6 py-6 @3xl:py-10 space-y-6 @3xl:space-y-8">
-            {/* Mobile: 1 Featured Arch + 2 Mini Arches | Desktop: 3 Grand Arches */}
+            {/* Mobile: 1 Swipeable Featured Arch + 2 Mini Arches | Desktop: 3 Grand Arches */}
             <div className="grid grid-cols-2 @3xl:grid-cols-3 gap-3 @3xl:gap-6">
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  onClick={() => openLightbox(heroPhotos, i % heroPhotos.length, hotel.name)}
-                  className={`overflow-hidden shadow-lg cursor-pointer bg-slate-200 ${
+                  onClick={
+                    i === 0 ? undefined : () => openLightbox(heroPhotos, i % heroPhotos.length, hotel.name)
+                  }
+                  className={`overflow-hidden shadow-lg bg-slate-200 ${
                     i === 0
                       ? 'col-span-2 @3xl:col-span-1 h-[270px] @3xl:h-[380px] rounded-t-[150px] @3xl:rounded-t-[220px] rounded-b-2xl'
                       : i === 1
-                      ? 'h-[140px] @3xl:h-[420px] @3xl:-mt-4 rounded-t-[90px] @3xl:rounded-t-[220px] rounded-b-xl @3xl:rounded-b-2xl'
-                      : 'h-[140px] @3xl:h-[380px] rounded-t-[90px] @3xl:rounded-t-[220px] rounded-b-xl @3xl:rounded-b-2xl'
+                      ? 'h-[140px] @3xl:h-[420px] @3xl:-mt-4 rounded-t-[90px] @3xl:rounded-t-[220px] rounded-b-xl @3xl:rounded-b-2xl cursor-pointer'
+                      : 'h-[140px] @3xl:h-[380px] rounded-t-[90px] @3xl:rounded-t-[220px] rounded-b-xl @3xl:rounded-b-2xl cursor-pointer'
                   }`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={heroPhotos[i % heroPhotos.length]}
-                    alt={hotel.name}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-                  />
+                  {i === 0 ? (
+                    <SwipeablePhotoSlider
+                      photos={heroPhotos}
+                      alt={hotel.name}
+                      className="w-full h-full"
+                      arrowsMode="none"
+                      showCounter={heroPhotos.length > 1}
+                      counterPositionClass="bottom-3 right-3"
+                      onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
+                    />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={heroPhotos[i % heroPhotos.length]}
+                      alt={hotel.name}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -1209,11 +1289,16 @@ export default function HotelTemplateHome({
               className="max-w-7xl mx-auto overflow-hidden aspect-[16/10] @3xl:aspect-[21/9] border shadow-2xl relative"
               style={{ borderColor: withAlpha(accentColor, 0.4) }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={currentHeroImg}
+              <SwipeablePhotoSlider
+                photos={heroPhotos}
                 alt={hotel.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full"
+                controlledIndex={slideIdx}
+                onIndexChange={setSlideIdx}
+                arrowsMode="desktop-hover"
+                showCounter={heroPhotos.length > 1}
+                counterPositionClass="top-3 right-3"
+                onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
               />
             </div>
             <div>
@@ -1264,11 +1349,16 @@ export default function HotelTemplateHome({
             />
 
             <div className="h-[240px] @3xl:h-[500px] rounded-2xl @3xl:rounded-3xl overflow-hidden shadow-xl bg-slate-200">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={currentHeroImg}
+              <SwipeablePhotoSlider
+                photos={heroPhotos}
                 alt={hotel.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full"
+                controlledIndex={slideIdx}
+                onIndexChange={setSlideIdx}
+                arrowsMode="desktop-hover"
+                showCounter={heroPhotos.length > 1}
+                counterPositionClass="top-3 right-3"
+                onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
               />
             </div>
           </section>
@@ -1279,16 +1369,29 @@ export default function HotelTemplateHome({
         return (
           <section className="border-b" style={{ backgroundColor: subtleSurface, borderColor: cardBorder }}>
             <div className="max-w-7xl mx-auto px-4 @3xl:px-6 py-4 @3xl:py-6 space-y-4 @3xl:space-y-5">
-              <div className="grid grid-cols-1 @3xl:grid-cols-12 gap-3 h-[200px] @3xl:h-[260px] rounded-xl overflow-hidden">
+              <div className="grid grid-cols-1 @3xl:grid-cols-12 gap-3 h-[210px] @3xl:h-[260px] rounded-xl overflow-hidden">
                 <div className="@3xl:col-span-6 h-full overflow-hidden bg-slate-200">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={heroPhotos[0]} alt={hotel.name} className="w-full h-full object-cover" />
+                  <SwipeablePhotoSlider
+                    photos={heroPhotos}
+                    alt={hotel.name}
+                    className="w-full h-full"
+                    arrowsMode="desktop-hover"
+                    showCounter={heroPhotos.length > 1}
+                    counterPositionClass="top-3 right-3"
+                    onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
+                  />
                 </div>
-                <div className="hidden @3xl:block @3xl:col-span-3 h-full overflow-hidden bg-slate-200">
+                <div
+                  onClick={() => openLightbox(heroPhotos, 1 % heroPhotos.length, hotel.name)}
+                  className="hidden @3xl:block @3xl:col-span-3 h-full overflow-hidden bg-slate-200 cursor-pointer"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={heroPhotos[1 % heroPhotos.length]} alt="" className="w-full h-full object-cover" />
                 </div>
-                <div className="hidden @3xl:block @3xl:col-span-3 h-full overflow-hidden bg-slate-200">
+                <div
+                  onClick={() => openLightbox(heroPhotos, 2 % heroPhotos.length, hotel.name)}
+                  className="hidden @3xl:block @3xl:col-span-3 h-full overflow-hidden bg-slate-200 cursor-pointer"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={heroPhotos[2 % heroPhotos.length]} alt="" className="w-full h-full object-cover" />
                 </div>
@@ -1314,20 +1417,34 @@ export default function HotelTemplateHome({
                 {[0, 1, 2].map((i) => (
                   <div
                     key={i}
-                    onClick={() => openLightbox(heroPhotos, i % heroPhotos.length, hotel.name)}
-                    className={`relative overflow-hidden border-2 cursor-pointer group bg-slate-200 ${
+                    onClick={
+                      i === 0 ? undefined : () => openLightbox(heroPhotos, i % heroPhotos.length, hotel.name)
+                    }
+                    className={`relative overflow-hidden border-2 bg-slate-200 ${
                       i === 0
                         ? 'col-span-2 @3xl:col-span-1 h-[240px] @3xl:h-full'
-                        : 'h-[120px] @3xl:h-full'
+                        : 'h-[120px] @3xl:h-full cursor-pointer group'
                     }`}
                     style={{ borderColor: withAlpha(accentColor, 0.45) }}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={heroPhotos[i % heroPhotos.length]}
-                      alt={hotel.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
+                    {i === 0 ? (
+                      <SwipeablePhotoSlider
+                        photos={heroPhotos}
+                        alt={hotel.name}
+                        className="w-full h-full"
+                        arrowsMode="desktop-hover"
+                        showCounter={heroPhotos.length > 1}
+                        counterPositionClass="top-3 right-3"
+                        onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={heroPhotos[i % heroPhotos.length]}
+                        alt={hotel.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -1355,11 +1472,16 @@ export default function HotelTemplateHome({
             >
               <div className="grid grid-cols-1 @5xl:grid-cols-12 gap-4 items-stretch">
                 <div className="@5xl:col-span-8 h-[240px] @3xl:h-[420px] rounded-[18px] @3xl:rounded-[22px] overflow-hidden bg-slate-200">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={currentHeroImg}
+                  <SwipeablePhotoSlider
+                    photos={heroPhotos}
                     alt={hotel.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full"
+                    controlledIndex={slideIdx}
+                    onIndexChange={setSlideIdx}
+                    arrowsMode="desktop-hover"
+                    showCounter={heroPhotos.length > 1}
+                    counterPositionClass="top-3 right-3"
+                    onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
                   />
                 </div>
                 <div
@@ -1417,32 +1539,17 @@ export default function HotelTemplateHome({
         return (
           <section>
             <div className="relative w-full h-[270px] @3xl:h-[520px] @5xl:h-[600px] overflow-hidden bg-slate-900">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={currentHeroImg}
+              <SwipeablePhotoSlider
+                photos={heroPhotos}
                 alt={hotel.name}
-                className="w-full h-full object-cover transition-all duration-700"
+                className="w-full h-full"
+                controlledIndex={slideIdx}
+                onIndexChange={setSlideIdx}
+                arrowsMode="always"
+                showCounter={heroPhotos.length > 1}
+                counterPositionClass="top-3 right-3"
+                onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
               />
-              {heroPhotos.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSlideIdx((p) => (p - 1 + heroPhotos.length) % heroPhotos.length)
-                    }
-                    className="absolute left-3 @3xl:left-5 top-1/2 -translate-y-1/2 p-2 @3xl:p-3 rounded-full bg-black/35 hover:bg-black/55 text-white cursor-pointer"
-                  >
-                    <ChevronLeft className="w-4 h-4 @3xl:w-5 @3xl:h-5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSlideIdx((p) => (p + 1) % heroPhotos.length)}
-                    className="absolute right-3 @3xl:right-5 top-1/2 -translate-y-1/2 p-2 @3xl:p-3 rounded-full bg-black/35 hover:bg-black/55 text-white cursor-pointer"
-                  >
-                    <ChevronRight className="w-4 h-4 @3xl:w-5 @3xl:h-5" />
-                  </button>
-                </>
-              )}
             </div>
             <div className="@3xl:hidden">
               <TemplateBookingForm
@@ -1515,6 +1622,7 @@ export default function HotelTemplateHome({
               {rooms.map((room, idx) => {
                 const photos = (room.gallery || []).map(cleanImg).filter(Boolean);
                 const cover = photos[0] || currentHeroImg;
+                const roomPhotos = photos.length ? photos : [cover];
                 const reversed = idx % 2 === 1;
                 return (
                   <div
@@ -1527,23 +1635,20 @@ export default function HotelTemplateHome({
                     }}
                   >
                     <div
-                      onClick={() => openLightbox(photos.length ? photos : [cover], 0, room.name)}
-                      className={`@5xl:col-span-7 aspect-[16/10] overflow-hidden cursor-pointer relative group bg-slate-200 ${
+                      className={`@5xl:col-span-7 aspect-[16/10] overflow-hidden relative bg-slate-200 ${
                         reversed ? '@5xl:order-2' : ''
                       }`}
                       style={{ borderRadius: btnRadius === '0px' ? '0px' : '14px' }}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={cover}
+                      <SwipeablePhotoSlider
+                        photos={roomPhotos}
                         alt={room.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        className="w-full h-full"
+                        arrowsMode="desktop-hover"
+                        showCounter={roomPhotos.length > 1}
+                        counterPositionClass="top-3 right-3"
+                        onTapPhoto={(pIdx) => openLightbox(roomPhotos, pIdx, room.name)}
                       />
-                      {photos.length > 1 && (
-                        <span className="absolute bottom-3 right-3 px-2.5 py-1 text-[11px] font-semibold bg-black/70 text-white rounded">
-                          {photos.length} photos
-                        </span>
-                      )}
                     </div>
 
                     <div
@@ -1611,6 +1716,7 @@ export default function HotelTemplateHome({
               {rooms.map((room) => {
                 const photos = (room.gallery || []).map(cleanImg).filter(Boolean);
                 const cover = photos[0] || currentHeroImg;
+                const roomPhotos = photos.length ? photos : [cover];
                 return (
                   <div
                     key={room.id}
@@ -1621,24 +1727,25 @@ export default function HotelTemplateHome({
                       borderRadius: '20px',
                     }}
                   >
-                    <div
-                      onClick={() => openLightbox(photos.length ? photos : [cover], 0, room.name)}
-                      className="relative aspect-[16/10] @3xl:aspect-[4/3] overflow-hidden cursor-pointer bg-slate-200"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={cover}
+                    <div className="relative aspect-[16/10] @3xl:aspect-[4/3] overflow-hidden bg-slate-200">
+                      <SwipeablePhotoSlider
+                        photos={roomPhotos}
                         alt={room.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      {(room.discount_pct ?? 0) > 0 && (
-                        <span
-                          className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold shadow-md"
-                          style={{ backgroundColor: accentColor, color: accentText }}
-                        >
-                          -{room.discount_pct}% OFF
-                        </span>
-                      )}
+                        className="w-full h-full"
+                        arrowsMode="desktop-hover"
+                        showCounter={roomPhotos.length > 1}
+                        counterPositionClass="top-3 right-3"
+                        onTapPhoto={(pIdx) => openLightbox(roomPhotos, pIdx, room.name)}
+                      >
+                        {(room.discount_pct ?? 0) > 0 && (
+                          <span
+                            className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-[10px] font-bold shadow-md pointer-events-none"
+                            style={{ backgroundColor: accentColor, color: accentText }}
+                          >
+                            -{room.discount_pct}% OFF
+                          </span>
+                        )}
+                      </SwipeablePhotoSlider>
                     </div>
                     <div className="p-4 @3xl:p-5 flex-1 flex flex-col justify-between space-y-4">
                       <div className="space-y-2">
@@ -1696,18 +1803,23 @@ export default function HotelTemplateHome({
                 {rooms.map((room) => {
                   const photos = (room.gallery || []).map(cleanImg).filter(Boolean);
                   const cover = photos[0] || currentHeroImg;
+                  const roomPhotos = photos.length ? photos : [cover];
                   return (
                     <div
                       key={room.id}
                       className="border p-4 rounded-2xl grid grid-cols-1 @3xl:grid-cols-12 gap-4 @3xl:gap-5 items-center text-left"
                       style={{ backgroundColor: cardBg, borderColor: cardBorder }}
                     >
-                      <div
-                        onClick={() => openLightbox(photos.length ? photos : [cover], 0, room.name)}
-                        className="@3xl:col-span-5 aspect-[16/10] @3xl:aspect-[4/3] rounded-xl overflow-hidden cursor-pointer relative bg-slate-200"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={cover} alt={room.name} className="w-full h-full object-cover" />
+                      <div className="@3xl:col-span-5 aspect-[16/10] @3xl:aspect-[4/3] rounded-xl overflow-hidden relative bg-slate-200">
+                        <SwipeablePhotoSlider
+                          photos={roomPhotos}
+                          alt={room.name}
+                          className="w-full h-full"
+                          arrowsMode="desktop-hover"
+                          showCounter={roomPhotos.length > 1}
+                          counterPositionClass="top-2.5 right-2.5"
+                          onTapPhoto={(pIdx) => openLightbox(roomPhotos, pIdx, room.name)}
+                        />
                       </div>
                       <div className="@3xl:col-span-7 space-y-3">
                         <h3 className="text-lg font-bold" style={{ color: textColor, fontFamily: fontStack }}>
@@ -1755,6 +1867,7 @@ export default function HotelTemplateHome({
               {rooms.map((room) => {
                 const photos = (room.gallery || []).map(cleanImg).filter(Boolean);
                 const cover = photos[0] || currentHeroImg;
+                const roomPhotos = photos.length ? photos : [cover];
                 return (
                   <div
                     key={room.id}
@@ -1765,12 +1878,16 @@ export default function HotelTemplateHome({
                       borderRadius: btnRadius === '9999px' ? '22px' : '12px',
                     }}
                   >
-                    <div
-                      onClick={() => openLightbox(photos.length ? photos : [cover], 0, room.name)}
-                      className="@5xl:col-span-4 aspect-[16/10] overflow-hidden cursor-pointer bg-slate-200 rounded-lg"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={cover} alt={room.name} className="w-full h-full object-cover" />
+                    <div className="@5xl:col-span-4 aspect-[16/10] overflow-hidden bg-slate-200 rounded-lg">
+                      <SwipeablePhotoSlider
+                        photos={roomPhotos}
+                        alt={room.name}
+                        className="w-full h-full"
+                        arrowsMode="desktop-hover"
+                        showCounter={roomPhotos.length > 1}
+                        counterPositionClass="top-2.5 right-2.5"
+                        onTapPhoto={(pIdx) => openLightbox(roomPhotos, pIdx, room.name)}
+                      />
                     </div>
                     <div className="@5xl:col-span-5 space-y-2">
                       <h3 className="text-lg @3xl:text-xl font-bold" style={{ color: textColor, fontFamily: fontStack }}>
@@ -1816,6 +1933,7 @@ export default function HotelTemplateHome({
               {rooms.map((room, idx) => {
                 const photos = (room.gallery || []).map(cleanImg).filter(Boolean);
                 const cover = photos[0] || currentHeroImg;
+                const roomPhotos = photos.length ? photos : [cover];
                 return (
                   <div
                     key={room.id}
@@ -1825,12 +1943,16 @@ export default function HotelTemplateHome({
                     <div className="hidden @3xl:block @3xl:col-span-1 text-xs font-mono opacity-55">
                       0{idx + 1}
                     </div>
-                    <div
-                      onClick={() => openLightbox(photos.length ? photos : [cover], 0, room.name)}
-                      className="@3xl:col-span-4 aspect-[16/10] overflow-hidden cursor-pointer bg-slate-200"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={cover} alt={room.name} className="w-full h-full object-cover" />
+                    <div className="@3xl:col-span-4 aspect-[16/10] overflow-hidden bg-slate-200">
+                      <SwipeablePhotoSlider
+                        photos={roomPhotos}
+                        alt={room.name}
+                        className="w-full h-full"
+                        arrowsMode="desktop-hover"
+                        showCounter={roomPhotos.length > 1}
+                        counterPositionClass="top-2.5 right-2.5"
+                        onTapPhoto={(pIdx) => openLightbox(roomPhotos, pIdx, room.name)}
+                      />
                     </div>
                     <div className="@3xl:col-span-4 space-y-1.5">
                       <span className="@3xl:hidden text-[10px] font-mono opacity-60">0{idx + 1}</span>
@@ -1871,6 +1993,7 @@ export default function HotelTemplateHome({
               {rooms.map((room) => {
                 const photos = (room.gallery || []).map(cleanImg).filter(Boolean);
                 const cover = photos[0] || currentHeroImg;
+                const roomPhotos = photos.length ? photos : [cover];
                 const thumbs = photos.length > 1 ? photos.slice(1, 5) : heroPhotos.slice(0, 4);
                 return (
                   <div
@@ -1878,12 +2001,16 @@ export default function HotelTemplateHome({
                     className="border rounded-2xl @3xl:rounded-3xl overflow-hidden shadow-md flex flex-col text-left"
                     style={{ backgroundColor: cardBg, borderColor: cardBorder }}
                   >
-                    <div
-                      onClick={() => openLightbox(photos.length ? photos : [cover], 0, room.name)}
-                      className="aspect-[16/10] overflow-hidden cursor-pointer bg-slate-200"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={cover} alt={room.name} className="w-full h-full object-cover" />
+                    <div className="aspect-[16/10] overflow-hidden bg-slate-200">
+                      <SwipeablePhotoSlider
+                        photos={roomPhotos}
+                        alt={room.name}
+                        className="w-full h-full"
+                        arrowsMode="desktop-hover"
+                        showCounter={roomPhotos.length > 1}
+                        counterPositionClass="top-3 right-3"
+                        onTapPhoto={(pIdx) => openLightbox(roomPhotos, pIdx, room.name)}
+                      />
                     </div>
                     {/* 4-Photo Mini Album Strip */}
                     <div
@@ -1893,7 +2020,13 @@ export default function HotelTemplateHome({
                       {thumbs.map((tUrl, tIdx) => (
                         <div
                           key={tIdx}
-                          onClick={() => openLightbox(photos.length ? photos : heroPhotos, tIdx, room.name)}
+                          onClick={() =>
+                            openLightbox(
+                              photos.length > 1 ? photos : heroPhotos,
+                              photos.length > 1 ? tIdx + 1 : tIdx,
+                              room.name
+                            )
+                          }
                           className="aspect-[4/3] rounded-lg overflow-hidden cursor-pointer bg-slate-200"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1940,17 +2073,18 @@ export default function HotelTemplateHome({
               {rooms.map((room) => {
                 const photos = (room.gallery || []).map(cleanImg).filter(Boolean);
                 const cover = photos[0] || currentHeroImg;
+                const roomPhotos = photos.length ? photos : [cover];
                 return (
                   <div key={room.id} className="text-center space-y-3.5">
-                    <div
-                      onClick={() => openLightbox(photos.length ? photos : [cover], 0, room.name)}
-                      className="aspect-[4/4] @3xl:aspect-[4/5] rounded-t-[160px] @3xl:rounded-t-[200px] rounded-b-2xl overflow-hidden shadow-lg cursor-pointer bg-slate-200 group"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={cover}
+                    <div className="aspect-[4/4] @3xl:aspect-[4/5] rounded-t-[160px] @3xl:rounded-t-[200px] rounded-b-2xl overflow-hidden shadow-lg bg-slate-200">
+                      <SwipeablePhotoSlider
+                        photos={roomPhotos}
                         alt={room.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        className="w-full h-full"
+                        arrowsMode="none"
+                        showCounter={roomPhotos.length > 1}
+                        counterPositionClass="bottom-3 right-3"
+                        onTapPhoto={(pIdx) => openLightbox(roomPhotos, pIdx, room.name)}
                       />
                     </div>
                     <div className="space-y-2 px-2">
@@ -1987,6 +2121,7 @@ export default function HotelTemplateHome({
               {rooms.map((room) => {
                 const photos = (room.gallery || []).map(cleanImg).filter(Boolean);
                 const cover = photos[0] || currentHeroImg;
+                const roomPhotos = photos.length ? photos : [cover];
                 return (
                   <div
                     key={room.id}
@@ -1997,15 +2132,15 @@ export default function HotelTemplateHome({
                       borderRadius: btnRadius === '0px' ? '0px' : '12px',
                     }}
                   >
-                    <div
-                      onClick={() => openLightbox(photos.length ? photos : [cover], 0, room.name)}
-                      className="aspect-[4/4] @3xl:aspect-[3/4] overflow-hidden cursor-pointer bg-slate-800"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={cover}
+                    <div className="aspect-[4/4] @3xl:aspect-[3/4] overflow-hidden bg-slate-800">
+                      <SwipeablePhotoSlider
+                        photos={roomPhotos}
                         alt={room.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        className="w-full h-full"
+                        arrowsMode="desktop-hover"
+                        showCounter={roomPhotos.length > 1}
+                        counterPositionClass="top-3 right-3"
+                        onTapPhoto={(pIdx) => openLightbox(roomPhotos, pIdx, room.name)}
                       />
                     </div>
                     <div className="p-4 @3xl:p-5 space-y-3 flex-1 flex flex-col justify-between" style={{ color: textColor }}>
@@ -2057,19 +2192,24 @@ export default function HotelTemplateHome({
               {rooms.map((room) => {
                 const photos = (room.gallery || []).map(cleanImg).filter(Boolean);
                 const cover = photos[0] || currentHeroImg;
+                const roomPhotos = photos.length ? photos : [cover];
                 return (
                   <div
                     key={room.id}
                     className="p-4 @3xl:p-6 grid grid-cols-1 @5xl:grid-cols-12 gap-4 @3xl:gap-5 items-center text-left"
                     style={{ borderColor: cardBorder }}
                   >
-                    <div className="@5xl:col-span-4 flex items-center gap-3.5">
-                      <div
-                        onClick={() => openLightbox(photos.length ? photos : [cover], 0, room.name)}
-                        className="w-24 h-20 @3xl:w-28 @3xl:h-20 rounded-lg overflow-hidden shrink-0 cursor-pointer bg-slate-200"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={cover} alt={room.name} className="w-full h-full object-cover" />
+                    <div className="@5xl:col-span-4 flex flex-col @5xl:flex-row @5xl:items-center gap-3.5">
+                      <div className="w-full aspect-[16/10] @5xl:w-32 @5xl:h-24 @5xl:aspect-auto rounded-lg overflow-hidden shrink-0 bg-slate-200">
+                        <SwipeablePhotoSlider
+                          photos={roomPhotos}
+                          alt={room.name}
+                          className="w-full h-full"
+                          arrowsMode="none"
+                          showCounter={roomPhotos.length > 1}
+                          counterPositionClass="top-2 right-2"
+                          onTapPhoto={(pIdx) => openLightbox(roomPhotos, pIdx, room.name)}
+                        />
                       </div>
                       <div className="min-w-0">
                         <h3 className="text-base font-bold" style={{ color: textColor }}>
@@ -2124,6 +2264,7 @@ export default function HotelTemplateHome({
               {rooms.map((room) => {
                 const photos = (room.gallery || []).map(cleanImg).filter(Boolean);
                 const cover = photos[0] || currentHeroImg;
+                const roomPhotos = photos.length ? photos : [cover];
                 const isDoubleBorder = template.id === 'imperial-galleria';
                 return (
                   <div
@@ -2137,21 +2278,16 @@ export default function HotelTemplateHome({
                       borderRadius: btnRadius === '0px' ? '0px' : '16px',
                     }}
                   >
-                    <div
-                      onClick={() => openLightbox(photos.length ? photos : [cover], 0, room.name)}
-                      className="aspect-[16/10] overflow-hidden cursor-pointer relative bg-slate-200"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={cover}
+                    <div className="aspect-[16/10] overflow-hidden relative bg-slate-200">
+                      <SwipeablePhotoSlider
+                        photos={roomPhotos}
                         alt={room.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        className="w-full h-full"
+                        arrowsMode="desktop-hover"
+                        showCounter={roomPhotos.length > 1}
+                        counterPositionClass="top-3 right-3"
+                        onTapPhoto={(pIdx) => openLightbox(roomPhotos, pIdx, room.name)}
                       />
-                      {photos.length > 1 && (
-                        <span className="absolute bottom-3 right-3 px-2.5 py-1 text-[11px] bg-black/70 text-white rounded">
-                          {photos.length} photos
-                        </span>
-                      )}
                     </div>
                     <div className="p-4 @3xl:p-6 space-y-4 flex-1 flex flex-col justify-between">
                       <div className="space-y-2">
@@ -2322,12 +2458,13 @@ export default function HotelTemplateHome({
   };
 
   // =========================================================================
-  // GALLERY STRIP + DYNAMIC COLOR FOOTER
+  // GALLERY STRIP (Mobile Finger-Swipeable Slider + Thumbnails | Desktop 4-Col Grid)
   // =========================================================================
   const renderGalleryStrip = () => {
-    if (heroPhotos.length < 2) return null;
+    if (galleryPhotosPool.length < 2) return null;
+    const safeGalleryIdx = galleryIdx % galleryPhotosPool.length;
     return (
-      <section id="gallery" className="max-w-7xl mx-auto px-4 @3xl:px-6 py-10 @3xl:py-14 space-y-6 @3xl:space-y-8">
+      <section id="gallery" className="max-w-7xl mx-auto px-4 @3xl:px-6 py-10 @3xl:py-14 space-y-5 @3xl:space-y-8">
         <div className="flex items-end justify-between gap-3">
           <div className="text-left">
             <span
@@ -2350,14 +2487,70 @@ export default function HotelTemplateHome({
           </a>
         </div>
 
-        <div className="grid grid-cols-2 @3xl:grid-cols-4 gap-2.5 @3xl:gap-3">
-          {heroPhotos.slice(0, 8).map((url, idx) => (
+        {/* MOBILE (< @3xl): Smooth Finger-Swipeable Carousel + Touch-Scrollable Thumbnail Strip */}
+        <div className="@3xl:hidden space-y-2.5">
+          <div
+            className={`aspect-[4/3] overflow-hidden shadow-md bg-slate-200 ${
+              template.id === 'mediterranean-arch'
+                ? 'rounded-t-[130px] rounded-b-2xl'
+                : btnRadius === '0px'
+                ? ''
+                : 'rounded-2xl'
+            }`}
+          >
+            <SwipeablePhotoSlider
+              photos={galleryPhotosPool}
+              alt={hotel.name}
+              className="w-full h-full"
+              controlledIndex={safeGalleryIdx}
+              onIndexChange={setGalleryIdx}
+              arrowsMode="none"
+              showCounter={true}
+              counterPositionClass="top-3 right-3"
+              onTapPhoto={(idx) => openLightbox(galleryPhotosPool, idx, hotel.name)}
+            />
+          </div>
+
+          <div
+            className="flex items-center gap-2 overflow-x-auto py-1"
+            style={{ touchAction: 'pan-x', scrollbarWidth: 'none' }}
+          >
+            {galleryPhotosPool.map((url, idx) => {
+              const active = idx === safeGalleryIdx;
+              return (
+                <button
+                  key={`${url}-${idx}`}
+                  type="button"
+                  onClick={() => setGalleryIdx(idx)}
+                  className="w-16 h-12 rounded-lg overflow-hidden shrink-0 cursor-pointer transition-all"
+                  style={{
+                    opacity: active ? 1 : 0.55,
+                    border: active ? `2px solid ${accentColor}` : `1px solid ${cardBorder}`,
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt=""
+                    loading="lazy"
+                    draggable={false}
+                    className="w-full h-full object-cover pointer-events-none"
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* DESKTOP (@3xl+): Crisp 4-Column Gallery Grid */}
+        <div className="hidden @3xl:grid @3xl:grid-cols-4 gap-3">
+          {galleryPhotosPool.slice(0, 8).map((url, idx) => (
             <div
               key={idx}
-              onClick={() => openLightbox(heroPhotos, idx, hotel.name)}
+              onClick={() => openLightbox(galleryPhotosPool, idx, hotel.name)}
               className={`aspect-[4/3] overflow-hidden cursor-pointer group bg-slate-200 ${
                 template.id === 'mediterranean-arch'
-                  ? 'rounded-t-[80px] @3xl:rounded-t-[120px] rounded-b-xl'
+                  ? 'rounded-t-[120px] rounded-b-xl'
                   : btnRadius === '0px'
                   ? ''
                   : 'rounded-xl'
@@ -2614,62 +2807,15 @@ export default function HotelTemplateHome({
         </>
       )}
 
-      {/* SHARED PHOTO LIGHTBOX */}
-      {lightboxOpen && lightboxPhotos.length > 0 && (
-        <div
-          onClick={() => setLightboxOpen(false)}
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.92)' }}
-        >
-          <div className="w-full max-w-5xl flex items-center justify-between mb-3" style={{ color: '#ffffff' }}>
-            <span className="text-xs @3xl:text-sm font-semibold truncate pr-3">
-              {lightboxTitle} ({lightboxIdx + 1} / {lightboxPhotos.length})
-            </span>
-            <button
-              type="button"
-              onClick={() => setLightboxOpen(false)}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 cursor-pointer shrink-0"
-              style={{ color: '#ffffff' }}
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-5xl aspect-[4/3] @3xl:aspect-[16/10] flex items-center justify-center overflow-hidden rounded-xl bg-black"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={lightboxPhotos[lightboxIdx]}
-              alt={lightboxTitle}
-              className="max-w-full max-h-full object-contain"
-            />
-            {lightboxPhotos.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setLightboxIdx((p) => (p - 1 + lightboxPhotos.length) % lightboxPhotos.length)
-                  }
-                  className="absolute left-3 p-2.5 @3xl:p-3 rounded-full bg-black/60 cursor-pointer"
-                  style={{ color: '#ffffff' }}
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLightboxIdx((p) => (p + 1) % lightboxPhotos.length)}
-                  className="absolute right-3 p-2.5 @3xl:p-3 rounded-full bg-black/60 cursor-pointer"
-                  style={{ color: '#ffffff' }}
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      {/* SHARED SWIPEABLE PHOTO LIGHTBOX */}
+      <SwipeableLightbox
+        open={lightboxOpen}
+        photos={lightboxPhotos}
+        index={lightboxIdx}
+        title={lightboxTitle}
+        onIndexChange={setLightboxIdx}
+        onClose={() => setLightboxOpen(false)}
+      />
     </div>
   );
 }

@@ -47,10 +47,35 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
     image.src = nextSlideImage;
   }, [currentIndex, slides]);
 
+  const touchStartXRef = React.useRef<number | null>(null);
+  const touchDeltaXRef = React.useRef<number>(0);
+
   if (!slides || slides.length === 0) return null;
 
   return (
-    <section className="relative w-full h-auto aspect-video md:h-[92vh] md:aspect-auto overflow-hidden bg-slate-900 select-none">
+    <section
+      className="relative w-full h-auto aspect-video md:h-[92vh] md:aspect-auto overflow-hidden bg-slate-900 select-none"
+      style={{ touchAction: 'pan-y' }}
+      onTouchStart={(e) => {
+        if (e.touches.length === 1) {
+          touchStartXRef.current = e.touches[0].clientX;
+          touchDeltaXRef.current = 0;
+        }
+      }}
+      onTouchMove={(e) => {
+        if (touchStartXRef.current !== null && e.touches.length === 1) {
+          touchDeltaXRef.current = e.touches[0].clientX - touchStartXRef.current;
+        }
+      }}
+      onTouchEnd={() => {
+        if (touchStartXRef.current !== null && slides.length > 1) {
+          if (touchDeltaXRef.current < -36) nextSlide();
+          else if (touchDeltaXRef.current > 36) prevSlide();
+        }
+        touchStartXRef.current = null;
+        touchDeltaXRef.current = 0;
+      }}
+    >
       {/* BACKGROUND SLIDES */}
       {slides.map((slide, index) => (
         <div

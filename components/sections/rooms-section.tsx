@@ -1,17 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   Maximize2,
   Users,
   BedDouble,
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  X,
 } from 'lucide-react';
 import { Room } from '@/lib/db/mock-data';
+import { SwipeablePhotoSlider, SwipeableLightbox } from '@/components/ui/swipeable-photo-slider';
 
 interface RoomsSectionProps {
   rooms: Room[];
@@ -36,29 +34,14 @@ export default function RoomsSection({
   const [lightboxIdx, setLightboxIdx] = useState(0);
   const [lightboxTitle, setLightboxTitle] = useState('');
 
-  const openRoomLightbox = (room: Room) => {
+  const openRoomLightbox = (room: Room, startIdx = 0) => {
     const photos = (room.gallery || []).map(normalizePhotoUrl).filter(Boolean);
     if (photos.length === 0) return;
     setLightboxPhotos(photos);
-    setLightboxIdx(0);
+    setLightboxIdx(startIdx);
     setLightboxTitle(room.name);
     setLightboxOpen(true);
   };
-
-  useEffect(() => {
-    if (!lightboxOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setLightboxOpen(false);
-      } else if (e.key === 'ArrowLeft' && lightboxPhotos.length > 1) {
-        setLightboxIdx((prev) => (prev - 1 + lightboxPhotos.length) % lightboxPhotos.length);
-      } else if (e.key === 'ArrowRight' && lightboxPhotos.length > 1) {
-        setLightboxIdx((prev) => (prev + 1) % lightboxPhotos.length);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [lightboxOpen, lightboxPhotos.length]);
 
   return (
     <section id="rooms" className="w-full py-20 md:py-28 bg-white text-slate-800 px-6">
@@ -90,23 +73,17 @@ export default function RoomsSection({
                 key={room.id}
                 className="bg-white dark:bg-slate-950 rounded-hotel overflow-hidden shadow-md hover:shadow-xl border border-slate-100 dark:border-slate-900 transition-all duration-300 flex flex-col group"
               >
-                {/* Room Image Container (Clickable to open Lightbox) */}
-                <div
-                  onClick={() => openRoomLightbox(room)}
-                  className="relative aspect-[16/10] overflow-hidden bg-slate-200 cursor-pointer"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={coverImg}
+                {/* Room Image Container (Swipeable with finger on mobile + Tap to open Lightbox) */}
+                <div className="relative aspect-[16/10] overflow-hidden bg-slate-200">
+                  <SwipeablePhotoSlider
+                    photos={photos.length > 0 ? photos : [coverImg]}
                     alt={room.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-750"
+                    className="w-full h-full"
+                    arrowsMode="desktop-hover"
+                    showCounter={photos.length > 1}
+                    counterPositionClass="top-3 right-3"
+                    onTapPhoto={(idx) => openRoomLightbox(room, idx)}
                   />
-
-                  {photos.length > 1 && (
-                    <span className="absolute bottom-3 right-3 bg-black/70 hover:bg-black/85 text-white text-[11px] font-medium px-2.5 py-1 rounded-md backdrop-blur-sm transition-colors">
-                      {photos.length} photos
-                    </span>
-                  )}
                 </div>
 
                 {/* Room Body Details */}
@@ -198,79 +175,15 @@ export default function RoomsSection({
         </div>
       </div>
 
-      {/* ROOM PHOTOS LIGHTBOX MODAL (Matching Gallery Section Lightbox Style) */}
-      {lightboxOpen && lightboxPhotos.length > 0 && (
-        <div
-          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 select-none animate-fade-in"
-          onClick={() => setLightboxOpen(false)}
-        >
-          {/* Close Button */}
-          <button
-            type="button"
-            onClick={() => setLightboxOpen(false)}
-            className="absolute top-6 right-6 z-55 p-2 bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors border border-white/10 cursor-pointer"
-            aria-label="Close Lightbox"
-          >
-            <X className="w-6 h-6" />
-          </button>
-
-          {/* Previous Button */}
-          {lightboxPhotos.length > 1 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setLightboxIdx(
-                  (lightboxIdx - 1 + lightboxPhotos.length) % lightboxPhotos.length
-                );
-              }}
-              className="absolute left-4 md:left-8 p-2.5 bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors border border-white/10 cursor-pointer"
-              aria-label="Previous Photo"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-          )}
-
-          {/* Current Image Container */}
-          <div className="max-w-5xl max-h-[85vh] flex flex-col items-center gap-4 relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={lightboxPhotos[lightboxIdx]}
-              alt={`${lightboxTitle} Photo ${lightboxIdx + 1}`}
-              className="max-w-full max-h-[80vh] object-contain rounded-md shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            />
-
-            {/* Caption */}
-            <div className="text-center text-white/85 text-xs md:text-sm tracking-wide">
-              <span className="text-accent/90 font-bold uppercase tracking-widest text-[10px] mr-2">
-                [ROOMS - {lightboxTitle}]
-              </span>
-              <span className="mr-2">
-                {lightboxTitle} Photo {lightboxIdx + 1}
-              </span>
-              <span className="text-white/40">
-                ({lightboxIdx + 1} of {lightboxPhotos.length})
-              </span>
-            </div>
-          </div>
-
-          {/* Next Button */}
-          {lightboxPhotos.length > 1 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setLightboxIdx((lightboxIdx + 1) % lightboxPhotos.length);
-              }}
-              className="absolute right-4 md:right-8 p-2.5 bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors border border-white/10 cursor-pointer"
-              aria-label="Next Photo"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          )}
-        </div>
-      )}
+      {/* SWIPEABLE ROOM PHOTOS LIGHTBOX MODAL */}
+      <SwipeableLightbox
+        open={lightboxOpen}
+        photos={lightboxPhotos}
+        index={lightboxIdx}
+        title={lightboxTitle}
+        onIndexChange={setLightboxIdx}
+        onClose={() => setLightboxOpen(false)}
+      />
     </section>
   );
 }
