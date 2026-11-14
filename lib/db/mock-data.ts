@@ -36,6 +36,7 @@ import {
   updateSupabaseMediaItemCategory,
   deleteSupabaseMediaItem
 } from './supabase-client';
+import { normalizeMapEmbedUrl } from '@/lib/map-utils';
 
 // Define TS Interfaces for our database schema
 export interface HotelTheme {
@@ -876,13 +877,25 @@ async function getHotelCustomizationMap(): Promise<Map<string, Partial<Hotel>>> 
   const map = new Map<string, Partial<Hotel>>();
   const norm = (s: string) => (s || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
+  const extractOverrides = (h: Hotel): Partial<Hotel> => ({
+    name: h.name,
+    email: h.email,
+    phone: h.phone,
+    address: h.address,
+    google_map_url: h.google_map_url,
+    custom_domain: h.custom_domain,
+    social_links: h.social_links,
+    theme: h.theme,
+    homepage_layout: h.homepage_layout,
+  });
+
   // Local db overrides first
   try {
     const db = getDb();
     for (const h of db.hotels || []) {
       const k = norm(h.slug);
-      if (k && h.theme) {
-        map.set(k, { theme: h.theme, homepage_layout: h.homepage_layout });
+      if (k) {
+        map.set(k, extractOverrides(h));
       }
     }
   } catch {
@@ -895,8 +908,8 @@ async function getHotelCustomizationMap(): Promise<Map<string, Partial<Hotel>>> 
       const sbHotels = await getSupabaseAllHotels();
       for (const h of sbHotels || []) {
         const k = norm(h.slug);
-        if (k && h.theme) {
-          map.set(k, { theme: h.theme, homepage_layout: h.homepage_layout });
+        if (k) {
+          map.set(k, extractOverrides(h));
         }
       }
     } catch {
@@ -916,13 +929,47 @@ async function applyHotelThemeOverride(hotel: Hotel): Promise<Hotel> {
   if (!normSlug) return hotel;
   const map = await getHotelCustomizationMap();
   const override = map.get(normSlug);
-  if (!override?.theme) return hotel;
+  if (!override) {
+    return {
+      ...hotel,
+      google_map_url: normalizeMapEmbedUrl(hotel.google_map_url, hotel.address),
+    };
+  }
+
+  const nextAddress = override.address?.trim() || hotel.address;
+  const nextMapUrl = normalizeMapEmbedUrl(
+    override.google_map_url?.trim() || hotel.google_map_url,
+    nextAddress
+  );
+
+  const mergedSocials = { ...hotel.social_links };
+  if (override.social_links) {
+    for (const key of ['facebook', 'instagram', 'whatsapp', 'twitter'] as const) {
+      const val = override.social_links[key];
+      if (typeof val === 'string' && val.trim() !== '') {
+        mergedSocials[key] = val.trim();
+      }
+    }
+  }
+
   return {
     ...hotel,
-    theme: {
-      ...hotel.theme,
-      ...override.theme,
-    },
+    name: override.name?.trim() || hotel.name,
+    email: override.email?.trim() || hotel.email,
+    phone: override.phone?.trim() || hotel.phone,
+    address: nextAddress,
+    google_map_url: nextMapUrl,
+    custom_domain:
+      override.custom_domain && String(override.custom_domain).trim()
+        ? String(override.custom_domain).trim()
+        : hotel.custom_domain,
+    social_links: mergedSocials,
+    theme: override.theme
+      ? {
+          ...hotel.theme,
+          ...override.theme,
+        }
+      : hotel.theme,
   };
 }
 
@@ -1604,21 +1651,66 @@ export async function updateHotelTheme(hotelId: string, theme: Partial<HotelThem
   return mergedTheme;
 }
 
-export async function updateHotelGeneralSettings(hotelId: string, data: Partial<Omit<Hotel, 'id' | 'theme' | 'homepage_layout' | 'slug'>>): Promise<Hotel> {
+export async function updateHotelGeneralSettings(
+  hotelId: string,
+  data: Partial<Omit<Hotel, 'id' | 'theme' | 'homepage_layout' | 'slug'>>
+): Promise<Hotel> {
+  const currentHotel = await getHotelBySlug(hotelId);
+  const normalizedData = {
+    ...data,
+    ...(data.google_map_url !== undefined
+      ? {
+          google_map_url: normalizeMapEmbedUrl(
+            data.google_map_url,
+            data.address || currentHotel?.address
+          ),
+        }
+      : {}),
+  };
+
   if (isSupabaseConfigured) {
-    const updated = await updateSupabaseHotelGeneralSettings(hotelId, data);
-    if (updated) return updated;
+    const updated = await updateSupabaseHotelGeneralSettings(
+      hotelId,
+      normalizedData,
+      currentHotel
+    );
+    if (updated) {
+      hotelCustomizationCache = null;
+      clearFlowStayCache(hotelId);
+      if (currentHotel?.slug) clearFlowStayCache(currentHotel.slug);
+      return updated;
+    }
   }
+
   const db = getDb();
-  const hotelIndex = db.hotels.findIndex(h => h.id === hotelId);
-  if (hotelIndex === -1) throw new Error('Hotel not found');
-  
-  db.hotels[hotelIndex] = {
-    ...db.hotels[hotelIndex],
-    ...data
-  } as Hotel;
+  const norm = (s?: string) => (s || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  const targetSlug = norm(currentHotel?.slug || hotelId);
+  const hotelIndex = db.hotels.findIndex(
+    (h) => h.id === hotelId || (targetSlug && norm(h.slug) === targetSlug)
+  );
+
+  let savedHotel: Hotel;
+  if (hotelIndex !== -1) {
+    db.hotels[hotelIndex] = {
+      ...db.hotels[hotelIndex],
+      ...normalizedData,
+    } as Hotel;
+    savedHotel = db.hotels[hotelIndex];
+  } else if (currentHotel) {
+    savedHotel = {
+      ...currentHotel,
+      ...normalizedData,
+    } as Hotel;
+    db.hotels.push(savedHotel);
+  } else {
+    throw new Error('Hotel not found');
+  }
+
   saveDb(db);
-  return db.hotels[hotelIndex];
+  hotelCustomizationCache = null;
+  clearFlowStayCache(hotelId);
+  if (currentHotel?.slug) clearFlowStayCache(currentHotel.slug);
+  return savedHotel;
 }
 
 export async function trackAnalyticsEvent(hotelId: string, event_type: AnalyticsEvent['event_type'], page_path: string, room_id?: string): Promise<void> {

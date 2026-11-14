@@ -33,6 +33,7 @@ import {
   getTemplateByTheme,
   type HotelWebsiteTemplate,
 } from '@/lib/hotel-templates';
+import { buildGoogleDirectionsUrl } from '@/lib/map-utils';
 import { deriveSurfacePalette, withAlpha } from '@/lib/color-utils';
 import { SwipeablePhotoSlider, SwipeableLightbox } from '@/components/ui/swipeable-photo-slider';
 import TemplateBookingForm from './template-booking-form';
@@ -294,6 +295,12 @@ export default function HotelTemplateHome({
     );
   };
 
+  const mapDirectionsHref = buildGoogleDirectionsUrl(
+    hotel.google_map_url,
+    hotel.name,
+    hotel.address
+  );
+
   /**
    * Shared Slide-Down Mobile Menu Drawer (used across all 16 templates on < @3xl / < 768px)
    */
@@ -322,22 +329,27 @@ export default function HotelTemplateHome({
         {(hotel.phone || hotel.email || hotel.address) && (
           <div className="pt-2 border-t space-y-1.5 text-[11px]" style={{ borderColor: cardBorder, color: mutedText }}>
             {hotel.phone && (
-              <div className="flex items-center gap-2">
+              <a href={isPreview ? undefined : `tel:${hotel.phone}`} className="flex items-center gap-2 hover:opacity-80">
                 <Phone className="w-3.5 h-3.5 shrink-0" style={{ color: accentColor }} />
                 <span>{hotel.phone}</span>
-              </div>
+              </a>
             )}
             {hotel.email && (
-              <div className="flex items-center gap-2 truncate">
+              <a href={isPreview ? undefined : `mailto:${hotel.email}`} className="flex items-center gap-2 truncate hover:opacity-80">
                 <Mail className="w-3.5 h-3.5 shrink-0" style={{ color: accentColor }} />
                 <span className="truncate">{hotel.email}</span>
-              </div>
+              </a>
             )}
             {hotel.address && (
-              <div className="flex items-start gap-2">
+              <a
+                href={isPreview ? '#location' : mapDirectionsHref}
+                target={isPreview ? undefined : '_blank'}
+                rel={isPreview ? undefined : 'noopener noreferrer'}
+                className="flex items-start gap-2 hover:opacity-80"
+              >
                 <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: accentColor }} />
-                <span className="leading-snug">{hotel.address}</span>
-              </div>
+                <span className="leading-snug underline-offset-2 hover:underline">{hotel.address}</span>
+              </a>
             )}
           </div>
         )}
@@ -534,10 +546,13 @@ export default function HotelTemplateHome({
           {/* Mobile compact 1-line bar (fixes multi-line address wrapping!) */}
           <div className="flex @5xl:hidden items-center justify-between gap-2">
             {hotel.phone ? (
-              <span className="flex items-center gap-1.5 font-medium truncate">
+              <a
+                href={isPreview ? undefined : `tel:${hotel.phone}`}
+                className="flex items-center gap-1.5 font-medium truncate hover:opacity-80"
+              >
                 <Phone className="w-3 h-3 shrink-0" style={{ color: accentColor }} />
                 <span className="truncate">{hotel.phone}</span>
-              </span>
+              </a>
             ) : (
               <span className="font-medium truncate">{hotel.name}</span>
             )}
@@ -553,23 +568,35 @@ export default function HotelTemplateHome({
           <div className="hidden @5xl:flex max-w-7xl mx-auto items-center justify-between gap-6">
             <div className="flex items-center gap-5 shrink-0">
               {hotel.phone && (
-                <span className="flex items-center gap-1.5">
+                <a
+                  href={isPreview ? undefined : `tel:${hotel.phone}`}
+                  className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                >
                   <Phone className="w-3 h-3" style={{ color: accentColor }} />
                   {hotel.phone}
-                </span>
+                </a>
               )}
               {hotel.email && (
-                <span className="flex items-center gap-1.5">
+                <a
+                  href={isPreview ? undefined : `mailto:${hotel.email}`}
+                  className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                >
                   <Mail className="w-3 h-3" style={{ color: accentColor }} />
                   {hotel.email}
-                </span>
+                </a>
               )}
             </div>
             {hotel.address && (
-              <span className="flex items-center gap-1.5 truncate max-w-md">
+              <a
+                href={isPreview ? '#location' : mapDirectionsHref}
+                target={isPreview ? undefined : '_blank'}
+                rel={isPreview ? undefined : 'noopener noreferrer'}
+                title="Open Exact GPS Location in Google Maps"
+                className="flex items-center gap-1.5 truncate max-w-md hover:opacity-80 transition-opacity"
+              >
                 <MapPin className="w-3 h-3 shrink-0" style={{ color: accentColor }} />
-                <span className="truncate">{hotel.address}</span>
-              </span>
+                <span className="truncate underline-offset-2 hover:underline">{hotel.address}</span>
+              </a>
             )}
           </div>
         </div>

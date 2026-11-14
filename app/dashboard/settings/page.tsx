@@ -1,9 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Save, HelpCircle, AlertCircle, CheckCircle, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Save,
+  AlertCircle,
+  CheckCircle,
+  Trash2,
+  AlertTriangle,
+  Loader2,
+  MapPin,
+  Navigation,
+  Compass,
+  ExternalLink,
+} from 'lucide-react';
 import { saveGeneralSettingsAction, deleteHotelAction, getAllHotelsAction } from '@/lib/db/actions';
 import { peekAdminBundle, loadAdminBundle, invalidateAdminCache } from '@/lib/admin-client-cache';
+import {
+  buildGoogleDirectionsUrl,
+  extractLatLng,
+  normalizeMapEmbedUrl,
+} from '@/lib/map-utils';
 import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
@@ -129,18 +145,44 @@ export default function SettingsPage() {
     });
   };
 
+  const previewEmbedUrl = useMemo(
+    () => normalizeMapEmbedUrl(formData.google_map_url, formData.address || formData.name),
+    [formData.google_map_url, formData.address, formData.name]
+  );
+
+  const detectedCoords = useMemo(
+    () => extractLatLng(formData.google_map_url) || extractLatLng(previewEmbedUrl),
+    [formData.google_map_url, previewEmbedUrl]
+  );
+
+  const testDirectionsUrl = useMemo(
+    () => buildGoogleDirectionsUrl(previewEmbedUrl || formData.google_map_url, formData.name, formData.address),
+    [previewEmbedUrl, formData.google_map_url, formData.name, formData.address]
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setNotification(null);
 
-    const result = await saveGeneralSettingsAction(hotelId, formData);
+    const normalizedMapUrl = normalizeMapEmbedUrl(
+      formData.google_map_url,
+      formData.address || formData.name
+    );
+    const payload = {
+      ...formData,
+      google_map_url: normalizedMapUrl,
+    };
+
+    const result = await saveGeneralSettingsAction(hotelId, payload);
 
     if (result.success) {
+      setFormData(payload);
       invalidateAdminCache(hotelId);
       setNotification({
         type: 'success',
-        message: 'Hotel configuration updated successfully. Changes are now live on your website.',
+        message:
+          'บันทึกข้อมูลเบอร์โทร ที่อยู่ และหมุดแผนที่สำเร็จแล้ว! ข้อมูลและพิกัด GPS ใหม่แสดงผลบนหน้าเว็บไซต์ทันที',
       });
       // Clear notification after 4 seconds
       setTimeout(() => setNotification(null), 4000);
@@ -262,40 +304,100 @@ export default function SettingsPage() {
 
         {/* Location & Map block */}
         <div className="bg-slate-900 border border-slate-800/60 p-6 md:p-8 rounded-xl space-y-6">
-          <h3 className="text-xs font-bold text-slate-200 uppercase tracking-widest border-b border-slate-850 pb-3">
-            Location & Map Embed
-          </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-850 pb-3">
+            <h3 className="text-xs font-bold text-slate-200 uppercase tracking-widest flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-accent" />
+              Location & Exact GPS Pin
+            </h3>
+            {detectedCoords && (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-mono font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md">
+                <Compass className="w-3.5 h-3.5" />
+                GPS: {detectedCoords.lat.toFixed(6)}, {detectedCoords.lng.toFixed(6)}
+              </span>
+            )}
+          </div>
 
           <div className="space-y-5">
             {/* Address */}
             <div className="space-y-1.5">
-              <label className="text-[10px] text-slate-450 uppercase font-bold tracking-wider">Physical Address</label>
+              <label className="text-[10px] text-slate-450 uppercase font-bold tracking-wider">
+                Physical Address (ที่อยู่ทางการของโรงแรม)
+              </label>
               <textarea
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
                 rows={2}
-                className="w-full bg-slate-955 border border-slate-800 rounded-lg px-4 py-3 text-xs md:text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-accent transition-colors resize-none"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-xs md:text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-accent transition-colors resize-none"
+                placeholder="เช่น 96/67 หมู่ 1 ตำบลสาคู อำเภอถลาง จังหวัดภูเก็ต 83110"
                 required
               />
             </div>
             
-            {/* Google Map URL */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between">
-                <label className="text-[10px] text-slate-450 uppercase font-bold tracking-wider">Google Maps Embed Iframe URL</label>
-                <span className="text-[9px] text-slate-500 font-medium">src attribute inside iframe tag</span>
+            {/* Google Map URL or Exact GPS Coordinates */}
+            <div className="space-y-2">
+              <div className="flex flex-wrap justify-between items-baseline gap-2">
+                <label className="text-[10px] text-slate-450 uppercase font-bold tracking-wider">
+                  พิกัด GPS (ละติจูด, ลองจิจูด) หรือลิงก์ Google Maps / Iframe
+                </label>
+                <span className="text-[10px] text-accent font-semibold">
+                  วางพิกัด เช่น 8.091165, 98.309927 ระบบแปลงหมุดให้อัตโนมัติ
+                </span>
               </div>
               <input
                 type="text"
                 name="google_map_url"
                 value={formData.google_map_url}
                 onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-xs text-slate-300 outline-none focus:border-accent transition-colors"
-                placeholder="https://www.google.com/maps/embed?pb=..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-xs text-slate-200 outline-none focus:border-accent transition-colors font-mono"
+                placeholder="8.091165, 98.309927 หรือ https://maps.google.com/maps?q=..."
                 required
               />
+              <div className="p-3.5 rounded-lg bg-slate-950/80 border border-slate-800/80 text-[11px] text-slate-400 leading-relaxed space-y-1">
+                <p className="font-semibold text-slate-200">
+                  💡 วิธีปักหมุดให้ตรงหน้าโรงแรม 100% (ป้องกันลูกค้าหลงไปหมุดซ้ำใน Google Maps):
+                </p>
+                <p>
+                  1. เปิด Google Maps ซูมไปที่อาคารโรงแรมจริง → <strong>คลิกขวาตรงจุดทางเข้าโรงแรม</strong> → คลิกตัวเลขบรรทัดแรก (เช่น <code className="text-accent">8.091165, 98.309927</code>) เพื่อคัดลอกพิกัด
+                </p>
+                <p>
+                  2. นำมาวางในช่องด้านบนแล้วกด <strong>Save Configuration</strong> — ปุ่มนำทางบนเว็บไซต์จะพาลูกค้าวิ่งตรงมายังพิกัด GPS นี้ทันทีโดยไม่แวะหมุดเก่าที่ผิด
+                </p>
+              </div>
             </div>
+
+            {/* LIVE INTERACTIVE MAP PIN PREVIEW */}
+            {previewEmbedUrl && (
+              <div className="space-y-2.5 pt-1">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                    ตัวอย่างหมุดแผนที่จริงบนหน้าเว็บไซต์ (Live Pin Preview)
+                  </span>
+                  <a
+                    href={testDirectionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-accent hover:underline"
+                  >
+                    <Navigation className="w-3.5 h-3.5" />
+                    ทดสอบกดนำทางด้วยพิกัดนี้
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+                <div className="w-full h-64 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+                  <iframe
+                    src={previewEmbedUrl}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Hotel Exact Pin Preview"
+                    className="w-full h-full"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

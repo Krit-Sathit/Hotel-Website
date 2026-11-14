@@ -207,13 +207,88 @@ export async function getSupabaseBlogPostBySlug(hotelId: string, slug: string): 
 // DYNAMIC DATABASE WRITE METHODS (CRUD / MUTATIONS)
 // -----------------------------------------------------------------------------
 
-export async function updateSupabaseHotelGeneralSettings(hotelId: string, data: any): Promise<Hotel | null> {
+export async function updateSupabaseHotelGeneralSettings(
+  hotelId: string,
+  data: any,
+  fallbackHotel?: Hotel | null
+): Promise<Hotel | null> {
   try {
-    const res = await supabaseFetch(`/hotels?id=eq.${hotelId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(data)
-    });
-    return (res && res.length > 0) ? res[0] as Hotel : null;
+    if (isUuid(hotelId)) {
+      const res = await supabaseFetch(`/hotels?id=eq.${hotelId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+      if (res && res.length > 0) return res[0] as Hotel;
+    }
+
+    const slug = fallbackHotel?.slug?.trim();
+    if (slug) {
+      const bySlug = await supabaseFetch(
+        `/hotels?slug=eq.${encodeURIComponent(slug)}&select=id`,
+        { method: 'GET' }
+      );
+      let targetUuid: string | null =
+        bySlug && bySlug.length > 0 ? bySlug[0].id : null;
+
+      if (!targetUuid) {
+        const allRows = await supabaseFetch('/hotels?select=id,slug', {
+          method: 'GET',
+        });
+        const normSlug = slug.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const matched = (allRows || []).find(
+          (r: any) =>
+            r.slug &&
+            r.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === normSlug
+        );
+        if (matched) targetUuid = matched.id;
+      }
+
+      if (targetUuid) {
+        const patched = await supabaseFetch(`/hotels?id=eq.${targetUuid}`, {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        });
+        if (patched && patched.length > 0) return patched[0] as Hotel;
+      } else if (fallbackHotel) {
+        const inserted = await supabaseFetch('/hotels', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: data.name ?? fallbackHotel.name,
+            slug: fallbackHotel.slug,
+            custom_domain:
+              data.custom_domain !== undefined
+                ? data.custom_domain
+                : fallbackHotel.custom_domain || null,
+            status: fallbackHotel.status || 'active',
+            logo_url: fallbackHotel.logo_url || null,
+            favicon_url: fallbackHotel.favicon_url || null,
+            email: data.email ?? fallbackHotel.email ?? '',
+            phone: data.phone ?? fallbackHotel.phone ?? '',
+            address: data.address ?? fallbackHotel.address ?? '',
+            google_map_url:
+              data.google_map_url ?? fallbackHotel.google_map_url ?? '',
+            social_links: data.social_links ??
+              fallbackHotel.social_links ?? {
+                facebook: '',
+                instagram: '',
+                whatsapp: '',
+                twitter: '',
+              },
+            theme: fallbackHotel.theme,
+            homepage_layout: fallbackHotel.homepage_layout || [
+              'hero',
+              'about',
+              'rooms',
+              'facilities',
+              'contact',
+            ],
+          }),
+        });
+        if (inserted && inserted.length > 0) return inserted[0] as Hotel;
+      }
+    }
+
+    return null;
   } catch (e) {
     console.error('updateSupabaseHotelGeneralSettings error:', e);
     return null;

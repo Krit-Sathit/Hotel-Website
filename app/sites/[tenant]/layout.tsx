@@ -10,6 +10,11 @@ import BookingWidget from '@/components/booking-widget';
 import MobileNavigation from '@/components/mobile-navigation';
 import TenantChromeGuard from '@/components/templates/tenant-chrome-guard';
 import { getBookingEngineUrl } from '@/lib/booking-engine';
+import {
+  buildGoogleDirectionsUrl,
+  extractLatLng,
+  formatPhoneForSchema,
+} from '@/lib/map-utils';
 
 interface TenantLayoutProps {
   children: React.ReactNode;
@@ -20,10 +25,18 @@ export async function generateMetadata({ params }: Pick<TenantLayoutProps, 'para
   const { tenant } = await params;
   const hotel = await getHotelBySlug(tenant);
   const hotelName = hotel?.name || 'Hotel';
+  const contactSnippet = [
+    hotel?.address ? `Address: ${hotel.address}` : '',
+    hotel?.phone ? `Tel: ${hotel.phone}` : '',
+  ]
+    .filter(Boolean)
+    .join(' | ');
 
   return {
-    title: `${hotelName} Hotel`,
-    description: `Official website for ${hotelName}.`,
+    title: `${hotelName} — Official Hotel Website`,
+    description: contactSnippet
+      ? `Official website for ${hotelName}. ${contactSnippet}. Book direct for the best guaranteed rates.`
+      : `Official website for ${hotelName}.`,
     icons: {
       icon: '/hotel-icon.svg'
     }
@@ -48,6 +61,48 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
   const isMainDomain = !host || host.includes('vercel.app') || host.includes('localhost') || host.includes('127.0.0.1');
   const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
   const bookingUrl = getBookingEngineUrl(hotel.slug, tenantPrefix);
+  const mapDirectionsHref = buildGoogleDirectionsUrl(
+    hotel.google_map_url,
+    hotel.name,
+    hotel.address
+  );
+  const geoCoords = extractLatLng(hotel.google_map_url);
+  const canonicalDomain = hotel.custom_domain
+    ? `https://${hotel.custom_domain.replace(/^https?:\/\//i, '').replace(/\/+$/, '')}`
+    : host
+    ? `https://${host}${tenantPrefix}`
+    : undefined;
+
+  // Official Schema.org Hotel JSON-LD for Google Knowledge Graph & GBP NAP/Pin Verification
+  const hotelJsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Hotel',
+    name: hotel.name,
+    ...(canonicalDomain ? { url: canonicalDomain } : {}),
+    ...(hotel.logo_url ? { logo: hotel.logo_url, image: hotel.logo_url } : {}),
+    ...(hotel.phone ? { telephone: formatPhoneForSchema(hotel.phone) } : {}),
+    ...(hotel.email ? { email: hotel.email } : {}),
+    ...(hotel.address
+      ? {
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: hotel.address,
+            addressCountry: 'TH',
+          },
+        }
+      : {}),
+    ...(geoCoords
+      ? {
+          geo: {
+            '@type': 'GeoCoordinates',
+            latitude: geoCoords.lat,
+            longitude: geoCoords.lng,
+          },
+        }
+      : {}),
+    hasMap: mapDirectionsHref,
+    sameAs: Object.values(hotel.social_links || {}).filter(Boolean),
+  };
 
   // Curated list of navigation links with tenant-aware hrefs
   const navLinks = [
@@ -79,10 +134,16 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
             </div>
             <div className="flex items-center gap-4">
               {hotel.address && (
-                <span className="flex items-center gap-1.5">
+                <a
+                  href={mapDirectionsHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open Exact GPS Location in Google Maps"
+                  className="flex items-center gap-1.5 hover:text-accent transition-colors"
+                >
                   <MapPin className="w-3.5 h-3.5 text-accent" />
                   {hotel.address}
-                </span>
+                </a>
               )}
             </div>
           </div>
@@ -328,6 +389,10 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
 
   return (
     <HotelThemeProvider theme={theme}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(hotelJsonLd) }}
+      />
       <TenantChromeGuard
         tenant={tenant}
         header={subpageHeader}
