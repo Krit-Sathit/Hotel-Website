@@ -3,39 +3,49 @@
 import React, { useState, useEffect } from 'react';
 import { Save, AlertCircle, CheckCircle, Eye } from 'lucide-react';
 import { saveThemeSettingsAction } from '@/lib/db/actions';
+import { peekAdminBundle, loadAdminBundle, invalidateAdminCache } from '@/lib/admin-client-cache';
 
 export default function ThemePage() {
-  const [hotelId, setHotelId] = useState('');
-  const [theme, setTheme] = useState({
-    primary_color: '#1a1a1a',
-    secondary_color: '#4a4a4a',
-    accent_color: '#d4af37',
-    background_color: '#ffffff',
-    text_color: '#111111',
-    button_style: 'rounded' as 'square' | 'rounded' | 'pill',
-    border_radius: '6px',
-    font_family: 'Inter',
-    dark_mode: false,
-    header_layout: 'centered' as 'centered' | 'minimal' | 'luxury',
-    footer_layout: 'simple' as 'simple' | 'luxury' | 'columns',
-    animation_style: 'fade' as 'fade' | 'slide' | 'none',
-  });
+  const initialHotel = peekAdminBundle()?.hotel;
+  const [hotelId, setHotelId] = useState(initialHotel?.id || '');
+  const [theme, setTheme] = useState(
+    initialHotel?.theme
+      ? { ...initialHotel.theme }
+      : {
+          primary_color: '#1a1a1a',
+          secondary_color: '#4a4a4a',
+          accent_color: '#d4af37',
+          background_color: '#ffffff',
+          text_color: '#111111',
+          button_style: 'rounded' as 'square' | 'rounded' | 'pill',
+          border_radius: '6px',
+          font_family: 'Inter',
+          dark_mode: false,
+          header_layout: 'centered' as 'centered' | 'minimal' | 'luxury',
+          footer_layout: 'simple' as 'simple' | 'luxury' | 'columns',
+          animation_style: 'fade' as 'fade' | 'slide' | 'none',
+        }
+  );
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialHotel?.theme);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     const getActiveTheme = async () => {
       try {
+        const cached = peekAdminBundle();
+        if (cached?.hotel?.theme) {
+          setHotelId(cached.hotel.id);
+          setTheme({ ...cached.hotel.theme });
+          setIsLoading(false);
+          return;
+        }
         setIsLoading(true);
-        const res = await fetch('/api/admin/data?include=hotel', { cache: 'no-store' });
-        if (!res.ok) throw new Error('Failed to fetch data');
-        const data = await res.json();
-        const hotel = data.hotel;
-        if (hotel && hotel.theme) {
-          setHotelId(hotel.id);
-          setTheme({ ...hotel.theme });
+        const data = await loadAdminBundle({ hotelOnly: true });
+        if (data?.hotel?.theme) {
+          setHotelId(data.hotel.id);
+          setTheme({ ...data.hotel.theme });
         }
       } catch (err) {
         console.error('Failed to load theme via API:', err);
@@ -44,7 +54,7 @@ export default function ThemePage() {
       }
     };
 
-    getActiveTheme();
+    void getActiveTheme();
     window.addEventListener('active-hotel-changed', getActiveTheme);
     return () => window.removeEventListener('active-hotel-changed', getActiveTheme);
   }, []);
@@ -71,6 +81,7 @@ export default function ThemePage() {
     const result = await saveThemeSettingsAction(hotelId, theme);
 
     if (result.success) {
+      invalidateAdminCache(hotelId);
       setNotification({
         type: 'success',
         message: 'Theme customization successfully updated! Your website has updated instantly.',

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Hotel as HotelIcon, Save, X, BedDouble, Users, Maximize2, CheckCircle, AlertCircle, Upload } from 'lucide-react';
 import { saveRoomAction, deleteRoomAction } from '@/lib/db/actions';
+import { peekAdminBundle, loadAdminBundle, invalidateAdminCache } from '@/lib/admin-client-cache';
 import type { Room } from '@/lib/db/mock-data';
 
 async function compressImageToWebP(file: File, maxWidth = 1200, quality = 0.8): Promise<File> {
@@ -63,9 +64,10 @@ async function compressImageToWebP(file: File, maxWidth = 1200, quality = 0.8): 
 }
 
 export default function RoomsManagerPage() {
-  const [hotelId, setHotelId] = useState('');
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const initialCached = peekAdminBundle();
+  const [hotelId, setHotelId] = useState(initialCached?.hotel?.id || '');
+  const [rooms, setRooms] = useState<Room[]>(initialCached?.rooms || []);
+  const [isLoading, setIsLoading] = useState(!initialCached?.complete);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -82,10 +84,11 @@ export default function RoomsManagerPage() {
 
   const fetchRoomsList = async () => {
     try {
-      const res = await fetch('/api/admin/data?include=rooms', { cache: 'no-store' });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setRooms(data.rooms || []);
+      invalidateAdminCache(hotelId);
+      const data = await loadAdminBundle({ force: true });
+      if (data) {
+        setRooms(data.rooms || []);
+      }
     } catch (err) {
       console.error('Failed to reload rooms via API:', err);
     }
@@ -94,13 +97,17 @@ export default function RoomsManagerPage() {
   useEffect(() => {
     const getActiveRooms = async () => {
       try {
+        const cached = peekAdminBundle();
+        if (cached?.complete) {
+          setHotelId(cached.hotel.id);
+          setRooms(cached.rooms || []);
+          setIsLoading(false);
+          return;
+        }
         setIsLoading(true);
-        const res = await fetch('/api/admin/data?include=rooms', { cache: 'no-store' });
-        if (!res.ok) throw new Error('Failed to fetch data');
-        const data = await res.json();
-        const hotel = data.hotel;
-        if (hotel) {
-          setHotelId(hotel.id);
+        const data = await loadAdminBundle();
+        if (data?.hotel) {
+          setHotelId(data.hotel.id);
           setRooms(data.rooms || []);
         }
       } catch (err) {
@@ -110,7 +117,7 @@ export default function RoomsManagerPage() {
       }
     };
 
-    getActiveRooms();
+    void getActiveRooms();
     window.addEventListener('active-hotel-changed', getActiveRooms);
     return () => window.removeEventListener('active-hotel-changed', getActiveRooms);
   }, []);

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle, Image as ImageIcon, Save } from 'lucide-react';
 import { saveAboutSectionAction } from '@/lib/db/actions';
+import { peekAdminBundle, loadAdminBundle, invalidateAdminCache } from '@/lib/admin-client-cache';
 
 type AboutContent = {
   title: string;
@@ -25,20 +26,30 @@ const emptyContent: AboutContent = {
 };
 
 export default function AboutSectionEditorPage() {
-  const [hotelId, setHotelId] = useState('');
-  const [content, setContent] = useState<AboutContent>(emptyContent);
-  const [media, setMedia] = useState<Array<{ id: string; image_url?: string; url?: string; alt_text?: string; file_name?: string }>>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const initialCached = peekAdminBundle();
+  const initialAbout = initialCached?.sections?.find((s: { section_type: string }) => s.section_type === 'about');
+  const [hotelId, setHotelId] = useState(initialCached?.hotel?.id || '');
+  const [content, setContent] = useState<AboutContent>({ ...emptyContent, ...(initialAbout?.content || {}) });
+  const [media, setMedia] = useState<Array<{ id: string; image_url?: string; url?: string; alt_text?: string; file_name?: string }>>(initialCached?.media || []);
+  const [isLoading, setIsLoading] = useState(!initialCached?.complete);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     const load = async () => {
       try {
+        const cached = peekAdminBundle();
+        if (cached?.complete) {
+          const about = cached.sections?.find((section: { section_type: string }) => section.section_type === 'about');
+          setHotelId(cached.hotel?.id || '');
+          setContent({ ...emptyContent, ...(about?.content || {}) });
+          setMedia(cached.media || []);
+          setIsLoading(false);
+          return;
+        }
         setIsLoading(true);
-        const response = await fetch('/api/admin/data?include=sections,media', { cache: 'no-store' });
-        if (!response.ok) throw new Error('Unable to load the About section.');
-        const data = await response.json();
+        const data = await loadAdminBundle();
+        if (!data) throw new Error('Unable to load the About section.');
         const about = data.sections?.find((section: { section_type: string }) => section.section_type === 'about');
         setHotelId(data.hotel?.id || '');
         setContent({ ...emptyContent, ...(about?.content || {}) });
@@ -49,7 +60,7 @@ export default function AboutSectionEditorPage() {
         setIsLoading(false);
       }
     };
-    load();
+    void load();
     window.addEventListener('active-hotel-changed', load);
     return () => window.removeEventListener('active-hotel-changed', load);
   }, []);
@@ -74,6 +85,7 @@ export default function AboutSectionEditorPage() {
     setIsSaving(true);
     setNotification(null);
     const result = await saveAboutSectionAction(hotelId, content);
+    if (result.success) invalidateAdminCache(hotelId);
     setNotification(result.success
       ? { type: 'success', message: 'About Introduction saved. Your website has been updated.' }
       : { type: 'error', message: result.error || 'Unable to save the About Introduction.' });

@@ -22,6 +22,7 @@ import {
   saveMediaOrderAction,
   associatePhotoWithRoomAction
 } from '@/lib/db/actions';
+import { peekAdminBundle, loadAdminBundle, invalidateAdminCache } from '@/lib/admin-client-cache';
 
 interface MediaFile {
   id: string;
@@ -108,13 +109,42 @@ export default function MediaLibraryPage() {
   const [uploadMethod, setUploadMethod] = useState<'upload' | 'paste'>('upload');
   const [libraryError, setLibraryError] = useState<string | null>(null);
 
-  // Seed default library files
-  const [files, setFiles] = useState<MediaFile[]>([]);
-  const [rooms, setRooms] = useState<any[]>([]);
+  // Seed default library files from warm client cache if available
+  const initialCached = peekAdminBundle();
+  const [files, setFiles] = useState<MediaFile[]>(
+    Array.isArray(initialCached?.media) ? initialCached.media : []
+  );
+  const [rooms, setRooms] = useState<any[]>(initialCached?.rooms || []);
   const mediaLoadId = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
+
+    const applyMediaData = (data: { hotel: any; rooms?: any[]; media?: any[] }) => {
+      const hotel = data.hotel;
+      setHotelId(hotel.id);
+      setRooms(data.rooms || []);
+
+      let deletedIds: string[] = [];
+      if (typeof window !== 'undefined') {
+        const deletedCache = localStorage.getItem(`flowstay_deleted_media_${hotel.id}`);
+        if (deletedCache) {
+          try {
+            deletedIds = JSON.parse(deletedCache) || [];
+          } catch (e) {
+            console.error('Failed to parse deleted media cache:', e);
+          }
+        }
+      }
+
+      if (Array.isArray(data.media)) {
+        const filtered = data.media.filter((item: MediaFile) => !deletedIds.includes(item.id));
+        setFiles(filtered);
+      } else {
+        setLibraryError('Media Library could not be loaded. Check the selected hotel and persistent storage settings.');
+        setFiles([]);
+      }
+    };
 
     const getActiveMedia = async () => {
       const loadId = ++mediaLoadId.current;
@@ -122,38 +152,17 @@ export default function MediaLibraryPage() {
         setLibraryError(null);
         setSelectedFile(null);
         setSelectedFileIds([]);
-        setFiles([]);
 
-        // The selected hotel is stored in a cookie, so this request must always
-        // bypass browser caches and read the cookie that was just updated.
-        const res = await fetch('/api/admin/data?include=rooms,media', { cache: 'no-store' });
-        if (!res.ok) throw new Error('Failed to fetch data');
-        const data = await res.json();
-        const hotel = data.hotel;
-        if (hotel && !cancelled && loadId === mediaLoadId.current) {
-          setHotelId(hotel.id);
-          setRooms(data.rooms || []);
-          
-          // Check localStorage cache first to preserve user deletions across serverless reloads
-          let deletedIds: string[] = [];
-          if (typeof window !== 'undefined') {
-            const deletedCache = localStorage.getItem(`flowstay_deleted_media_${hotel.id}`);
-            if (deletedCache) {
-              try {
-                deletedIds = JSON.parse(deletedCache) || [];
-              } catch (e) {
-                console.error('Failed to parse deleted media cache:', e);
-              }
-            }
-          }
+        const cached = peekAdminBundle();
+        if (cached?.complete) {
+          applyMediaData(cached);
+          return;
+        }
 
-          if (Array.isArray(data.media)) {
-            const filtered = data.media.filter((item: MediaFile) => !deletedIds.includes(item.id));
-            setFiles(filtered);
-          } else {
-            setLibraryError('Media Library could not be loaded. Check the selected hotel and persistent storage settings.');
-            setFiles([]);
-          }
+        const data = await loadAdminBundle();
+        if (!data?.hotel) throw new Error('Failed to fetch data');
+        if (!cancelled && loadId === mediaLoadId.current) {
+          applyMediaData(data);
         }
       } catch (err) {
         console.error('Failed to load media details via API:', err);
@@ -164,10 +173,8 @@ export default function MediaLibraryPage() {
       }
     };
 
-    getActiveMedia();
+    void getActiveMedia();
 
-    // TenantSelector emits this event as soon as the user chooses another hotel.
-    // This is necessary because router.refresh() preserves this client page state.
     window.addEventListener('active-hotel-changed', getActiveMedia);
     return () => {
       cancelled = true;
@@ -462,9 +469,9 @@ export default function MediaLibraryPage() {
     try {
       const res = await associatePhotoWithRoomAction(hotelId, fileUrl, roomId || null);
       if (res.success) {
-        const dataRes = await fetch('/api/admin/data?include=rooms', { cache: 'no-store' });
-        if (dataRes.ok) {
-          const data = await dataRes.json();
+        invalidateAdminCache(hotelId);
+        const data = await loadAdminBundle({ force: true });
+        if (data) {
           setRooms(data.rooms || []);
         }
       }

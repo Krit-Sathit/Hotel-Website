@@ -17,8 +17,10 @@ export default async function GalleryPage({ params }: GalleryPageProps) {
     notFound();
   }
 
-  const photos = await getGalleryPhotos(hotel.id);
-  const rooms = await getRooms(hotel.id);
+  const [photos, rooms] = await Promise.all([
+    getGalleryPhotos(hotel.id),
+    getRooms(hotel.id),
+  ]);
 
   return (
     <div className="pt-8">

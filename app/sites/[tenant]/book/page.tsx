@@ -4,9 +4,6 @@ import { getHotelBySlug } from '@/lib/db/mock-data';
 import HotelBookingEngine from '@/components/booking/hotel-booking-engine';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 interface BookPageProps {
   params: Promise<{ tenant: string }>;
   searchParams: Promise<{

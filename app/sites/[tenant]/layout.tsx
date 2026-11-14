@@ -10,9 +10,6 @@ import BookingWidget from '@/components/booking-widget';
 import MobileNavigation from '@/components/mobile-navigation';
 import { getBookingEngineUrl } from '@/lib/booking-engine';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 interface TenantLayoutProps {
   children: React.ReactNode;
   params: Promise<{ tenant: string }>;

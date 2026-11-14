@@ -25,9 +25,6 @@ import LocationSection from '@/components/sections/location-section';
 import ContactSection from '@/components/sections/contact-section';
 import { getBookingEngineUrl } from '@/lib/booking-engine';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 interface TenantPageProps {
   params: Promise<{ tenant: string }>;
 }

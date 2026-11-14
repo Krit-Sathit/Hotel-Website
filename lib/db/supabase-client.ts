@@ -39,7 +39,7 @@ async function supabaseFetch(path: string, options: RequestInit = {}) {
     // the tag immediately after every content change, so visitors do not wait on
     // a Supabase round trip for unchanged content.
     ...(isReadRequest
-      ? { next: { revalidate: 120, tags: ['hotel-content'] } }
+      ? { next: { revalidate: 180, tags: ['hotel-content'] } }
       : { cache: 'no-store' })
   });
 

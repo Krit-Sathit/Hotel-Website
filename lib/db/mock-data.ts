@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { unstable_cache } from 'next/cache';
 import {
   isSupabaseConfigured,
   getSupabaseHotelBySlug,
@@ -737,8 +738,8 @@ interface FlowStayWebsiteBundle {
   media: any[];
 }
 
-const FLOWSTAY_CACHE_TTL_MS = 60_000;
-const FLOWSTAY_NEGATIVE_CACHE_TTL_MS = 60_000;
+const FLOWSTAY_CACHE_TTL_MS = 180_000;
+const FLOWSTAY_NEGATIVE_CACHE_TTL_MS = 180_000;
 const FLOWSTAY_FETCH_TIMEOUT_MS = 2500;
 const flowStayBundleCache = new Map<string, { expiresAt: number; data: FlowStayWebsiteBundle | null }>();
 const flowStayInFlight = new Map<string, Promise<FlowStayWebsiteBundle | null>>();
@@ -751,6 +752,93 @@ const FLOWSTAY_LEGACY_ALIASES: Record<string, string> = {
   'theparphuket.com': 'theparphuket',
   'www.theparphuket.com': 'theparphuket',
 };
+
+const NON_FLOWSTAY_KEYS = new Set([
+  'hotel-a',
+  'hotel-b',
+  'grandhorizon.com',
+  'urbannest.com',
+  '11111111-1111-1111-1111-111111111111',
+  '22222222-2222-2222-2222-222222222222',
+]);
+
+function isLocalOrSupabaseOnlyKey(key: string): boolean {
+  if (!key) return true;
+  if (NON_FLOWSTAY_KEYS.has(key)) return true;
+  // Supabase UUIDs are never FlowStay numeric IDs or slugs
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(key);
+}
+
+function normalizeHttpsUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  return url.replace(/^http:\/\/(www\.)?flowstay\.live\//i, 'https://flowstay.live/');
+}
+
+function normalizeFlowStayBundleUrls(bundle: FlowStayWebsiteBundle): FlowStayWebsiteBundle {
+  if (bundle.hotel) {
+    if (bundle.hotel.logo_url) bundle.hotel.logo_url = normalizeHttpsUrl(bundle.hotel.logo_url);
+    if (bundle.hotel.favicon_url) bundle.hotel.favicon_url = normalizeHttpsUrl(bundle.hotel.favicon_url);
+    if (bundle.hotel.hero_image_url) bundle.hotel.hero_image_url = normalizeHttpsUrl(bundle.hotel.hero_image_url);
+  }
+  if (Array.isArray(bundle.slides)) {
+    bundle.slides = bundle.slides.map((s) => ({
+      ...s,
+      image_url: normalizeHttpsUrl(s.image_url) || s.image_url,
+    }));
+  }
+  if (Array.isArray(bundle.rooms)) {
+    bundle.rooms = bundle.rooms.map((r) => ({
+      ...r,
+      gallery: Array.isArray(r.gallery) ? r.gallery.map((g) => normalizeHttpsUrl(g) || g) : [],
+    }));
+  }
+  if (Array.isArray(bundle.sections)) {
+    bundle.sections = bundle.sections.map((sec) => {
+      if (sec.content && typeof sec.content === 'object') {
+        const c = { ...sec.content };
+        if (c.primary_image_url) c.primary_image_url = normalizeHttpsUrl(c.primary_image_url);
+        if (c.secondary_image_url) c.secondary_image_url = normalizeHttpsUrl(c.secondary_image_url);
+        return { ...sec, content: c };
+      }
+      return sec;
+    });
+  }
+  if (Array.isArray(bundle.promotions)) {
+    bundle.promotions = bundle.promotions.map((p) => ({
+      ...p,
+      image_url: normalizeHttpsUrl(p.image_url) || p.image_url,
+    }));
+  }
+  if (Array.isArray(bundle.gallery)) {
+    bundle.gallery = bundle.gallery.map((g) => ({
+      ...g,
+      image_url: normalizeHttpsUrl(g.image_url) || g.image_url,
+    }));
+  }
+  if (Array.isArray(bundle.media)) {
+    bundle.media = bundle.media.map((m) => ({
+      ...m,
+      url: normalizeHttpsUrl(m.url) || m.url,
+    }));
+  }
+  return bundle;
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('FlowStay fetch timeout')), ms);
+    promise.then(
+      (val) => {
+        clearTimeout(timer);
+        resolve(val);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
 
 export function normalizeFlowStayIdentifier(slugOrId: string): string {
   const clean = String(slugOrId || '').trim().toLowerCase();
@@ -794,11 +882,51 @@ function cacheFlowStayBundle(requestedKey: string, bundle: FlowStayWebsiteBundle
   }
 }
 
+const fetchCachedFlowStayBundleRemote = unstable_cache(
+  async (key: string): Promise<FlowStayWebsiteBundle | null> => {
+    const res = await withTimeout(
+      fetch(`${FLOWSTAY_API_BASE}/api/public/hotel-website/${encodeURIComponent(key)}`, {
+        headers: { Accept: 'application/json' },
+        next: { revalidate: 180, tags: ['hotel-content'] },
+      }),
+      FLOWSTAY_FETCH_TIMEOUT_MS
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as FlowStayWebsiteBundle;
+    if (!data || !data.hotel) return null;
+    return normalizeFlowStayBundleUrls(data);
+  },
+  ['flowstay-website-bundle-v2'],
+  { revalidate: 180, tags: ['hotel-content'] }
+);
+
+const fetchCachedFlowStayAllHotelsRemote = unstable_cache(
+  async (): Promise<Hotel[]> => {
+    const res = await withTimeout(
+      fetch(`${FLOWSTAY_API_BASE}/api/public/hotel-websites`, {
+        headers: { Accept: 'application/json' },
+        next: { revalidate: 180, tags: ['hotel-content'] },
+      }),
+      FLOWSTAY_FETCH_TIMEOUT_MS
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    const hotels = data && Array.isArray(data.hotels) ? (data.hotels as Hotel[]) : [];
+    return hotels.map((h) => ({
+      ...h,
+      logo_url: h.logo_url ? normalizeHttpsUrl(h.logo_url) : null,
+      favicon_url: h.favicon_url ? normalizeHttpsUrl(h.favicon_url) : null,
+    }));
+  },
+  ['flowstay-all-hotels-v2'],
+  { revalidate: 180, tags: ['hotel-content'] }
+);
+
 export async function fetchFlowStayWebsiteBundle(slugOrId: string): Promise<FlowStayWebsiteBundle | null> {
   if (!slugOrId) return null;
   const rawKey = String(slugOrId).trim().toLowerCase();
   const key = normalizeFlowStayIdentifier(rawKey);
-  if (!key) return null;
+  if (!key || isLocalOrSupabaseOnlyKey(key)) return null;
 
   const cached = flowStayBundleCache.get(key) || flowStayBundleCache.get(rawKey);
   if (cached && cached.expiresAt > Date.now()) {
@@ -812,23 +940,7 @@ export async function fetchFlowStayWebsiteBundle(slugOrId: string): Promise<Flow
 
   const fetchPromise = (async (): Promise<FlowStayWebsiteBundle | null> => {
     try {
-      const res = await fetch(
-        `${FLOWSTAY_API_BASE}/api/public/hotel-website/${encodeURIComponent(key)}`,
-        {
-          next: { revalidate: 60, tags: ['hotel-content'] },
-          headers: { Accept: 'application/json' },
-          signal: AbortSignal.timeout(FLOWSTAY_FETCH_TIMEOUT_MS),
-        }
-      );
-      if (!res.ok) {
-        cacheFlowStayBundle(key, null);
-        return null;
-      }
-      const data = (await res.json()) as FlowStayWebsiteBundle;
-      if (!data || !data.hotel) {
-        cacheFlowStayBundle(key, null);
-        return null;
-      }
+      const data = await fetchCachedFlowStayBundleRemote(key);
       cacheFlowStayBundle(key, data);
       return data;
     } catch (err) {
@@ -854,22 +966,15 @@ export async function fetchFlowStayAllHotels(): Promise<Hotel[]> {
 
   flowStayAllHotelsInFlight = (async (): Promise<Hotel[]> => {
     try {
-      const res = await fetch(`${FLOWSTAY_API_BASE}/api/public/hotel-websites`, {
-        next: { revalidate: 60, tags: ['hotel-content'] },
-        headers: { Accept: 'application/json' },
-        signal: AbortSignal.timeout(FLOWSTAY_FETCH_TIMEOUT_MS),
-      });
-      if (!res.ok) {
-        flowStayAllHotelsCache = { expiresAt: Date.now() + 15_000, data: [] };
-        return [];
-      }
-      const data = await res.json();
-      const hotels = data && Array.isArray(data.hotels) ? (data.hotels as Hotel[]) : [];
-      flowStayAllHotelsCache = { expiresAt: Date.now() + FLOWSTAY_CACHE_TTL_MS, data: hotels };
+      const hotels = await fetchCachedFlowStayAllHotelsRemote();
+      flowStayAllHotelsCache = {
+        expiresAt: Date.now() + (hotels.length > 0 ? FLOWSTAY_CACHE_TTL_MS : 30_000),
+        data: hotels,
+      };
       return hotels;
     } catch (err) {
       console.warn('[FlowStay Sync] Failed to fetch all hotels from FlowStay:', err);
-      flowStayAllHotelsCache = { expiresAt: Date.now() + 15_000, data: [] };
+      flowStayAllHotelsCache = { expiresAt: Date.now() + 30_000, data: [] };
       return [];
     } finally {
       flowStayAllHotelsInFlight = null;
@@ -894,7 +999,11 @@ export async function getHotelBySlug(slug: string): Promise<Hotel | null> {
   if (isSupabaseConfigured && slug !== 'hotel-1784206393534') {
     try {
       const hotel = await getSupabaseHotelBySlug(slug);
-      if (hotel) return hotel;
+      if (hotel) {
+        cacheFlowStayBundle(hotel.id, null);
+        cacheFlowStayBundle(hotel.slug, null);
+        return hotel;
+      }
     } catch (e) {
       console.error('getHotelBySlug Supabase error:', e);
     }
@@ -913,10 +1022,19 @@ export async function getHotelBySlug(slug: string): Promise<Hotel | null> {
   if (isSupabaseConfigured && fallbackHotel?.slug && fallbackHotel.id !== 'hotel-1784206393534') {
     try {
       const migratedHotel = await getSupabaseHotelBySlug(fallbackHotel.slug);
-      if (migratedHotel) return migratedHotel;
+      if (migratedHotel) {
+        cacheFlowStayBundle(migratedHotel.id, null);
+        cacheFlowStayBundle(migratedHotel.slug, null);
+        return migratedHotel;
+      }
     } catch (e) {
       console.error('getHotelBySlug legacy tenant resolution error:', e);
     }
+  }
+
+  if (fallbackHotel) {
+    cacheFlowStayBundle(fallbackHotel.id, null);
+    cacheFlowStayBundle(fallbackHotel.slug, null);
   }
 
   return fallbackHotel;

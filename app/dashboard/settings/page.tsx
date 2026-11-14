@@ -3,25 +3,27 @@
 import React, { useState, useEffect } from 'react';
 import { Save, HelpCircle, AlertCircle, CheckCircle, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
 import { saveGeneralSettingsAction, deleteHotelAction, getAllHotelsAction } from '@/lib/db/actions';
+import { peekAdminBundle, loadAdminBundle, invalidateAdminCache } from '@/lib/admin-client-cache';
 import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [hotelId, setHotelId] = useState('');
+  const initialHotel = peekAdminBundle()?.hotel;
+  const [hotelId, setHotelId] = useState(initialHotel?.id || '');
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    google_map_url: '',
-    custom_domain: '',
-    facebook: '',
-    instagram: '',
-    whatsapp: '',
-    twitter: '',
+    name: initialHotel?.name || '',
+    email: initialHotel?.email || '',
+    phone: initialHotel?.phone || '',
+    address: initialHotel?.address || '',
+    google_map_url: initialHotel?.google_map_url || '',
+    custom_domain: initialHotel?.custom_domain || '',
+    facebook: initialHotel?.social_links?.facebook || '',
+    instagram: initialHotel?.social_links?.instagram || '',
+    whatsapp: initialHotel?.social_links?.whatsapp || '',
+    twitter: initialHotel?.social_links?.twitter || '',
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialHotel);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -77,29 +79,36 @@ export default function SettingsPage() {
     }
   };
 
-  // Load active hotel data from our secure API endpoint
+  // Load active hotel data from client bundle cache / API
   useEffect(() => {
+    const applyHotel = (hotel: any) => {
+      setHotelId(hotel.id);
+      setFormData({
+        name: hotel.name,
+        email: hotel.email,
+        phone: hotel.phone || '',
+        address: hotel.address || '',
+        google_map_url: hotel.google_map_url || '',
+        custom_domain: hotel.custom_domain || '',
+        facebook: hotel.social_links?.facebook || '',
+        instagram: hotel.social_links?.instagram || '',
+        whatsapp: hotel.social_links?.whatsapp || '',
+        twitter: hotel.social_links?.twitter || '',
+      });
+    };
+
     const getActiveHotel = async () => {
       try {
+        const cached = peekAdminBundle();
+        if (cached?.hotel) {
+          applyHotel(cached.hotel);
+          setIsLoading(false);
+          return;
+        }
         setIsLoading(true);
-        const res = await fetch('/api/admin/data?include=hotel', { cache: 'no-store' });
-        if (!res.ok) throw new Error('Failed to fetch data');
-        const data = await res.json();
-        const hotel = data.hotel;
-        if (hotel) {
-          setHotelId(hotel.id);
-          setFormData({
-            name: hotel.name,
-            email: hotel.email,
-            phone: hotel.phone || '',
-            address: hotel.address || '',
-            google_map_url: hotel.google_map_url || '',
-            custom_domain: hotel.custom_domain || '',
-            facebook: hotel.social_links?.facebook || '',
-            instagram: hotel.social_links?.instagram || '',
-            whatsapp: hotel.social_links?.whatsapp || '',
-            twitter: hotel.social_links?.twitter || '',
-          });
+        const data = await loadAdminBundle({ hotelOnly: true });
+        if (data?.hotel) {
+          applyHotel(data.hotel);
         }
       } catch (err) {
         console.error('Failed to load settings via API:', err);
@@ -108,7 +117,7 @@ export default function SettingsPage() {
       }
     };
 
-    getActiveHotel();
+    void getActiveHotel();
     window.addEventListener('active-hotel-changed', getActiveHotel);
     return () => window.removeEventListener('active-hotel-changed', getActiveHotel);
   }, []);
@@ -128,6 +137,7 @@ export default function SettingsPage() {
     const result = await saveGeneralSettingsAction(hotelId, formData);
 
     if (result.success) {
+      invalidateAdminCache(hotelId);
       setNotification({
         type: 'success',
         message: 'Hotel configuration updated successfully. Changes are now live on your website.',

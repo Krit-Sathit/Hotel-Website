@@ -3,22 +3,13 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { 
-  BarChart3, 
-  Settings, 
-  Palette, 
-  Layers, 
-  Image as ImageIcon, 
-  CalendarRange, 
-  Hotel as HotelIcon, 
-  Grid,
-  Users as UsersIcon,
   ExternalLink, 
   LogOut,
   Sparkles,
-  ShieldCheck
 } from 'lucide-react';
 import { getHotelBySlug, getAllHotels } from '@/lib/db/mock-data';
 import TenantSelector from '@/components/dashboard/tenant-selector';
+import SidebarNav from '@/components/dashboard/sidebar-nav';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -54,19 +45,6 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     userRole === 'super_admin'
       ? allHotels.map(h => ({ id: h.id, name: h.name }))
       : [{ id: hotel.id, name: hotel.name }];
-
-  // Sidebar navigation menu items
-  const menuItems = [
-    { label: 'Analytics Overview', href: '/dashboard', icon: <BarChart3 className="w-4 h-4" /> },
-    { label: 'General Settings', href: '/dashboard/settings', icon: <Settings className="w-4 h-4" /> },
-    { label: 'Design & Theme', href: '/dashboard/theme', icon: <Palette className="w-4 h-4" /> },
-    { label: 'Homepage Builder', href: '/dashboard/builder', icon: <Grid className="w-4 h-4" /> },
-    { label: 'Hero Slides', href: '/dashboard/hero', icon: <Layers className="w-4 h-4" /> },
-    { label: 'Rooms Manager', href: '/dashboard/rooms', icon: <HotelIcon className="w-4 h-4" /> },
-    { label: 'Promotions Manager', href: '/dashboard/promotions', icon: <CalendarRange className="w-4 h-4" /> },
-    { label: 'Media Library', href: '/dashboard/media', icon: <ImageIcon className="w-4 h-4" /> },
-    { label: 'User & Access Manager', href: '/dashboard/users', icon: <UsersIcon className="w-4 h-4" /> },
-  ];
 
   // The public tenant site is served through this production app. Using a
   // relative URL also keeps the button working in local development.
@@ -104,19 +82,8 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
           )}
         </div>
 
-        {/* Sidebar Nav items */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto text-left">
-          {menuItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 px-3.5 py-3 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all"
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        {/* Sidebar Nav items (instant client active state + bundle prefetcher) */}
+        <SidebarNav initialHotel={hotel} />
 
         {/* Sidebar bottom footer */}
         <div className="p-4 border-t border-slate-100 space-y-2">

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { revalidatePath, updateTag } from 'next/cache';
+import { revalidatePath, revalidateTag, updateTag } from 'next/cache';
 import { clearFlowStayCache } from '@/lib/db/mock-data';
 
 const corsHeaders = {
@@ -24,9 +24,13 @@ export async function POST(request: Request) {
     }
 
     try {
-      updateTag('hotel-content');
+      revalidateTag('hotel-content', { expire: 0 });
     } catch {
-      // ignore if updateTag not supported in current context
+      try {
+        updateTag('hotel-content');
+      } catch {
+        // ignore if neither is supported in current context
+      }
     }
 
     revalidatePath('/', 'layout');

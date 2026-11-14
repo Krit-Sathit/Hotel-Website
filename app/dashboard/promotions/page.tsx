@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Tag, Calendar, Save, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { savePromotionAction, deletePromotionAction } from '@/lib/db/actions';
+import { peekAdminBundle, loadAdminBundle, invalidateAdminCache } from '@/lib/admin-client-cache';
 import type { Promotion } from '@/lib/db/mock-data';
 
 export default function PromotionsManagerPage() {
-  const [hotelId, setHotelId] = useState('');
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const initialCached = peekAdminBundle();
+  const [hotelId, setHotelId] = useState(initialCached?.hotel?.id || '');
+  const [promotions, setPromotions] = useState<Promotion[]>(initialCached?.promotions || []);
+  const [isLoading, setIsLoading] = useState(!initialCached?.complete);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -18,10 +20,11 @@ export default function PromotionsManagerPage() {
 
   const fetchPromotionsList = async () => {
     try {
-      const res = await fetch('/api/admin/data?include=promotions', { cache: 'no-store' });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setPromotions(data.promotions || []);
+      invalidateAdminCache(hotelId);
+      const data = await loadAdminBundle({ force: true });
+      if (data) {
+        setPromotions(data.promotions || []);
+      }
     } catch (err) {
       console.error('Failed to reload promotions via API:', err);
     }
@@ -30,13 +33,17 @@ export default function PromotionsManagerPage() {
   useEffect(() => {
     const getActivePromotions = async () => {
       try {
+        const cached = peekAdminBundle();
+        if (cached?.complete) {
+          setHotelId(cached.hotel.id);
+          setPromotions(cached.promotions || []);
+          setIsLoading(false);
+          return;
+        }
         setIsLoading(true);
-        const res = await fetch('/api/admin/data?include=promotions', { cache: 'no-store' });
-        if (!res.ok) throw new Error('Failed to fetch data');
-        const data = await res.json();
-        const hotel = data.hotel;
-        if (hotel) {
-          setHotelId(hotel.id);
+        const data = await loadAdminBundle();
+        if (data?.hotel) {
+          setHotelId(data.hotel.id);
           setPromotions(data.promotions || []);
         }
       } catch (err) {
@@ -46,7 +53,7 @@ export default function PromotionsManagerPage() {
       }
     };
 
-    getActivePromotions();
+    void getActivePromotions();
     window.addEventListener('active-hotel-changed', getActivePromotions);
     return () => window.removeEventListener('active-hotel-changed', getActivePromotions);
   }, []);

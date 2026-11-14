@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Save, Plus, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, AlertCircle, CheckCircle } from 'lucide-react';
 import { saveHeroSlidesAction } from '@/lib/db/actions';
+import { peekAdminBundle, loadAdminBundle, invalidateAdminCache } from '@/lib/admin-client-cache';
 import type { HeroSlide } from '@/lib/db/mock-data';
 
 interface SlideEditorCardProps {
@@ -172,23 +173,27 @@ const SlideEditorCard = memo(function SlideEditorCard({
 });
 
 export default function HeroPage() {
-  const [hotelId, setHotelId] = useState('');
-  const [slides, setSlides] = useState<HeroSlide[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const initialCached = peekAdminBundle();
+  const [hotelId, setHotelId] = useState(initialCached?.hotel?.id || '');
+  const [slides, setSlides] = useState<HeroSlide[]>(initialCached?.slides || []);
+  const [isLoading, setIsLoading] = useState(!initialCached?.complete);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const getActiveSlides = useCallback(async () => {
+  const getActiveSlides = useCallback(async (force = false) => {
     try {
+      const cached = !force ? peekAdminBundle() : null;
+      if (cached?.complete) {
+        setHotelId(cached.hotel.id);
+        setSlides(cached.slides || []);
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
-      const res = await fetch('/api/admin/data?include=slides', { cache: 'no-store' });
-      if (!res.ok) throw new Error('Failed to fetch data');
-      const data = await res.json();
-      const hotel = data.hotel;
-      const slidesList = data.slides;
-      if (hotel) {
-        setHotelId(hotel.id);
-        setSlides(slidesList || []);
+      const data = await loadAdminBundle({ force });
+      if (data?.hotel) {
+        setHotelId(data.hotel.id);
+        setSlides(data.slides || []);
       }
     } catch (err) {
       console.error('Failed to load slides via API:', err);
@@ -198,9 +203,12 @@ export default function HeroPage() {
   }, []);
 
   useEffect(() => {
-    getActiveSlides();
-    window.addEventListener('active-hotel-changed', getActiveSlides);
-    return () => window.removeEventListener('active-hotel-changed', getActiveSlides);
+    void getActiveSlides(false);
+    const onHotelChanged = () => {
+      void getActiveSlides(false);
+    };
+    window.addEventListener('active-hotel-changed', onHotelChanged);
+    return () => window.removeEventListener('active-hotel-changed', onHotelChanged);
   }, [getActiveSlides]);
 
   const handleFieldChange = useCallback((index: number, field: keyof HeroSlide, value: any) => {
@@ -278,6 +286,7 @@ export default function HeroPage() {
     const result = await saveHeroSlidesAction(hotelId, slides);
 
     if (result.success) {
+      invalidateAdminCache(hotelId);
       setNotification({
         type: 'success',
         message: 'Hero slider configuration saved successfully. Slider updates are now live.',

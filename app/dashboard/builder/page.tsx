@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Save, ChevronUp, ChevronDown, Eye, EyeOff, AlertCircle, CheckCircle, GripVertical } from 'lucide-react';
 import { saveHomepageLayoutAction } from '@/lib/db/actions';
+import { peekAdminBundle, loadAdminBundle, invalidateAdminCache } from '@/lib/admin-client-cache';
 
 interface BlockItem {
   id: string;
@@ -12,62 +13,66 @@ interface BlockItem {
   description: string;
 }
 
+const SECTION_DEFINITIONS: Record<string, { name: string; desc: string }> = {
+  hero: { name: 'Hero Slider Banner', desc: 'Full-screen visual slideshow with custom headlines, subheadings and call to actions.' },
+  about: { name: 'About Introduction', desc: 'Introduction to the hotel heritage, featuring overlapping luxury image composition.' },
+  rooms: { name: 'Accommodations Showcase', desc: 'Grid display of available suites and room types, details, pricing and booking triggers.' },
+  facilities: { name: 'Resort Amenities', desc: 'Grid listing of premium services such as spa, restaurants, swimming pools, and butler services.' },
+  promotions: { name: 'Special Offers', desc: 'Active promotion campaigns, timelines, CTAs and copyable coupon codes.' },
+  gallery: { name: 'Filterable Media Gallery', desc: 'Grouped photo gallery with category filter tabs and interactive modal lightbox.' },
+  testimonials: { name: 'Guest Reviews', desc: 'Double column cards displaying elegant guest reviews and location markers.' },
+  awards: { name: 'Prestige Accolades', desc: 'Accreditation ribbon displaying Michelin Keys, Conde Nast Traveler or Travel+Leisure titles.' },
+  location: { name: 'Map & Nearby attractions', desc: 'Responsive embedded Google Map alongside curated lists of local tourist spots.' },
+  contact: { name: 'Digital Contact Form', desc: 'Direct contact phone and email directories plus interactive inquiry submission form.' }
+};
+
+function buildBlocksFromLayout(currentLayout: string[] = []): BlockItem[] {
+  const mappedBlocks: BlockItem[] = currentLayout.map((key: string) => ({
+    id: key,
+    name: SECTION_DEFINITIONS[key]?.name || key,
+    description: SECTION_DEFINITIONS[key]?.desc || '',
+    isEnabled: true,
+  }));
+
+  Object.keys(SECTION_DEFINITIONS).forEach((key: string) => {
+    if (!currentLayout.includes(key)) {
+      mappedBlocks.push({
+        id: key,
+        name: SECTION_DEFINITIONS[key].name,
+        description: SECTION_DEFINITIONS[key].desc,
+        isEnabled: false,
+      });
+    }
+  });
+
+  return mappedBlocks;
+}
+
 export default function BuilderPage() {
-  const [hotelId, setHotelId] = useState('');
-  const [blocks, setBlocks] = useState<BlockItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const initialHotel = peekAdminBundle()?.hotel;
+  const [hotelId, setHotelId] = useState(initialHotel?.id || '');
+  const [blocks, setBlocks] = useState<BlockItem[]>(
+    initialHotel ? buildBlocksFromLayout(initialHotel.homepage_layout || []) : []
+  );
+  const [isLoading, setIsLoading] = useState(!initialHotel);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-
-  // All possible sections and their definitions
-  const sectionDefinitions: Record<string, { name: string; desc: string }> = {
-    hero: { name: 'Hero Slider Banner', desc: 'Full-screen visual slideshow with custom headlines, subheadings and call to actions.' },
-    about: { name: 'About Introduction', desc: 'Introduction to the hotel heritage, featuring overlapping luxury image composition.' },
-    rooms: { name: 'Accommodations Showcase', desc: 'Grid display of available suites and room types, details, pricing and booking triggers.' },
-    facilities: { name: 'Resort Amenities', desc: 'Grid listing of premium services such as spa, restaurants, swimming pools, and butler services.' },
-    promotions: { name: 'Special Offers', desc: 'Active promotion campaigns, timelines, CTAs and copyable coupon codes.' },
-    gallery: { name: 'Filterable Media Gallery', desc: 'Grouped photo gallery with category filter tabs and interactive modal lightbox.' },
-    testimonials: { name: 'Guest Reviews', desc: 'Double column cards displaying elegant guest reviews and location markers.' },
-    awards: { name: 'Prestige Accolades', desc: 'Accreditation ribbon displaying Michelin Keys, Conde Nast Traveler or Travel+Leisure titles.' },
-    location: { name: 'Map & Nearby attractions', desc: 'Responsive embedded Google Map alongside curated lists of local tourist spots.' },
-    contact: { name: 'Digital Contact Form', desc: 'Direct contact phone and email directories plus interactive inquiry submission form.' }
-  };
 
   useEffect(() => {
     const getActiveLayout = async () => {
       try {
+        const cached = peekAdminBundle();
+        if (cached?.hotel) {
+          setHotelId(cached.hotel.id);
+          setBlocks(buildBlocksFromLayout(cached.hotel.homepage_layout || []));
+          setIsLoading(false);
+          return;
+        }
         setIsLoading(true);
-        const res = await fetch('/api/admin/data?include=hotel', { cache: 'no-store' });
-        if (!res.ok) throw new Error('Failed to fetch data');
-        const data = await res.json();
-        const hotel = data.hotel;
-        if (hotel) {
-          setHotelId(hotel.id);
-          
-          // Map current homepage_layout array to block items
-          const currentLayout = hotel.homepage_layout || [];
-          
-          // 1. Map existing layout elements in order, treating them as enabled
-          const mappedBlocks: BlockItem[] = currentLayout.map((key: string) => ({
-            id: key,
-            name: sectionDefinitions[key]?.name || key,
-            description: sectionDefinitions[key]?.desc || '',
-            isEnabled: true
-          }));
-
-          // 2. Identify any defined sections missing from layout (disabled ones)
-          Object.keys(sectionDefinitions).forEach((key: string) => {
-            if (!currentLayout.includes(key)) {
-              mappedBlocks.push({
-                id: key,
-                name: sectionDefinitions[key].name,
-                description: sectionDefinitions[key].desc,
-                isEnabled: false
-              });
-            }
-          });
-
-          setBlocks(mappedBlocks);
+        const data = await loadAdminBundle({ hotelOnly: true });
+        if (data?.hotel) {
+          setHotelId(data.hotel.id);
+          setBlocks(buildBlocksFromLayout(data.hotel.homepage_layout || []));
         }
       } catch (err) {
         console.error('Failed to load layout via API:', err);
@@ -76,7 +81,7 @@ export default function BuilderPage() {
       }
     };
 
-    getActiveLayout();
+    void getActiveLayout();
     window.addEventListener('active-hotel-changed', getActiveLayout);
     return () => window.removeEventListener('active-hotel-changed', getActiveLayout);
   }, []);
@@ -114,6 +119,7 @@ export default function BuilderPage() {
     const result = await saveHomepageLayoutAction(hotelId, enabledLayoutOrder);
 
     if (result.success) {
+      invalidateAdminCache(hotelId);
       setNotification({
         type: 'success',
         message: 'Homepage layout structure updated successfully. Reordering is now live on your site.',
