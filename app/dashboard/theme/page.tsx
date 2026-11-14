@@ -12,9 +12,11 @@ import {
   Smartphone,
   Maximize2,
   X,
-  SlidersHorizontal,
-  ChevronDown,
+  Palette,
+  RotateCcw,
   ExternalLink,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import { saveThemeSettingsAction } from '@/lib/db/actions';
 import {
@@ -37,6 +39,11 @@ import {
   type TemplateCategory,
   type HotelWebsiteTemplate,
 } from '@/lib/hotel-templates';
+import {
+  COLOR_PALETTE_PRESETS,
+  isDarkColor,
+  type ColorPalettePreset,
+} from '@/lib/color-utils';
 import HotelTemplateHome from '@/components/templates/hotel-template-home';
 
 const DEFAULT_THEME: HotelTheme = HOTEL_WEBSITE_TEMPLATES[0].theme;
@@ -47,20 +54,23 @@ function normalizeImg(url?: string | null): string {
 }
 
 /**
- * Visual Structural Blueprint Thumbnail — distinctly illustrates each of the 16 page layouts!
+ * Visual Structural Blueprint Thumbnail — distinctly illustrates each of the 16 page layouts
+ * and reflects active custom colors!
  */
 function LayoutBlueprintThumbnail({
   template,
   photos,
+  themeOverride,
 }: {
   template: HotelWebsiteTemplate;
   photos: string[];
+  themeOverride?: HotelTheme;
 }) {
-  const { theme } = template;
+  const theme = themeOverride || template.theme;
   const p0 = photos[0] || template.fallbackHeroImage;
   const p1 = photos[1 % photos.length] || p0;
   const p2 = photos[2 % photos.length] || p0;
-  const isDark = Boolean(theme.dark_mode);
+  const isDark = isDarkColor(theme.background_color);
   const bg = theme.background_color || '#ffffff';
   const line = isDark ? 'rgba(255,255,255,0.2)' : '#cbd5e1';
   const block = isDark ? '#1e293b' : '#f1f5f9';
@@ -239,15 +249,15 @@ function LayoutBlueprintThumbnail({
   // #16 MODULAR BENTO CARD-STACK
   if (template.shellStyle === 'card-stack-canvas') {
     return (
-      <div className="h-36 w-full p-2 space-y-1.5 overflow-hidden" style={{ backgroundColor: '#e2e8f0' }}>
-        <div className="bg-white rounded-xl p-1.5 grid grid-cols-3 gap-1.5 h-16 shadow-2xs">
+      <div className="h-36 w-full p-2 space-y-1.5 overflow-hidden" style={{ backgroundColor: isDark ? bg : '#e2e8f0' }}>
+        <div className="rounded-xl p-1.5 grid grid-cols-3 gap-1.5 h-16 shadow-2xs" style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff' }}>
           <img src={p0} alt="" className="col-span-2 w-full h-full object-cover rounded-lg" />
           <div className="rounded-lg p-1.5 flex flex-col justify-between" style={{ backgroundColor: theme.primary_color }}>
             <span className="h-1.5 w-8 bg-white/80 rounded-full" />
             <span className="h-2 w-full rounded-full" style={{ backgroundColor: theme.accent_color }} />
           </div>
         </div>
-        <div className="bg-white rounded-xl p-1.5 grid grid-cols-3 gap-1.5 h-14 shadow-2xs">
+        <div className="rounded-xl p-1.5 grid grid-cols-3 gap-1.5 h-14 shadow-2xs" style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff' }}>
           {[p0, p1, p2].map((u, i) => (
             <div key={i} className="rounded-lg overflow-hidden border border-slate-100">
               <img src={u} alt="" className="w-full h-7 object-cover" />
@@ -259,14 +269,14 @@ function LayoutBlueprintThumbnail({
     );
   }
 
-  // #12 DARK CINEMA 21:9 + 3:4 POSTERS
+  // #12 CINEMA 21:9 + 3:4 POSTERS
   if (template.heroLayout === 'widescreen-noir') {
     return (
-      <div className="h-36 w-full p-2 space-y-2 overflow-hidden" style={{ backgroundColor: '#0b0f19' }}>
+      <div className="h-36 w-full p-2 space-y-2 overflow-hidden" style={{ backgroundColor: bg }}>
         <div className="h-12 w-full overflow-hidden border" style={{ borderColor: `${theme.accent_color}50` }}>
           <img src={p0} alt="" className="w-full h-full object-cover" />
         </div>
-        <div className="h-3.5 w-5/6 mx-auto border px-1.5 flex items-center justify-between" style={{ backgroundColor: '#111827', borderColor: `${theme.accent_color}50` }}>
+        <div className="h-3.5 w-5/6 mx-auto border px-1.5 flex items-center justify-between" style={{ backgroundColor: theme.secondary_color, borderColor: `${theme.accent_color}50` }}>
           <span className="h-1 w-16 bg-white/40" />
           <span className="h-2 w-8" style={{ backgroundColor: theme.accent_color }} />
         </div>
@@ -442,7 +452,7 @@ function LayoutBlueprintThumbnail({
   // #01 CLASSIC FULL-BLEED SLIDER + 2-COL GRID
   return (
     <div className="h-36 w-full flex flex-col overflow-hidden" style={{ backgroundColor: bg }}>
-      <div className="h-2.5" style={{ backgroundColor: theme.primary_color }} />
+      <div className="h-2.5" style={{ backgroundColor: theme.secondary_color || theme.primary_color }} />
       <div className="h-3.5 bg-white border-b px-2 flex items-center justify-between" style={{ borderColor: line }}>
         <span className="h-1.5 w-12" style={{ backgroundColor: theme.primary_color }} />
         <span className="h-2 w-8 rounded-2xs" style={{ backgroundColor: theme.primary_color }} />
@@ -457,8 +467,7 @@ function LayoutBlueprintThumbnail({
 }
 
 /**
- * Scaled Live Desktop/Mobile Viewport Container so true 1280px desktop layouts (Left Sidebar, 50/50 Split, 5-Photo Mosaic, 3-Col Bento)
- * render at real desktop proportions inside the side preview panel!
+ * Scaled Live Desktop/Mobile Viewport Container
  */
 function ScaledLiveViewport({
   viewMode,
@@ -484,8 +493,8 @@ function ScaledLiveViewport({
 
   if (viewMode === 'mobile') {
     return (
-      <div ref={wrapRef} className="p-4 bg-slate-100 flex justify-center max-h-[600px] overflow-y-auto">
-        <div className="w-[375px] rounded-[28px] border-[6px] border-slate-800 bg-white overflow-hidden shadow-xl">
+      <div ref={wrapRef} className="p-4 bg-slate-100 flex justify-center max-h-[620px] overflow-y-auto">
+        <div className="w-[375px] max-w-full rounded-[28px] border-[6px] border-slate-800 bg-white overflow-hidden shadow-xl">
           {children}
         </div>
       </div>
@@ -498,7 +507,7 @@ function ScaledLiveViewport({
   return (
     <div
       ref={wrapRef}
-      className="w-full max-h-[600px] overflow-y-auto overflow-x-hidden bg-slate-100"
+      className="w-full max-h-[620px] overflow-y-auto overflow-x-hidden bg-slate-100"
     >
       <div
         style={{
@@ -531,10 +540,12 @@ export default function ThemePage() {
     initialHotel?.theme ? { ...DEFAULT_THEME, ...initialHotel.theme } : { ...DEFAULT_THEME }
   );
 
+  // When true, clicking different Layout templates keeps the user's chosen brand colors!
+  const [lockCustomColors, setLockCustomColors] = useState(false);
+
   const [activeCategory, setActiveCategory] = useState<TemplateCategory>('all');
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [fullScreenPreview, setFullScreenPreview] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const [isLoading, setIsLoading] = useState(!initialHotel?.theme);
   const [isSaving, setIsSaving] = useState(false);
@@ -607,7 +618,6 @@ export default function ThemePage() {
     return HOTEL_WEBSITE_TEMPLATES.filter((t) => t.category === activeCategory);
   }, [activeCategory]);
 
-  // Build gallery & fallback sample data so Live Preview is ALWAYS rich and realistic
   const previewGallery = useMemo(() => {
     return (media || []).map((m: any, i: number) => ({
       id: m.id || `g-${i}`,
@@ -641,6 +651,7 @@ export default function ThemePage() {
     return list;
   }, [slides, rooms]);
 
+  // Only generate sample rooms if the hotel literally has 0 rooms created yet
   const previewRooms: Room[] = useMemo(() => {
     if (rooms.length > 0) return rooms;
     return [
@@ -654,7 +665,7 @@ export default function ThemePage() {
         max_guests: 2,
         room_size: 36,
         bed_type: 'King Bed',
-        price: 2400,
+        price: 0,
         sort_order: 0,
       },
       {
@@ -667,21 +678,8 @@ export default function ThemePage() {
         max_guests: 3,
         room_size: 48,
         bed_type: 'King / Twin',
-        price: 3500,
+        price: 0,
         sort_order: 1,
-      },
-      {
-        id: 'sample-3',
-        hotel_id: hotelId,
-        name: 'Family Garden Residence',
-        description: 'Generous living space surrounded by lush tropical gardens for families and groups.',
-        gallery: [blueprintPhotos[0]],
-        amenities: ['Garden View', 'Living Area', 'Free Wi-Fi'],
-        max_guests: 4,
-        room_size: 62,
-        bed_type: '2 Queen Beds',
-        price: 4200,
-        sort_order: 2,
       },
     ];
   }, [rooms, hotelId, blueprintPhotos]);
@@ -712,9 +710,68 @@ export default function ThemePage() {
     [theme, savedTheme]
   );
 
+  // Selecting a structural layout template: preserves custom colors when lockCustomColors is ON!
   const handleSelectTemplate = (tpl: HotelWebsiteTemplate) => {
-    setTheme({ ...tpl.theme });
+    if (lockCustomColors) {
+      setTheme((prev) => ({
+        ...tpl.theme,
+        template_id: tpl.id,
+        primary_color: prev.primary_color,
+        secondary_color: prev.secondary_color,
+        accent_color: prev.accent_color,
+        background_color: prev.background_color,
+        text_color: prev.text_color,
+        dark_mode: isDarkColor(prev.background_color),
+      }));
+    } else {
+      setTheme({ ...tpl.theme });
+    }
     setNotification(null);
+  };
+
+  const handleApplyColorPreset = (preset: ColorPalettePreset) => {
+    setLockCustomColors(true);
+    setTheme((prev) => ({
+      ...prev,
+      template_id: selectedTemplate.id,
+      primary_color: preset.primary_color,
+      secondary_color: preset.secondary_color,
+      accent_color: preset.accent_color,
+      background_color: preset.background_color,
+      text_color: preset.text_color,
+      dark_mode: preset.dark_mode,
+    }));
+  };
+
+  const handleColorInputChange = (
+    key: 'primary_color' | 'secondary_color' | 'accent_color' | 'background_color' | 'text_color',
+    val: string
+  ) => {
+    setLockCustomColors(true);
+    setTheme((prev) => {
+      const next = {
+        ...prev,
+        template_id: selectedTemplate.id,
+        [key]: val,
+      };
+      if (key === 'background_color') {
+        next.dark_mode = isDarkColor(val);
+      }
+      return next;
+    });
+  };
+
+  const handleResetToTemplateDefaultColors = () => {
+    setLockCustomColors(false);
+    setTheme((prev) => ({
+      ...prev,
+      primary_color: selectedTemplate.theme.primary_color,
+      secondary_color: selectedTemplate.theme.secondary_color,
+      accent_color: selectedTemplate.theme.accent_color,
+      background_color: selectedTemplate.theme.background_color,
+      text_color: selectedTemplate.theme.text_color,
+      dark_mode: selectedTemplate.theme.dark_mode,
+    }));
   };
 
   const handleApplyTheme = async () => {
@@ -725,6 +782,7 @@ export default function ThemePage() {
     const payloadTheme: HotelTheme = {
       ...theme,
       template_id: theme.template_id || selectedTemplate.id,
+      dark_mode: isDarkColor(theme.background_color),
     };
 
     const result = await saveThemeSettingsAction(hotelId, payloadTheme);
@@ -736,7 +794,7 @@ export default function ThemePage() {
       void loadAdminBundle({ hotelId, force: true });
       setNotification({
         type: 'success',
-        message: `บันทึกใช้งาน "${selectedTemplate.nameTh}" เรียบร้อยแล้ว! หน้าเว็บไซต์จริงเปลี่ยน Layout และดีไซน์ตามที่เลือกทันที`,
+        message: `บันทึกใช้งาน "${selectedTemplate.nameTh}" พร้อมโทนสีที่คุณเลือกเรียบร้อยแล้ว! หน้าเว็บไซต์จริงอัปเดตทันที`,
       });
       setTimeout(() => setNotification(null), 5000);
     } else {
@@ -748,7 +806,35 @@ export default function ThemePage() {
     setIsSaving(false);
   };
 
+  const newTabPreviewHref = useMemo(() => {
+    if (!hotel?.slug) return '#';
+    const strip = (hex?: string) => (hex || '').replace(/^#/, '');
+    const qs = new URLSearchParams({
+      preview_template: selectedTemplate.id,
+      pc: strip(theme.primary_color),
+      sc: strip(theme.secondary_color),
+      ac: strip(theme.accent_color),
+      bg: strip(theme.background_color),
+      tc: strip(theme.text_color),
+      ff: theme.font_family || 'Inter',
+      bs: theme.button_style || 'rounded',
+    });
+    return `/sites/${hotel.slug}?${qs.toString()}`;
+  }, [hotel?.slug, selectedTemplate.id, theme]);
+
   const fontImportName = (theme.font_family || 'Inter').replace(/ /g, '+');
+
+  const colorFields: {
+    key: 'primary_color' | 'secondary_color' | 'accent_color' | 'background_color' | 'text_color';
+    label: string;
+    hint: string;
+  }[] = [
+    { key: 'primary_color', label: 'สีหลัก (Primary)', hint: 'ปุ่มจอง / หัวเว็บ / ฟุตเตอร์' },
+    { key: 'secondary_color', label: 'สีรอง (Secondary)', hint: 'แถบเบอร์โทรด้านบน' },
+    { key: 'accent_color', label: 'สีไฮไลท์ (Accent)', hint: 'ป้ายโปรฯ / ไอคอน / เส้นคั่น' },
+    { key: 'background_color', label: 'สีพื้นหลัง (Background)', hint: 'พื้นหลังหน้าเว็บทั้งหมด' },
+    { key: 'text_color', label: 'สีตัวอักษร (Text)', hint: 'หัวข้อและเนื้อหาหลัก' },
+  ];
 
   if (isLoading) {
     return (
@@ -759,7 +845,7 @@ export default function ThemePage() {
   }
 
   return (
-    <div className="max-w-7xl space-y-6 text-left pb-16">
+    <div className="max-w-7xl space-y-5 text-left pb-16">
       <link
         rel="stylesheet"
         href={`https://fonts.googleapis.com/css2?family=${fontImportName}:wght@300;400;500;600;700&display=swap`}
@@ -771,7 +857,7 @@ export default function ThemePage() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
               <LayoutTemplate className="w-3 h-3" />
-              16 Website Layouts & Designs
+              16 Layouts + ปรับสีได้ทุกแบบ
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <Check className="w-3 h-3" />
@@ -779,21 +865,21 @@ export default function ThemePage() {
             </span>
           </div>
           <h1 className="text-xl md:text-2xl font-bold text-slate-900">
-            เลือกรูปแบบดีไซน์และโครงสร้างเว็บไซต์ (Website Layout Templates)
+            เลือกรูปแบบ Layout เว็บไซต์ & ปรับแต่งสีแบรนด์โรงแรม
           </h1>
           <p className="text-xs text-slate-500">
-            แต่ละแบบมี <strong>โครงสร้างหน้าเว็บ การจัดวางเมนู ภาพปก ฟอร์มจอง และการโชว์ห้องพักที่แตกต่างกัน</strong> — คลิกเพื่อดูตัวอย่างหน้าเว็บจริงด้านขวาได้ทันที
+            เลือกโครงสร้างหน้าเว็บได้ <strong>16 แบบ</strong> เปลี่ยนสีได้อิสระทุกแบบ รองรับมือถือครบถ้วน และดึงราคาต่ำสุดจริงหลังหักโปรฯ จาก Channel Manager อัตโนมัติ
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           {hotel?.slug && (
             <a
-              href={`/sites/${hotel.slug}?preview_template=${selectedTemplate.id}`}
+              href={newTabPreviewHref}
               target="_blank"
               rel="noreferrer"
               className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1.5 transition-colors"
-              title="เปิดดูตัวอย่างเทมเพลตนี้แบบเต็มหน้าจอในแท็บใหม่"
+              title="เปิดดูตัวอย่างเทมเพลตพร้อมโทนสีที่เลือกแบบเต็มหน้าจอในแท็บใหม่"
             >
               <span>เปิดดูในแท็บใหม่</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -815,8 +901,8 @@ export default function ThemePage() {
               {isSaving
                 ? 'กำลังบันทึก...'
                 : hasUnsavedChanges
-                ? `ใช้ Layout "${selectedTemplate.nameTh}"`
-                : 'ใช้งาน Layout นี้อยู่'}
+                ? 'บันทึก Layout และสีที่เลือก'
+                : 'บันทึกแล้ว (ใช้งานอยู่)'}
             </span>
           </button>
         </div>
@@ -839,6 +925,174 @@ export default function ThemePage() {
           <p className="text-xs font-semibold">{notification.message}</p>
         </div>
       )}
+
+      {/* PROMINENT COLOR CUSTOMIZER PANEL (Works across ALL 16 Templates!) */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+              <Palette className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">
+                ปรับโทนสีเว็บไซต์ (เปลี่ยนสีได้กับทุก Template ทั้ง 16 แบบ)
+              </h2>
+              <p className="text-[11px] text-slate-500">
+                คลิกชุดสีสำเร็จรูปด้านล่าง หรือจิ้มเลือกสีแบรนด์เองได้ทันที — ตัวอย่างด้านขวาจะเปลี่ยนสีตามแบบเรียลไทม์
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setLockCustomColors((p) => !p)}
+              className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 cursor-pointer transition-colors ${
+                lockCustomColors
+                  ? 'bg-blue-50 border-blue-200 text-blue-700'
+                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+              }`}
+              title="เมื่อล็อกสีไว้ เวลาคลิกดู Layout แบบอื่น ระบบจะคงโทนสีที่คุณแต่งไว้ให้โดยอัตโนมัติ"
+            >
+              {lockCustomColors ? (
+                <Lock className="w-3.5 h-3.5 text-blue-600" />
+              ) : (
+                <Unlock className="w-3.5 h-3.5 text-slate-400" />
+              )}
+              <span>{lockCustomColors ? 'ล็อกสีที่แต่งไว้กับทุก Layout' : 'ใช้สีแนะนำตามแต่ละ Layout'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResetToTemplateDefaultColors}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[11px] font-semibold text-slate-600 flex items-center gap-1.5 cursor-pointer"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>รีเซ็ตสีเริ่มต้นของ Layout นี้</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 12 Quick Color Palette Presets */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {COLOR_PALETTE_PRESETS.map((preset) => {
+            const isActivePreset =
+              theme.primary_color.toLowerCase() === preset.primary_color.toLowerCase() &&
+              theme.accent_color.toLowerCase() === preset.accent_color.toLowerCase() &&
+              theme.background_color.toLowerCase() === preset.background_color.toLowerCase();
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => handleApplyColorPreset(preset)}
+                className={`px-3 py-2 rounded-xl border text-left shrink-0 flex items-center gap-2.5 cursor-pointer transition-all ${
+                  isActivePreset
+                    ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-600/15'
+                    : 'border-slate-200 bg-slate-50/60 hover:bg-white hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center -space-x-1">
+                  <span
+                    className="w-4 h-4 rounded-full border border-white shadow-2xs"
+                    style={{ backgroundColor: preset.primary_color }}
+                  />
+                  <span
+                    className="w-4 h-4 rounded-full border border-white shadow-2xs"
+                    style={{ backgroundColor: preset.accent_color }}
+                  />
+                  <span
+                    className="w-4 h-4 rounded-full border border-slate-300 shadow-2xs"
+                    style={{ backgroundColor: preset.background_color }}
+                  />
+                </div>
+                <span className="text-[11px] font-bold text-slate-800 whitespace-nowrap">
+                  {preset.nameTh}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 5 Custom Color Pickers + Font + Button Shape */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5 pt-1">
+          {colorFields.map((item) => (
+            <label
+              key={item.key}
+              className="bg-slate-50 hover:bg-slate-100/80 p-2.5 rounded-xl border border-slate-200 space-y-1 cursor-pointer block transition-colors"
+            >
+              <span className="text-[11px] font-bold text-slate-800 block truncate">
+                {item.label}
+              </span>
+              <span className="text-[9px] text-slate-400 block truncate">{item.hint}</span>
+              <div className="flex items-center gap-2 pt-0.5">
+                <input
+                  type="color"
+                  value={theme[item.key] || '#0f172a'}
+                  onChange={(e) => handleColorInputChange(item.key, e.target.value)}
+                  className="w-7 h-7 rounded-md border border-slate-300 cursor-pointer bg-transparent shrink-0"
+                />
+                <span className="text-[10px] font-mono font-semibold text-slate-600 uppercase">
+                  {theme[item.key]}
+                </span>
+              </div>
+            </label>
+          ))}
+
+          {/* Font Family */}
+          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1 flex flex-col justify-between">
+            <div>
+              <span className="text-[11px] font-bold text-slate-800 block">ฟอนต์ (Font)</span>
+              <span className="text-[9px] text-slate-400 block">รูปแบบตัวอักษร</span>
+            </div>
+            <select
+              value={theme.font_family}
+              onChange={(e) =>
+                setTheme((prev) => ({
+                  ...prev,
+                  template_id: selectedTemplate.id,
+                  font_family: e.target.value,
+                }))
+              }
+              className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-slate-800"
+            >
+              <option value="Inter">Inter (คลีน)</option>
+              <option value="Plus Jakarta Sans">Plus Jakarta</option>
+              <option value="Outfit">Outfit (โมเดิร์น)</option>
+              <option value="DM Sans">DM Sans</option>
+              <option value="Playfair Display">Playfair (หรู)</option>
+              <option value="Cormorant Garamond">Cormorant</option>
+              <option value="Bodoni Moda">Bodoni Moda</option>
+              <option value="Lora">Lora (อบอุ่น)</option>
+              <option value="Noto Serif">Noto Serif</option>
+              <option value="Cinzel">Cinzel</option>
+              <option value="Marcellus">Marcellus</option>
+            </select>
+          </div>
+
+          {/* Button Shape */}
+          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1 flex flex-col justify-between">
+            <div>
+              <span className="text-[11px] font-bold text-slate-800 block">ทรงปุ่มกด</span>
+              <span className="text-[9px] text-slate-400 block">ความโค้งปุ่ม</span>
+            </div>
+            <select
+              value={theme.button_style}
+              onChange={(e) =>
+                setTheme((prev) => ({
+                  ...prev,
+                  template_id: selectedTemplate.id,
+                  button_style: e.target.value as HotelTheme['button_style'],
+                }))
+              }
+              className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-slate-800"
+            >
+              <option value="rounded">มุมมน (Rounded)</option>
+              <option value="pill">แคปซูล (Pill)</option>
+              <option value="square">เหลี่ยมคม (Square)</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
       {/* LAYOUT CATEGORY FILTER PILLS */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -867,7 +1121,7 @@ export default function ThemePage() {
       {/* SPLIT WORKSPACE: LEFT 16 STRUCTURAL TEMPLATES (7 cols) | RIGHT TRUE-SCALE LIVE WEBSITE PREVIEW (5 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* LEFT: 16 STRUCTURAL LAYOUT CARDS */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {filteredTemplates.map((tpl) => {
               const isSelected = selectedTemplate.id === tpl.id;
@@ -882,13 +1136,17 @@ export default function ThemePage() {
                     isSelected
                       ? 'border-blue-600 ring-4 ring-blue-600/15 shadow-lg -translate-y-0.5'
                       : isSavedActive
-                      ? 'border-emerald-500/70 hover:border-emerald-600 shadow-sm'
+                      ? 'border-emerald-500/70 hover:border-emerald-600 shadow-xs'
                       : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
                   }`}
                 >
                   {/* STRUCTURAL BLUEPRINT DIAGRAM */}
                   <div className="relative border-b border-slate-100 w-full">
-                    <LayoutBlueprintThumbnail template={tpl} photos={blueprintPhotos} />
+                    <LayoutBlueprintThumbnail
+                      template={tpl}
+                      photos={blueprintPhotos}
+                      themeOverride={isSelected || lockCustomColors ? theme : undefined}
+                    />
 
                     <div className="absolute top-2 left-2 flex items-center gap-1">
                       <span
@@ -947,125 +1205,6 @@ export default function ThemePage() {
               );
             })}
           </div>
-
-          {/* OPTIONAL ADVANCED COLOR / FONT FINE-TUNING */}
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setShowAdvanced((prev) => !prev)}
-              className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-50 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-slate-100 text-slate-700">
-                  <SlidersHorizontal className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-slate-900">
-                    ปรับแต่งสีและฟอนต์เพิ่มเติมบน Layout ที่เลือก (ไม่บังคับ)
-                  </div>
-                  <div className="text-[11px] text-slate-500">
-                    คงโครงสร้าง Layout ของ &ldquo;{selectedTemplate.nameTh}&rdquo; ไว้ แต่เปลี่ยนสีแบรนด์หรือฟอนต์ได้ตามต้องการ
-                  </div>
-                </div>
-              </div>
-              <ChevronDown
-                className={`w-4 h-4 text-slate-400 transition-transform ${
-                  showAdvanced ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-
-            {showAdvanced && (
-              <div className="p-5 pt-2 border-t border-slate-100 space-y-4 bg-slate-50/40">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { key: 'primary_color', label: 'สีหลัก (ปุ่ม/แถบบน)' },
-                    { key: 'accent_color', label: 'สีเน้น (ไฮไลท์)' },
-                    { key: 'background_color', label: 'สีพื้นหลังเว็บ' },
-                    { key: 'text_color', label: 'สีตัวอักษรหลัก' },
-                  ].map((item) => (
-                    <label
-                      key={item.key}
-                      className="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5 cursor-pointer block"
-                    >
-                      <span className="text-[11px] font-bold text-slate-700 block">
-                        {item.label}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={(theme as any)[item.key] || '#000000'}
-                          onChange={(e) =>
-                            setTheme({
-                              ...theme,
-                              template_id: selectedTemplate.id,
-                              [item.key]: e.target.value,
-                            })
-                          }
-                          className="w-7 h-7 rounded border-0 cursor-pointer bg-transparent"
-                        />
-                        <span className="text-[11px] font-mono text-slate-500 uppercase">
-                          {(theme as any)[item.key]}
-                        </span>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-700 block">
-                      ฟอนต์เว็บไซต์ (Font Family)
-                    </label>
-                    <select
-                      value={theme.font_family}
-                      onChange={(e) =>
-                        setTheme({
-                          ...theme,
-                          template_id: selectedTemplate.id,
-                          font_family: e.target.value,
-                        })
-                      }
-                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium text-slate-800"
-                    >
-                      <option value="Inter">Inter (คลีนมาตรฐาน)</option>
-                      <option value="Plus Jakarta Sans">Plus Jakarta Sans (รีสอร์ทโปร่งสบาย)</option>
-                      <option value="Outfit">Outfit (โมเดิร์นสถาปัตย์)</option>
-                      <option value="DM Sans">DM Sans (มินิมอลร่วมสมัย)</option>
-                      <option value="Playfair Display">Playfair Display (นิตยสารหรู)</option>
-                      <option value="Cormorant Garamond">Cormorant Garamond (แกรนด์พาเลซ)</option>
-                      <option value="Bodoni Moda">Bodoni Moda (แฟชั่นエディทอเรียล)</option>
-                      <option value="Lora">Lora (อบอุ่นธรรมชาติ)</option>
-                      <option value="Noto Serif">Noto Serif (เซนมินิมอล)</option>
-                      <option value="Cinzel">Cinzel (ซีเนม่าคลาสสิก)</option>
-                      <option value="Marcellus">Marcellus (บูทีครีทรีต)</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-700 block">
-                      รูปทรงปุ่มกด (Button Shape)
-                    </label>
-                    <select
-                      value={theme.button_style}
-                      onChange={(e) =>
-                        setTheme({
-                          ...theme,
-                          template_id: selectedTemplate.id,
-                          button_style: e.target.value as HotelTheme['button_style'],
-                        })
-                      }
-                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium text-slate-800"
-                    >
-                      <option value="rounded">มุมมน (Rounded)</option>
-                      <option value="pill">ทรงแคปซูลโค้งมน (Pill)</option>
-                      <option value="square">มุมเหลี่ยมคมชัด (Square)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* RIGHT: STICKY REAL-LAYOUT LIVE PREVIEW */}
@@ -1080,7 +1219,7 @@ export default function ThemePage() {
                     {selectedTemplate.nameTh}
                   </div>
                   <div className="text-[10px] text-blue-600 font-semibold truncate">
-                    โครงสร้าง: {selectedTemplate.layoutBadge}
+                    {viewMode === 'mobile' ? 'มุมมองมือถือ (Mobile Responsive)' : `โครงสร้าง: ${selectedTemplate.layoutBadge}`}
                   </div>
                 </div>
               </div>
@@ -1109,7 +1248,7 @@ export default function ThemePage() {
                         ? { backgroundColor: '#0f172a', color: '#ffffff' }
                         : { color: '#64748b' }
                     }
-                    title="มุมมองมือถือ"
+                    title="มุมมองมือถือ 375px"
                   >
                     <Smartphone className="w-3.5 h-3.5" />
                   </button>
@@ -1141,7 +1280,7 @@ export default function ThemePage() {
               </div>
             )}
 
-            {/* TRUE 1280px SCALED REAL WEBSITE RENDERER */}
+            {/* TRUE SCALED DESKTOP / CONTAINER-QUERY MOBILE PREVIEW */}
             <ScaledLiveViewport viewMode={viewMode}>
               <HotelTemplateHome
                 hotel={previewHotel}
@@ -1167,7 +1306,7 @@ export default function ThemePage() {
                 ) : (
                   <span className="text-emerald-700 font-semibold flex items-center gap-1">
                     <Check className="w-3.5 h-3.5" />
-                    Layout นี้กำลังแสดงผลบนเว็บไซต์จริง
+                    Layout และสีนี้กำลังแสดงผลบนเว็บไซต์จริง
                   </span>
                 )}
               </div>
@@ -1182,22 +1321,23 @@ export default function ThemePage() {
                   color: '#ffffff',
                 }}
               >
-                {isSaving ? 'กำลังบันทึก...' : 'ใช้ Layout นี้'}
+                {isSaving ? 'กำลังบันทึก...' : 'บันทึก Layout & สี'}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* FULL-SCREEN INTERACTIVE PREVIEW MODAL */}
+      {/* FULL-SCREEN INTERACTIVE PREVIEW MODAL (Includes Live Layout Switcher + Live Color Pickers + Desktop/Mobile Toggle!) */}
       {fullScreenPreview && (
         <div
           className="fixed inset-0 z-50 flex flex-col"
           style={{ backgroundColor: 'rgba(15, 23, 42, 0.88)' }}
         >
-          <div className="bg-white border-b border-slate-200 px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <div className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+            {/* Left: Layout Switcher */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                 สลับดู Layout:
               </span>
               <select
@@ -1206,7 +1346,7 @@ export default function ThemePage() {
                   const found = HOTEL_WEBSITE_TEMPLATES.find((t) => t.id === e.target.value);
                   if (found) handleSelectTemplate(found);
                 }}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-900 cursor-pointer"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-900 cursor-pointer max-w-[300px]"
               >
                 {HOTEL_WEBSITE_TEMPLATES.map((tpl) => (
                   <option key={tpl.id} value={tpl.id}>
@@ -1214,8 +1354,44 @@ export default function ThemePage() {
                   </option>
                 ))}
               </select>
+
+              {/* Inline Live Color Pickers inside Full-Screen Preview! */}
+              <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+                <span className="text-[11px] font-bold text-slate-500 hidden xl:inline">
+                  เปลี่ยนสีทันที:
+                </span>
+                {[
+                  { key: 'primary_color' as const, title: 'สีหลัก (ปุ่ม/หัวเว็บ)' },
+                  { key: 'secondary_color' as const, title: 'สีรอง (แถบบน)' },
+                  { key: 'accent_color' as const, title: 'สีไฮไลท์' },
+                  { key: 'background_color' as const, title: 'สีพื้นหลัง' },
+                  { key: 'text_color' as const, title: 'สีตัวอักษร' },
+                ].map((c) => (
+                  <label
+                    key={c.key}
+                    title={c.title}
+                    className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-1.5 py-1 cursor-pointer"
+                  >
+                    <input
+                      type="color"
+                      value={theme[c.key] || '#0f172a'}
+                      onChange={(e) => handleColorInputChange(c.key, e.target.value)}
+                      className="w-5 h-5 rounded border-0 cursor-pointer bg-transparent"
+                    />
+                  </label>
+                ))}
+                <button
+                  type="button"
+                  onClick={handleResetToTemplateDefaultColors}
+                  title="รีเซ็ตสีเริ่มต้นของ Layout นี้"
+                  className="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
+            {/* Right: Desktop/Mobile + Save + Close */}
             <div className="flex items-center gap-2.5">
               <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
                 <button
@@ -1257,7 +1433,7 @@ export default function ThemePage() {
                 style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
               >
                 <Save className="w-3.5 h-3.5" />
-                <span>{isSaving ? 'กำลังบันทึก...' : 'บันทึกใช้งาน Layout นี้'}</span>
+                <span>{isSaving ? 'กำลังบันทึก...' : 'บันทึก Layout & สีนี้'}</span>
               </button>
 
               <button
@@ -1271,10 +1447,12 @@ export default function ThemePage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto bg-slate-900/50 p-4 md:p-8">
+          <div className="flex-1 overflow-y-auto bg-slate-900/55 p-4 md:p-8">
             <div
-              className={`mx-auto rounded-2xl overflow-hidden shadow-2xl ${
-                viewMode === 'mobile' ? 'max-w-[390px]' : 'max-w-7xl'
+              className={`mx-auto shadow-2xl overflow-hidden ${
+                viewMode === 'mobile'
+                  ? 'w-[385px] max-w-full rounded-[32px] border-[8px] border-slate-800 bg-white'
+                  : 'max-w-7xl rounded-2xl'
               }`}
             >
               <HotelTemplateHome

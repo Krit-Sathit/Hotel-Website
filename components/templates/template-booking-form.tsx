@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Calendar, Users, Tag, ArrowRight, Sparkles } from 'lucide-react';
 import type { HotelTheme } from '@/lib/db/mock-data';
+import { deriveSurfacePalette, mixHex, withAlpha } from '@/lib/color-utils';
 
 export type BookingFormVariant =
   | 'horizontal'
@@ -48,10 +49,11 @@ export default function TemplateBookingForm({
   const [checkIn, setCheckIn] = useState(getFormattedDate(1));
   const [checkOut, setCheckOut] = useState(getFormattedDate(2));
   const [adults, setAdults] = useState('2');
-  const [children, setChildren] = useState('0');
+  const [children] = useState('0');
   const [promoCode, setPromoCode] = useState('');
 
   const radius = getButtonRadius(theme);
+  const palette = deriveSurfacePalette(theme);
 
   const handleCheckInChange = (val: string) => {
     setCheckIn(val);
@@ -99,55 +101,68 @@ export default function TemplateBookingForm({
     router.push(`${basePath}?${params.toString()}`);
   };
 
-  // 1. VERTICAL CARD VARIANT (Used inside Hero Right-Overlay #10, Split Hero #02, Sticky Sidebar #05 & #14)
+  const inputSurfaceBg = palette.bgIsDark
+    ? mixHex(palette.cardBg, '#ffffff', 0.06)
+    : mixHex(palette.cardBg, palette.primary, 0.035);
+
+  // 1. VERTICAL CARD VARIANT (Used inside Hero Right-Overlay #10, Split Hero #02, Sticky Sidebar #05)
   if (variant === 'vertical-card') {
     const cardRadius = radius === '0px' ? '0px' : '20px';
     return (
       <form
         onSubmit={handleSubmit}
-        className="w-full p-6 shadow-2xl border space-y-4 text-left"
+        className="w-full p-5 @3xl:p-6 shadow-2xl border space-y-3.5 text-left"
         style={{
-          backgroundColor: '#ffffff',
-          color: '#0f172a',
-          borderColor: '#e2e8f0',
+          backgroundColor: palette.cardBg,
+          color: palette.text,
+          borderColor: palette.cardBorder,
           borderRadius: cardRadius,
         }}
       >
-        <div className="space-y-1 border-b border-slate-100 pb-3">
+        <div className="space-y-1 border-b pb-3" style={{ borderColor: palette.cardBorder }}>
           <div
-            className="text-[10px] font-bold uppercase tracking-[0.22em] flex items-center gap-1.5"
-            style={{ color: theme.accent_color }}
+            className="text-[10px] font-bold uppercase tracking-[0.2em] flex items-center gap-1.5"
+            style={{ color: palette.accent }}
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            Official Direct Booking
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <span>Official Direct Booking</span>
           </div>
-          <h3
-            className="text-lg font-bold tracking-wide"
-            style={{ color: theme.primary_color }}
-          >
+          <h3 className="text-base @3xl:text-lg font-bold tracking-wide" style={{ color: palette.text }}>
             Check Availability
           </h3>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] truncate" style={{ color: palette.mutedText }}>
             Best Rate Guaranteed at {hotelName}
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <label className="block space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-              <Calendar className="w-3 h-3" style={{ color: theme.accent_color }} />
+        <div className="grid grid-cols-1 @sm:grid-cols-2 gap-2.5">
+          <label className="block space-y-1 min-w-0">
+            <span
+              className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
+              style={{ color: palette.mutedText }}
+            >
+              <Calendar className="w-3 h-3 shrink-0" style={{ color: palette.accent }} />
               Check-In
             </span>
             <input
               type="date"
               value={checkIn}
               onChange={(e) => handleCheckInChange(e.target.value)}
-              className="w-full px-3 py-2 text-xs font-semibold border border-slate-200 rounded-lg bg-slate-50 text-slate-900 outline-none"
+              className="w-full min-w-0 px-2.5 py-2 text-xs font-semibold border rounded-lg outline-none"
+              style={{
+                backgroundColor: inputSurfaceBg,
+                color: palette.text,
+                borderColor: palette.cardBorder,
+                colorScheme: palette.bgIsDark ? 'dark' : 'light',
+              }}
             />
           </label>
-          <label className="block space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-              <Calendar className="w-3 h-3" style={{ color: theme.accent_color }} />
+          <label className="block space-y-1 min-w-0">
+            <span
+              className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
+              style={{ color: palette.mutedText }}
+            >
+              <Calendar className="w-3 h-3 shrink-0" style={{ color: palette.accent }} />
               Check-Out
             </span>
             <input
@@ -155,21 +170,35 @@ export default function TemplateBookingForm({
               value={checkOut}
               min={checkIn}
               onChange={(e) => setCheckOut(e.target.value)}
-              className="w-full px-3 py-2 text-xs font-semibold border border-slate-200 rounded-lg bg-slate-50 text-slate-900 outline-none"
+              className="w-full min-w-0 px-2.5 py-2 text-xs font-semibold border rounded-lg outline-none"
+              style={{
+                backgroundColor: inputSurfaceBg,
+                color: palette.text,
+                borderColor: palette.cardBorder,
+                colorScheme: palette.bgIsDark ? 'dark' : 'light',
+              }}
             />
           </label>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <label className="block space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-              <Users className="w-3 h-3" style={{ color: theme.accent_color }} />
+        <div className="grid grid-cols-2 gap-2.5">
+          <label className="block space-y-1 min-w-0">
+            <span
+              className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
+              style={{ color: palette.mutedText }}
+            >
+              <Users className="w-3 h-3 shrink-0" style={{ color: palette.accent }} />
               Guests
             </span>
             <select
               value={adults}
               onChange={(e) => setAdults(e.target.value)}
-              className="w-full px-3 py-2 text-xs font-semibold border border-slate-200 rounded-lg bg-slate-50 text-slate-900 outline-none"
+              className="w-full min-w-0 px-2.5 py-2 text-xs font-semibold border rounded-lg outline-none"
+              style={{
+                backgroundColor: inputSurfaceBg,
+                color: palette.text,
+                borderColor: palette.cardBorder,
+              }}
             >
               <option value="1">1 Adult</option>
               <option value="2">2 Adults</option>
@@ -177,9 +206,12 @@ export default function TemplateBookingForm({
               <option value="4">4 Adults</option>
             </select>
           </label>
-          <label className="block space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-              <Tag className="w-3 h-3" style={{ color: theme.accent_color }} />
+          <label className="block space-y-1 min-w-0">
+            <span
+              className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
+              style={{ color: palette.mutedText }}
+            >
+              <Tag className="w-3 h-3 shrink-0" style={{ color: palette.accent }} />
               Promo Code
             </span>
             <input
@@ -187,45 +219,52 @@ export default function TemplateBookingForm({
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value)}
               placeholder="Optional"
-              className="w-full px-3 py-2 text-xs font-semibold border border-slate-200 rounded-lg bg-slate-50 text-slate-900 outline-none"
+              className="w-full min-w-0 px-2.5 py-2 text-xs font-semibold border rounded-lg outline-none"
+              style={{
+                backgroundColor: inputSurfaceBg,
+                color: palette.text,
+                borderColor: palette.cardBorder,
+              }}
             />
           </label>
         </div>
 
         <button
           type="submit"
-          className="w-full py-3.5 px-5 text-xs font-bold uppercase tracking-[0.18em] flex items-center justify-center gap-2 transition-opacity hover:opacity-90 cursor-pointer shadow-md"
+          className="w-full py-3 px-5 text-xs font-bold uppercase tracking-[0.16em] flex items-center justify-center gap-2 transition-opacity hover:opacity-90 cursor-pointer shadow-md"
           style={{
-            backgroundColor: theme.primary_color,
-            color: '#ffffff',
+            backgroundColor: palette.primary,
+            color: palette.primaryText,
             borderRadius: radius,
           }}
         >
           <span>Search Available Rooms</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-4 h-4 shrink-0" />
         </button>
       </form>
     );
   }
 
-  // 2. DARK COMMAND BAR (Cinema Noir #12)
+  // 2. COMMAND BAR (Cinema #12 — Dynamically respects user colors!)
   if (variant === 'dark-command') {
+    const barBg = palette.bgIsDark ? palette.cardBg : palette.secondary;
+    const barText = palette.bgIsDark ? palette.text : palette.secondaryText;
     return (
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-5xl mx-auto px-5 py-4 border flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-2xl"
+        className="w-full max-w-5xl mx-auto px-4 @3xl:px-6 py-4 border flex flex-col @3xl:flex-row items-stretch @3xl:items-center justify-between gap-3.5 shadow-2xl"
         style={{
-          backgroundColor: '#111827',
-          borderColor: `${theme.accent_color}50`,
-          borderRadius: radius === '0px' ? '0px' : '12px',
-          color: '#f8fafc',
+          backgroundColor: barBg,
+          borderColor: withAlpha(palette.accent, 0.45),
+          borderRadius: radius === '0px' ? '0px' : '14px',
+          color: barText,
         }}
       >
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-1">
-          <label className="block text-left">
+        <div className="grid grid-cols-1 @sm:grid-cols-2 @3xl:grid-cols-3 gap-3.5 flex-1 min-w-0">
+          <label className="block text-left min-w-0">
             <span
               className="text-[9px] font-bold uppercase tracking-[0.2em] block mb-1"
-              style={{ color: theme.accent_color }}
+              style={{ color: palette.accent }}
             >
               Arrival Date
             </span>
@@ -233,14 +272,18 @@ export default function TemplateBookingForm({
               type="date"
               value={checkIn}
               onChange={(e) => handleCheckInChange(e.target.value)}
-              className="w-full bg-transparent border-b border-white/20 pb-1 text-xs font-semibold outline-none"
-              style={{ color: '#ffffff', backgroundColor: 'transparent' }}
+              className="w-full min-w-0 bg-transparent border-b pb-1 text-xs font-semibold outline-none"
+              style={{
+                color: barText,
+                borderColor: withAlpha(barText, 0.25),
+                colorScheme: 'dark',
+              }}
             />
           </label>
-          <label className="block text-left">
+          <label className="block text-left min-w-0">
             <span
               className="text-[9px] font-bold uppercase tracking-[0.2em] block mb-1"
-              style={{ color: theme.accent_color }}
+              style={{ color: palette.accent }}
             >
               Departure Date
             </span>
@@ -249,22 +292,30 @@ export default function TemplateBookingForm({
               value={checkOut}
               min={checkIn}
               onChange={(e) => setCheckOut(e.target.value)}
-              className="w-full bg-transparent border-b border-white/20 pb-1 text-xs font-semibold outline-none"
-              style={{ color: '#ffffff', backgroundColor: 'transparent' }}
+              className="w-full min-w-0 bg-transparent border-b pb-1 text-xs font-semibold outline-none"
+              style={{
+                color: barText,
+                borderColor: withAlpha(barText, 0.25),
+                colorScheme: 'dark',
+              }}
             />
           </label>
-          <label className="block text-left col-span-2 md:col-span-1">
+          <label className="block text-left @sm:col-span-2 @3xl:col-span-1 min-w-0">
             <span
               className="text-[9px] font-bold uppercase tracking-[0.2em] block mb-1"
-              style={{ color: theme.accent_color }}
+              style={{ color: palette.accent }}
             >
               Guests
             </span>
             <select
               value={adults}
               onChange={(e) => setAdults(e.target.value)}
-              className="w-full bg-transparent border-b border-white/20 pb-1 text-xs font-semibold outline-none"
-              style={{ color: '#ffffff', backgroundColor: '#111827' }}
+              className="w-full min-w-0 border-b pb-1 text-xs font-semibold outline-none"
+              style={{
+                color: barText,
+                backgroundColor: barBg,
+                borderColor: withAlpha(barText, 0.25),
+              }}
             >
               <option value="1">1 Guest • 1 Suite</option>
               <option value="2">2 Guests • 1 Suite</option>
@@ -276,42 +327,53 @@ export default function TemplateBookingForm({
 
         <button
           type="submit"
-          className="px-7 py-3.5 text-xs font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 shrink-0 cursor-pointer transition-opacity hover:opacity-90"
+          className="px-6 py-3 text-xs font-bold uppercase tracking-[0.18em] flex items-center justify-center gap-2 shrink-0 cursor-pointer transition-opacity hover:opacity-90"
           style={{
-            backgroundColor: theme.accent_color,
-            color: '#090d16',
+            backgroundColor: palette.accent,
+            color: palette.accentText,
             borderRadius: radius,
           }}
         >
           <span>Reserve</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-3.5 h-3.5 shrink-0" />
         </button>
       </form>
     );
   }
 
-  // 3. MINIMAL ZEN HAIRLINE STRIP (#06 Zen Frame & #09 Magazine)
+  // 3. MINIMAL ZEN HAIRLINE STRIP (#06 Zen Frame, #08 Sidebar, #09 Magazine)
   if (variant === 'minimal-line') {
     return (
       <form
         onSubmit={handleSubmit}
-        className="w-full py-4 border-y flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4"
-        style={{ borderColor: `${theme.primary_color}22` }}
+        className="w-full py-4 border-y flex flex-col @3xl:flex-row items-stretch @3xl:items-center justify-between gap-3.5"
+        style={{ borderColor: palette.cardBorder, color: palette.text }}
       >
-        <div className="flex flex-wrap items-center gap-6 flex-1 text-left">
-          <label className="flex items-center gap-2 text-xs">
-            <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 font-semibold">
+        <div className="grid grid-cols-1 @sm:grid-cols-2 @3xl:flex @3xl:flex-wrap items-center gap-3.5 @3xl:gap-6 flex-1 text-left">
+          <label className="flex items-center justify-between @3xl:justify-start gap-2 text-xs min-w-0">
+            <span
+              className="text-[10px] uppercase tracking-[0.18em] font-semibold shrink-0"
+              style={{ color: palette.mutedText }}
+            >
               Check-In:
             </span>
             <input
               type="date"
               value={checkIn}
               onChange={(e) => handleCheckInChange(e.target.value)}
-              className="bg-transparent font-semibold text-xs outline-none border-b border-slate-300 pb-0.5"
+              className="bg-transparent font-semibold text-xs outline-none border-b pb-0.5 min-w-0"
+              style={{
+                color: palette.text,
+                borderColor: palette.cardBorder,
+                colorScheme: palette.bgIsDark ? 'dark' : 'light',
+              }}
             />
           </label>
-          <label className="flex items-center gap-2 text-xs">
-            <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 font-semibold">
+          <label className="flex items-center justify-between @3xl:justify-start gap-2 text-xs min-w-0">
+            <span
+              className="text-[10px] uppercase tracking-[0.18em] font-semibold shrink-0"
+              style={{ color: palette.mutedText }}
+            >
               Check-Out:
             </span>
             <input
@@ -319,17 +381,30 @@ export default function TemplateBookingForm({
               value={checkOut}
               min={checkIn}
               onChange={(e) => setCheckOut(e.target.value)}
-              className="bg-transparent font-semibold text-xs outline-none border-b border-slate-300 pb-0.5"
+              className="bg-transparent font-semibold text-xs outline-none border-b pb-0.5 min-w-0"
+              style={{
+                color: palette.text,
+                borderColor: palette.cardBorder,
+                colorScheme: palette.bgIsDark ? 'dark' : 'light',
+              }}
             />
           </label>
-          <label className="flex items-center gap-2 text-xs">
-            <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 font-semibold">
+          <label className="flex items-center justify-between @3xl:justify-start gap-2 text-xs @sm:col-span-2 @3xl:col-span-1 min-w-0">
+            <span
+              className="text-[10px] uppercase tracking-[0.18em] font-semibold shrink-0"
+              style={{ color: palette.mutedText }}
+            >
               Guests:
             </span>
             <select
               value={adults}
               onChange={(e) => setAdults(e.target.value)}
-              className="bg-transparent font-semibold text-xs outline-none border-b border-slate-300 pb-0.5"
+              className="font-semibold text-xs outline-none border-b pb-0.5"
+              style={{
+                color: palette.text,
+                backgroundColor: palette.bg,
+                borderColor: palette.cardBorder,
+              }}
             >
               <option value="1">1 Adult</option>
               <option value="2">2 Adults</option>
@@ -341,47 +416,69 @@ export default function TemplateBookingForm({
 
         <button
           type="submit"
-          className="px-6 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 cursor-pointer"
+          className="px-6 py-2.5 text-[11px] font-bold uppercase tracking-[0.18em] flex items-center justify-center gap-2 cursor-pointer shrink-0"
           style={{
-            backgroundColor: theme.primary_color,
-            color: '#ffffff',
+            backgroundColor: palette.primary,
+            color: palette.primaryText,
             borderRadius: radius,
           }}
         >
           <span>Check Dates</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-3.5 h-3.5 shrink-0" />
         </button>
       </form>
     );
   }
 
-  // 4. FLOATING GLASS CAPSULE (#03 Floating Glass, #07 Curved Coastal, #13 Story Sanctuary)
+  // 4. FLOATING GLASS CAPSULE (#03 Floating Glass, #07 Curved Coastal, #11 Arch, #13 Story, #14 Direct, #16 Bento)
   if (variant === 'floating-glass') {
     return (
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-5xl mx-auto p-3 md:px-6 md:py-3.5 shadow-2xl border backdrop-blur-xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3"
+        className="w-full max-w-5xl mx-auto p-3.5 @3xl:px-6 @3xl:py-3.5 shadow-2xl border backdrop-blur-xl flex flex-col @3xl:flex-row items-stretch @3xl:items-center justify-between gap-3"
         style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.96)',
-          borderColor: 'rgba(226, 232, 240, 0.9)',
-          borderRadius: radius === '9999px' ? '9999px' : '20px',
-          color: '#0f172a',
+          backgroundColor: withAlpha(palette.cardBg, 0.96, 'rgba(255,255,255,0.96)'),
+          borderColor: palette.cardBorder,
+          borderRadius: radius === '9999px' ? '24px' : '20px',
+          color: palette.text,
         }}
       >
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 flex-1 md:divide-x md:divide-slate-200 text-left">
-          <label className="px-2 block">
-            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block">
+        <div className="grid grid-cols-1 @sm:grid-cols-2 @3xl:grid-cols-3 gap-2.5 @3xl:gap-3 flex-1 text-left min-w-0">
+          <label
+            className="px-2.5 py-1.5 @3xl:py-0 rounded-xl @3xl:rounded-none border @3xl:border-0 block min-w-0"
+            style={{
+              backgroundColor: inputSurfaceBg,
+              borderColor: palette.cardBorder,
+            }}
+          >
+            <span
+              className="text-[9px] font-bold uppercase tracking-widest block"
+              style={{ color: palette.accent }}
+            >
               Check-In
             </span>
             <input
               type="date"
               value={checkIn}
               onChange={(e) => handleCheckInChange(e.target.value)}
-              className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none"
+              className="w-full min-w-0 bg-transparent text-xs font-bold outline-none"
+              style={{
+                color: palette.text,
+                colorScheme: palette.bgIsDark ? 'dark' : 'light',
+              }}
             />
           </label>
-          <label className="px-2 md:pl-4 block">
-            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block">
+          <label
+            className="px-2.5 py-1.5 @3xl:py-0 rounded-xl @3xl:rounded-none border @3xl:border-0 block min-w-0"
+            style={{
+              backgroundColor: inputSurfaceBg,
+              borderColor: palette.cardBorder,
+            }}
+          >
+            <span
+              className="text-[9px] font-bold uppercase tracking-widest block"
+              style={{ color: palette.accent }}
+            >
               Check-Out
             </span>
             <input
@@ -389,17 +486,34 @@ export default function TemplateBookingForm({
               value={checkOut}
               min={checkIn}
               onChange={(e) => setCheckOut(e.target.value)}
-              className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none"
+              className="w-full min-w-0 bg-transparent text-xs font-bold outline-none"
+              style={{
+                color: palette.text,
+                colorScheme: palette.bgIsDark ? 'dark' : 'light',
+              }}
             />
           </label>
-          <label className="px-2 md:pl-4 block col-span-2 md:col-span-1">
-            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block">
+          <label
+            className="px-2.5 py-1.5 @3xl:py-0 rounded-xl @3xl:rounded-none border @3xl:border-0 block @sm:col-span-2 @3xl:col-span-1 min-w-0"
+            style={{
+              backgroundColor: inputSurfaceBg,
+              borderColor: palette.cardBorder,
+            }}
+          >
+            <span
+              className="text-[9px] font-bold uppercase tracking-widest block"
+              style={{ color: palette.accent }}
+            >
               Guests
             </span>
             <select
               value={adults}
               onChange={(e) => setAdults(e.target.value)}
-              className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none"
+              className="w-full min-w-0 text-xs font-bold outline-none"
+              style={{
+                color: palette.text,
+                backgroundColor: inputSurfaceBg,
+              }}
             >
               <option value="1">1 Adult • 1 Room</option>
               <option value="2">2 Adults • 1 Room</option>
@@ -411,60 +525,85 @@ export default function TemplateBookingForm({
 
         <button
           type="submit"
-          className="px-7 py-3.5 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shrink-0 shadow-md cursor-pointer transition-transform hover:scale-[1.01]"
+          className="px-6 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shrink-0 shadow-md cursor-pointer transition-opacity hover:opacity-90"
           style={{
-            backgroundColor: theme.primary_color,
-            color: '#ffffff',
+            backgroundColor: palette.primary,
+            color: palette.primaryText,
             borderRadius: radius,
           }}
         >
           <span>Book Now</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-3.5 h-3.5 shrink-0" />
         </button>
       </form>
     );
   }
 
-  // 5. STANDARD HORIZONTAL BAR
+  // 5. STANDARD HORIZONTAL BAR (#01 Classic, #04 Grand Crest, #15 Triptych)
   return (
     <div
-      className="w-full border-b py-3 px-6 shadow-xs"
-      style={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a' }}
+      className="w-full border-b py-3 px-4 @3xl:px-6 shadow-xs"
+      style={{
+        backgroundColor: palette.cardBg,
+        borderColor: palette.cardBorder,
+        color: palette.text,
+      }}
     >
       <form
         onSubmit={handleSubmit}
-        className="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs"
+        className="max-w-7xl mx-auto flex flex-col @3xl:flex-row items-stretch @3xl:items-center justify-between gap-2.5 @3xl:gap-3 text-xs"
       >
-        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-700 shrink-0 hidden lg:inline">
+        <span
+          className="text-[10px] font-bold uppercase tracking-widest shrink-0 hidden @5xl:inline truncate max-w-[180px]"
+          style={{ color: palette.accent }}
+        >
           Book {hotelName}
         </span>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 flex-1">
-          <label className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-left">
-            <span className="text-[9px] text-slate-400 font-bold uppercase block">Check-In</span>
+        <div className="grid grid-cols-1 @sm:grid-cols-2 @3xl:grid-cols-4 gap-2 flex-1 min-w-0">
+          <label
+            className="border rounded-lg px-2.5 py-1.5 text-left min-w-0"
+            style={{ backgroundColor: inputSurfaceBg, borderColor: palette.cardBorder }}
+          >
+            <span className="text-[9px] font-bold uppercase block" style={{ color: palette.mutedText }}>
+              Check-In
+            </span>
             <input
               type="date"
               value={checkIn}
               onChange={(e) => handleCheckInChange(e.target.value)}
-              className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none"
+              className="w-full min-w-0 bg-transparent text-xs font-bold outline-none"
+              style={{ color: palette.text, colorScheme: palette.bgIsDark ? 'dark' : 'light' }}
             />
           </label>
-          <label className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-left">
-            <span className="text-[9px] text-slate-400 font-bold uppercase block">Check-Out</span>
+          <label
+            className="border rounded-lg px-2.5 py-1.5 text-left min-w-0"
+            style={{ backgroundColor: inputSurfaceBg, borderColor: palette.cardBorder }}
+          >
+            <span className="text-[9px] font-bold uppercase block" style={{ color: palette.mutedText }}>
+              Check-Out
+            </span>
             <input
               type="date"
               value={checkOut}
               min={checkIn}
               onChange={(e) => setCheckOut(e.target.value)}
-              className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none"
+              className="w-full min-w-0 bg-transparent text-xs font-bold outline-none"
+              style={{ color: palette.text, colorScheme: palette.bgIsDark ? 'dark' : 'light' }}
             />
           </label>
-          <label className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-left">
-            <span className="text-[9px] text-slate-400 font-bold uppercase block">Guests</span>
+          <label
+            className="border rounded-lg px-2.5 py-1.5 text-left min-w-0"
+            style={{ backgroundColor: inputSurfaceBg, borderColor: palette.cardBorder }}
+          >
+            <span className="text-[9px] font-bold uppercase block" style={{ color: palette.mutedText }}>
+              Guests
+            </span>
             <select
               value={adults}
               onChange={(e) => setAdults(e.target.value)}
-              className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none"
+              className="w-full min-w-0 text-xs font-bold outline-none"
+              style={{ color: palette.text, backgroundColor: inputSurfaceBg }}
             >
               <option value="1">1 Adult</option>
               <option value="2">2 Adults</option>
@@ -472,29 +611,35 @@ export default function TemplateBookingForm({
               <option value="4">4 Adults</option>
             </select>
           </label>
-          <label className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-left">
-            <span className="text-[9px] text-slate-400 font-bold uppercase block">Promo</span>
+          <label
+            className="border rounded-lg px-2.5 py-1.5 text-left min-w-0"
+            style={{ backgroundColor: inputSurfaceBg, borderColor: palette.cardBorder }}
+          >
+            <span className="text-[9px] font-bold uppercase block" style={{ color: palette.mutedText }}>
+              Promo
+            </span>
             <input
               type="text"
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value)}
               placeholder="Code"
-              className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none"
+              className="w-full min-w-0 bg-transparent text-xs font-bold outline-none"
+              style={{ color: palette.text }}
             />
           </label>
         </div>
 
         <button
           type="submit"
-          className="px-6 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+          className="px-6 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shrink-0 cursor-pointer transition-opacity hover:opacity-90"
           style={{
-            backgroundColor: theme.primary_color,
-            color: '#ffffff',
+            backgroundColor: palette.primary,
+            color: palette.primaryText,
             borderRadius: radius,
           }}
         >
           <span>Book Now</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-3.5 h-3.5 shrink-0" />
         </button>
       </form>
     </div>

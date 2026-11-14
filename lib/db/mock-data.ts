@@ -110,6 +110,9 @@ export interface Room {
   room_size: number;
   bed_type: string;
   price?: number;
+  original_price?: number;
+  discount_pct?: number;
+  promo_name?: string;
   book_now_url?: string;
   sort_order: number;
 }
@@ -947,6 +950,114 @@ function cacheFlowStayBundle(requestedKey: string, bundle: FlowStayWebsiteBundle
   }
 }
 
+interface LowestRoomRateInfo {
+  price: number;
+  original_price?: number;
+  discount_pct?: number;
+  promo_name?: string;
+}
+
+function getThailandDateStr(daysAhead: number): string {
+  // Thailand UTC+7 date string YYYY-MM-DD
+  const thTime = new Date(Date.now() + (7 * 3600 + daysAhead * 86400) * 1000);
+  return thTime.toISOString().slice(0, 10);
+}
+
+async function fetchFlowStayTrpcDetailWindow(
+  slug: string,
+  checkIn: string,
+  checkOut: string
+): Promise<any[] | null> {
+  try {
+    const encoded = encodeURIComponent(
+      JSON.stringify({ json: { slug, checkIn, checkOut } })
+    );
+    const res = await withTimeout(
+      fetch(`${FLOWSTAY_API_BASE}/api/trpc/hotelBySlug.getDetail?input=${encoded}`, {
+        headers: { Accept: 'application/json' },
+        next: { revalidate: 180, tags: ['hotel-content'] },
+      }),
+      FLOWSTAY_FETCH_TIMEOUT_MS
+    );
+    if (!res.ok) return null;
+    const payload = await res.json();
+    const detail = payload?.result?.data?.json ?? payload?.result?.data ?? null;
+    const rawRooms = detail?.roomDetails || detail?.roomTypes;
+    return Array.isArray(rawRooms) ? rawRooms : null;
+  } catch {
+    return null;
+  }
+}
+
+function extractLowestFromRatePlans(ratePlans: any[]): LowestRoomRateInfo | null {
+  if (!Array.isArray(ratePlans) || ratePlans.length === 0) return null;
+  let best: LowestRoomRateInfo | null = null;
+
+  for (const rp of ratePlans) {
+    const finalPrice = Math.round(Number(rp?.price || 0));
+    if (finalPrice <= 0) continue;
+
+    const origPrice = Math.round(Number(rp?.originalPrice || finalPrice));
+    const discPct = Math.round(Number(rp?.discountPct || 0));
+    const promoName = String(rp?.promoNameEn || rp?.promoName || '').trim() || undefined;
+
+    if (!best || finalPrice < best.price || (finalPrice === best.price && discPct > (best.discount_pct || 0))) {
+      best = {
+        price: finalPrice,
+        original_price: origPrice > finalPrice ? origPrice : undefined,
+        discount_pct: discPct > 0 ? discPct : undefined,
+        promo_name: promoName,
+      };
+    }
+  }
+  return best;
+}
+
+async function fetchFlowStayLowestRoomRates(
+  slug: string,
+  roomCount: number
+): Promise<Map<string, LowestRoomRateInfo>> {
+  const rateMap = new Map<string, LowestRoomRateInfo>();
+  if (!slug || roomCount <= 0) return rateMap;
+
+  // 1. Primary window: tomorrow -> day after tomorrow (Channel Manager live rate + active FlowStay promotions)
+  const ci1 = getThailandDateStr(1);
+  const co1 = getThailandDateStr(2);
+  let rawRooms = await fetchFlowStayTrpcDetailWindow(slug, ci1, co1);
+  if (!rawRooms && slug.includes('-')) {
+    rawRooms = await fetchFlowStayTrpcDetailWindow(slug.replace(/-/g, ''), ci1, co1);
+  }
+
+  if (rawRooms) {
+    for (const rm of rawRooms) {
+      const lowest = extractLowestFromRatePlans(rm?.ratePlans);
+      if (lowest) {
+        rateMap.set(String(rm.id), lowest);
+      }
+    }
+  }
+
+  // 2. Fallback window (+7d -> +8d) ONLY if some rooms had no ratePlans tomorrow (e.g. min-stay / closed tomorrow)
+  if (rateMap.size < roomCount) {
+    const ci7 = getThailandDateStr(7);
+    const co7 = getThailandDateStr(8);
+    const fallbackRooms = await fetchFlowStayTrpcDetailWindow(slug, ci7, co7);
+    if (fallbackRooms) {
+      for (const rm of fallbackRooms) {
+        const rmKey = String(rm.id);
+        if (!rateMap.has(rmKey)) {
+          const lowest = extractLowestFromRatePlans(rm?.ratePlans);
+          if (lowest) {
+            rateMap.set(rmKey, lowest);
+          }
+        }
+      }
+    }
+  }
+
+  return rateMap;
+}
+
 const fetchCachedFlowStayBundleRemote = unstable_cache(
   async (key: string): Promise<FlowStayWebsiteBundle | null> => {
     const res = await withTimeout(
@@ -959,9 +1070,31 @@ const fetchCachedFlowStayBundleRemote = unstable_cache(
     if (!res.ok) return null;
     const data = (await res.json()) as FlowStayWebsiteBundle;
     if (!data || !data.hotel) return null;
+
+    // NEVER display roomTypes.basePrice! Always strip basePrice first, then populate ONLY from
+    // FlowStay Channel Manager lowest rate with FlowStay promotions already deducted.
+    if (Array.isArray(data.rooms) && data.rooms.length > 0) {
+      const hotelSlug = data.hotel.slug || key;
+      const lowestRatesByRoomId = await fetchFlowStayLowestRoomRates(
+        hotelSlug,
+        data.rooms.length
+      );
+
+      data.rooms = data.rooms.map((rm) => {
+        const cmRate = lowestRatesByRoomId.get(String(rm.id));
+        return {
+          ...rm,
+          price: cmRate ? cmRate.price : 0,
+          original_price: cmRate?.original_price,
+          discount_pct: cmRate?.discount_pct,
+          promo_name: cmRate?.promo_name,
+        };
+      });
+    }
+
     return normalizeFlowStayBundleUrls(data);
   },
-  ['flowstay-website-bundle-v2'],
+  ['flowstay-website-bundle-v3'],
   { revalidate: 180, tags: ['hotel-content'] }
 );
 
@@ -1254,7 +1387,19 @@ export async function getRoomById(id: string): Promise<Room | null> {
     );
     if (res.ok) {
       const data = await res.json();
-      if (data?.room) return data.room as Room;
+      if (data?.room) {
+        const rm = data.room as Room;
+        // Strip basePrice from single-room endpoint and hydrate from cached Channel Manager bundle if available
+        const bundle = rm.hotel_id ? await fetchFlowStayWebsiteBundle(String(rm.hotel_id)) : null;
+        const matched = bundle?.rooms?.find((r) => String(r.id) === String(rm.id));
+        return {
+          ...rm,
+          price: matched ? matched.price : 0,
+          original_price: matched?.original_price,
+          discount_pct: matched?.discount_pct,
+          promo_name: matched?.promo_name,
+        };
+      }
     }
   } catch (err) {
     console.warn('[FlowStay Sync] Failed to fetch room by id', id, err);

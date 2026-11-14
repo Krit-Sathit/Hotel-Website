@@ -136,22 +136,60 @@ export default function RoomsSection({
                     </span>
                   </div>
 
-                  {/* Footer Buttons Row */}
-                  <div className="flex items-center justify-between gap-4 pt-1">
-                    <Link
-                      href={`${tenantPrefix}/rooms/${room.id}`}
-                      className="text-xs font-bold tracking-widest uppercase text-slate-400 hover:text-accent transition-colors flex items-center gap-1 group/btn"
-                    >
-                      Explore Suite
-                      <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
-                    </Link>
+                  {/* Footer Price + Buttons Row */}
+                  <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
+                    <div>
+                      {(room.price ?? 0) > 0 ? (
+                        <div className="space-y-0.5 text-left">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+                              Lowest Direct Rate
+                            </span>
+                            {room.discount_pct && room.discount_pct > 0 && (
+                              <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 text-[10px] font-bold">
+                                -{room.discount_pct}%
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            {room.original_price && room.original_price > (room.price ?? 0) && (
+                              <span className="text-xs text-slate-400 line-through">
+                                ฿{room.original_price.toLocaleString()}
+                              </span>
+                            )}
+                            <span className="text-xl font-bold text-primary">
+                              ฿{Number(room.price ?? 0).toLocaleString()}
+                            </span>
+                            <span className="text-xs text-slate-400">/ night</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <Link
+                          href={`${tenantPrefix}/rooms/${room.id}`}
+                          className="text-xs font-bold tracking-widest uppercase text-slate-400 hover:text-accent transition-colors flex items-center gap-1 group/btn"
+                        >
+                          Explore Suite
+                          <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
+                        </Link>
+                      )}
+                    </div>
 
-                    <Link
-                      href={bookingUrl}
-                      className="bg-primary hover:bg-primary/95 text-white font-semibold text-[10px] md:text-xs tracking-[0.15em] uppercase py-3 px-6 rounded-hotel transition-all shadow-sm flex items-center gap-1.5"
-                    >
-                      Reserve
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      {(room.price ?? 0) > 0 && (
+                        <Link
+                          href={`${tenantPrefix}/rooms/${room.id}`}
+                          className="text-[11px] font-bold tracking-wider uppercase text-slate-500 hover:text-accent transition-colors"
+                        >
+                          Details
+                        </Link>
+                      )}
+                      <Link
+                        href={`${bookingUrl}${bookingUrl.includes('?') ? '&' : '?'}roomTypeId=${encodeURIComponent(room.id)}`}
+                        className="bg-primary hover:bg-primary/95 text-white font-semibold text-[10px] md:text-xs tracking-[0.15em] uppercase py-3 px-6 rounded-hotel transition-all shadow-sm flex items-center gap-1.5 whitespace-nowrap"
+                      >
+                        Reserve
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>

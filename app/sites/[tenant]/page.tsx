@@ -9,6 +9,7 @@ import {
   getRooms,
   getPromotions,
   getGalleryPhotos,
+  type HotelTheme,
 } from '@/lib/db/mock-data';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
 import HotelTemplateHome from '@/components/templates/hotel-template-home';
@@ -17,7 +18,16 @@ import { getBookingEngineUrl } from '@/lib/booking-engine';
 
 interface TenantPageProps {
   params: Promise<{ tenant: string }>;
-  searchParams: Promise<{ preview_template?: string }>;
+  searchParams: Promise<{
+    preview_template?: string;
+    pc?: string;
+    sc?: string;
+    ac?: string;
+    bg?: string;
+    tc?: string;
+    ff?: string;
+    bs?: string;
+  }>;
 }
 
 export async function generateMetadata({
@@ -85,9 +95,30 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
     getGalleryPhotos(hotel.id),
   ]);
 
-  // Support live preview query override (?preview_template=<id>)
+  // Support live preview query override (?preview_template=<id>&pc=...&sc=...&ac=...&bg=...&tc=...)
   const previewTpl = query?.preview_template
     ? HOTEL_WEBSITE_TEMPLATES.find((t) => t.id === query.preview_template)
+    : undefined;
+
+  const cleanHex = (val?: string) =>
+    val && /^[0-9a-fA-F]{6}$/.test(val.trim()) ? `#${val.trim()}` : undefined;
+
+  const previewBs: HotelTheme['button_style'] | undefined =
+    query?.bs === 'square' || query?.bs === 'rounded' || query?.bs === 'pill'
+      ? query.bs
+      : undefined;
+
+  const previewThemeOverride: HotelTheme | undefined = previewTpl
+    ? {
+        ...previewTpl.theme,
+        ...(cleanHex(query?.pc) ? { primary_color: cleanHex(query.pc)! } : {}),
+        ...(cleanHex(query?.sc) ? { secondary_color: cleanHex(query.sc)! } : {}),
+        ...(cleanHex(query?.ac) ? { accent_color: cleanHex(query.ac)! } : {}),
+        ...(cleanHex(query?.bg) ? { background_color: cleanHex(query.bg)! } : {}),
+        ...(cleanHex(query?.tc) ? { text_color: cleanHex(query.tc)! } : {}),
+        ...(query?.ff ? { font_family: query.ff } : {}),
+        ...(previewBs ? { button_style: previewBs } : {}),
+      }
     : undefined;
 
   return (
@@ -95,7 +126,7 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
       <PageViewTracker hotelId={hotel.id} pagePath="/" />
       <HotelTemplateHome
         hotel={hotel}
-        themeOverride={previewTpl ? previewTpl.theme : undefined}
+        themeOverride={previewThemeOverride}
         templateOverride={previewTpl}
         slides={slides}
         sections={dbSections}
