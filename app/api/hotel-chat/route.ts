@@ -121,7 +121,9 @@ async function lookupFlowStayHotel(slug: string): Promise<CachedFlowStayHotel> {
             descriptionEn: String(h.descriptionEn || '').trim(),
             phone: String(h.contactPhone || '').trim(),
             email: String(h.contactEmail || h.bookingEmail || '').trim(),
-            lineId: String(h.lineId || '').trim(),
+            lineId: /^@?test(line)?$/i.test(String(h.lineId || '').trim())
+              ? ''
+              : String(h.lineId || '').trim(),
             whatsapp: String(h.whatsapp || '').trim(),
             googleMapsUrl: String(h.googleMapsUrl || h.mapUrl || '').trim(),
             starRating: typeof h.starRating === 'number' ? h.starRating : Number(h.starRating) || null,

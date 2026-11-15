@@ -41,17 +41,18 @@ function normalizeWhatsAppHref(raw: string): string {
 
 function normalizeLineInfo(raw: string): { label: string; href: string } | null {
   const trimmed = raw.trim();
-  if (!trimmed) return null;
+  if (!trimmed || /^@?test(line)?$/i.test(trimmed)) return null;
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     const seg = trimmed.split('/').filter(Boolean).pop() || 'LINE';
     const cleanId = decodeURIComponent(seg).replace(/^~/, '');
+    if (/^@?test(line)?$/i.test(cleanId)) return null;
     return {
       label: `Line: ${cleanId}`,
       href: trimmed,
     };
   }
   const cleanId = trimmed.replace(/^line:\s*/i, '').trim();
-  if (!cleanId) return null;
+  if (!cleanId || /^@?test(line)?$/i.test(cleanId)) return null;
   const href = cleanId.startsWith('@')
     ? `https://line.me/R/ti/p/${encodeURIComponent(cleanId)}`
     : `https://line.me/ti/p/~${encodeURIComponent(cleanId)}`;
