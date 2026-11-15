@@ -19,6 +19,8 @@ import {
   Star,
   Menu,
   Tag,
+  Camera,
+  ChevronDown,
 } from 'lucide-react';
 import type {
   Hotel,
@@ -34,7 +36,7 @@ import {
   type HotelWebsiteTemplate,
 } from '@/lib/hotel-templates';
 import { buildGoogleDirectionsUrl } from '@/lib/map-utils';
-import { deriveSurfacePalette, withAlpha } from '@/lib/color-utils';
+import { deriveSurfacePalette, isDarkColor, withAlpha } from '@/lib/color-utils';
 import { SwipeablePhotoSlider, SwipeableLightbox } from '@/components/ui/swipeable-photo-slider';
 import TemplateBookingForm from './template-booking-form';
 import PromotionsSection from '@/components/sections/promotions-section';
@@ -379,6 +381,189 @@ export default function HotelTemplateHome({
     template.heroLayout === 'triptych-panels';
 
   const renderTopHeader = () => {
+    // 0. Hotel Indigo Boutique Header (#17: Deep Teal/Primary Bar + Gold Active HOME Pill + White BOOK NOW Button)
+    if (template.shellStyle === 'indigo-boutique') {
+      const indigoHeaderIsDark = isDarkColor(primaryColor);
+      const bookBtnBg = indigoHeaderIsDark ? '#ffffff' : textColor;
+      const bookBtnText = indigoHeaderIsDark ? primaryColor : bgColor;
+      const indigoNavRow1 = [
+        { label: 'HOME', href: isPreview ? '#top' : tenantPrefix || '/', active: true },
+        { label: 'OUR ROOMS', href: isPreview ? '#rooms' : `${tenantPrefix}/rooms` },
+        ...(promotions.length > 0
+          ? [{ label: 'OFFERS', href: isPreview ? '#promotions' : `${tenantPrefix}/promotions`, hasCaret: true }]
+          : []),
+        { label: 'AMENITIES & FACILITIES', href: '#experience-mosaic' },
+        { label: 'GALLERY', href: isPreview ? '#gallery' : `${tenantPrefix}/gallery` },
+      ];
+      const indigoNavRow2 = [
+        { label: 'NEIGHBORHOOD STORY', href: '#neighborhood-story', hasCaret: true },
+        { label: 'DIRECT PRIVILEGES', href: '#settle-in', hasCaret: true },
+        { label: 'LOCATION & CONTACT', href: isPreview ? '#location' : `${tenantPrefix}/contact` },
+      ];
+
+      return (
+        <header
+          className="sticky top-0 z-40 shadow-lg backdrop-blur-md transition-colors duration-300 border-b"
+          style={{
+            backgroundColor: withAlpha(primaryColor, 0.96),
+            color: primaryText,
+            borderColor: withAlpha(primaryText, 0.1),
+          }}
+        >
+          {/* MOBILE HEADER (< @3xl) */}
+          <div className="@3xl:hidden px-4 py-3 flex items-center justify-between gap-2.5">
+            <a
+              href={isPreview ? '#top' : tenantPrefix || '/'}
+              className="flex items-center gap-2.5 min-w-0 text-left"
+            >
+              {hotel.logo_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={cleanImg(hotel.logo_url)}
+                  alt={hotel.name}
+                  className="w-8 h-8 rounded object-contain bg-white/95 p-0.5 shrink-0"
+                />
+              )}
+              <div className="flex flex-col leading-none min-w-0">
+                <span className="text-[8px] font-bold uppercase tracking-[0.28em] opacity-80">
+                  HOTEL
+                </span>
+                <span
+                  className="text-sm font-bold uppercase tracking-[0.14em] truncate mt-0.5"
+                  style={{ fontFamily: fontStack, color: primaryText }}
+                >
+                  {hotel.name}
+                </span>
+              </div>
+            </a>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <a
+                href={getReserveHref()}
+                className="px-3.5 py-2 text-[10px] font-bold uppercase tracking-[0.14em] shadow-xs whitespace-nowrap"
+                style={{
+                  backgroundColor: bookBtnBg,
+                  color: bookBtnText,
+                  borderRadius: btnRadius,
+                  fontFamily: fontStack,
+                }}
+              >
+                BOOK NOW
+              </a>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen((p) => !p)}
+                className="p-2 border cursor-pointer"
+                style={{
+                  borderColor: withAlpha(primaryText, 0.25),
+                  color: primaryText,
+                  borderRadius: btnRadius,
+                }}
+                aria-label="Toggle Menu"
+              >
+                {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* DESKTOP BOUTIQUE EMBLEM + 2-TIER NAV + WHITE BOOK NOW CTA (@3xl+) */}
+          <div className="hidden @3xl:flex max-w-7xl mx-auto px-6 py-3.5 items-center justify-between gap-6">
+            {/* Left Stacked Boutique Crest */}
+            <a
+              href={isPreview ? '#top' : tenantPrefix || '/'}
+              className="flex items-center gap-3 shrink-0 group text-center"
+            >
+              {hotel.logo_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={cleanImg(hotel.logo_url)}
+                  alt={hotel.name}
+                  className="w-10 h-10 rounded object-contain bg-white/95 p-1 shrink-0"
+                />
+              )}
+              <div className="flex flex-col items-center leading-tight">
+                <span className="text-[9px] font-semibold uppercase tracking-[0.32em] opacity-85">
+                  BOUTIQUE HOTEL
+                </span>
+                <span
+                  className="text-base @5xl:text-lg font-bold uppercase tracking-[0.18em] mt-0.5"
+                  style={{ fontFamily: fontStack, color: primaryText }}
+                >
+                  {hotel.name}
+                </span>
+                <div className="flex items-center gap-2 mt-1 opacity-75">
+                  <span className="w-4 h-[1px]" style={{ backgroundColor: primaryText }} />
+                  <span className="text-[8px] uppercase tracking-[0.26em]">OFFICIAL STAY</span>
+                  <span className="w-4 h-[1px]" style={{ backgroundColor: primaryText }} />
+                </div>
+              </div>
+            </a>
+
+            {/* Center 2-Row Navigation with Signature Gold/Accent Active HOME Pill */}
+            <nav className="flex flex-col items-center gap-1.5">
+              <div className="flex flex-wrap items-center justify-center gap-5 @5xl:gap-7 text-[11px] font-bold uppercase tracking-[0.14em]">
+                {indigoNavRow1.map((item) =>
+                  item.active ? (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      className="px-4 py-2 transition-opacity hover:opacity-90 shadow-xs"
+                      style={{
+                        backgroundColor: accentColor,
+                        color: accentText,
+                        borderRadius: btnRadius,
+                      }}
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      className="inline-flex items-center gap-1 py-1 hover:opacity-75 transition-opacity"
+                      style={{ color: primaryText }}
+                    >
+                      <span>{item.label}</span>
+                      {item.hasCaret && <ChevronDown className="w-3 h-3 opacity-75" />}
+                    </a>
+                  )
+                )}
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-6 text-[10px] font-semibold uppercase tracking-[0.15em] opacity-90">
+                {indigoNavRow2.map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="inline-flex items-center gap-1 hover:opacity-75 transition-opacity"
+                    style={{ color: primaryText }}
+                  >
+                    <span>{item.label}</span>
+                    {item.hasCaret && <ChevronDown className="w-3 h-3 opacity-75" />}
+                  </a>
+                ))}
+              </div>
+            </nav>
+
+            {/* Right Crisp Solid White BOOK NOW Rectangle */}
+            <a
+              href={getReserveHref()}
+              className="px-7 py-3 text-xs font-bold uppercase tracking-[0.16em] shadow-md hover:opacity-90 transition-all shrink-0"
+              style={{
+                backgroundColor: bookBtnBg,
+                color: bookBtnText,
+                borderRadius: btnRadius,
+                fontFamily: fontStack,
+              }}
+            >
+              BOOK NOW
+            </a>
+          </div>
+
+          {renderMobileNavDrawer()}
+        </header>
+      );
+    }
+
     // 1. Floating Pill Navbar (#03)
     if (template.shellStyle === 'floating-pill-nav') {
       return (
@@ -1560,6 +1745,69 @@ export default function HotelTemplateHome({
           </section>
         );
 
+      // #17 HOTEL INDIGO BOUTIQUE STORY HERO (Full-Bleed Swipeable Photo + Centered Serif Display & Story Copy)
+      case 'indigo-story-hero': {
+        const inlineLinkColor = isDarkColor(accentColor) ? '#F59E0B' : accentColor;
+        return (
+          <section className="relative w-full h-[420px] @3xl:h-[620px] @5xl:h-[700px] overflow-hidden bg-slate-900">
+            <SwipeablePhotoSlider
+              photos={heroPhotos}
+              alt={hotel.name}
+              className="w-full h-full"
+              controlledIndex={slideIdx}
+              onIndexChange={setSlideIdx}
+              arrowsMode="desktop-hover"
+              showCounter={heroPhotos.length > 1}
+              counterPositionClass="bottom-4 right-4"
+              onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
+            />
+
+            {/* Balanced Boutique Vignette (pointer-events-none so finger swipe works everywhere!) */}
+            <div
+              className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center px-5 @3xl:px-10 text-center"
+              style={{
+                background:
+                  'linear-gradient(180deg, rgba(8,20,30,0.28) 0%, rgba(8,20,30,0.48) 55%, rgba(8,20,30,0.72) 100%)',
+              }}
+            >
+              <div className="max-w-4xl mx-auto space-y-4 @3xl:space-y-5 mt-4 @3xl:mt-8">
+                <h1
+                  className="text-2xl @xl:text-3xl @3xl:text-5xl @5xl:text-6xl font-normal uppercase tracking-[0.08em] leading-tight text-white drop-shadow-md"
+                  style={{ fontFamily: fontStack }}
+                >
+                  {hotel.name}
+                </h1>
+
+                <div className="max-w-3xl mx-auto space-y-3 text-xs @3xl:text-[15px] leading-relaxed text-white/95 font-normal drop-shadow-xs">
+                  <p>{aboutData.description}</p>
+                  <p className="hidden @xl:block">
+                    Coastal heritage, thoughtful architecture, and warm local character shape our
+                    curated rooms, relaxing spaces, and neighborhood experience.{' '}
+                    <a
+                      href="#neighborhood-story"
+                      className="pointer-events-auto underline underline-offset-4 font-semibold hover:opacity-85"
+                      style={{ color: inlineLinkColor }}
+                    >
+                      Discover our hotel story.
+                    </a>
+                  </p>
+                  <p className="text-[11px] @3xl:text-sm">
+                    Book directly on our official website for guaranteed lowest rates &amp; member perks.{' '}
+                    <a
+                      href={getReserveHref()}
+                      className="pointer-events-auto underline underline-offset-4 font-semibold hover:opacity-85"
+                      style={{ color: inlineLinkColor }}
+                    >
+                      Explore rooms &amp; live availability.
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      }
+
       // #01 CLASSIC FULL-BLEED SLIDER (Default)
       case 'full-slider':
       default:
@@ -2355,6 +2603,100 @@ export default function HotelTemplateHome({
               })}
             </div>
           )}
+
+          {/* LAYOUT K: HOTEL INDIGO BOUTIQUE SUITES (#17 — Editorial Serif + Finger-Swipeable Gallery + Lowest Promo Rate) */}
+          {template.roomsLayout === 'indigo-boutique-suites' && (
+            <div className="grid grid-cols-1 @3xl:grid-cols-2 gap-6 @3xl:gap-10">
+              {rooms.map((room, idx) => {
+                const photos = (room.gallery || []).map(cleanImg).filter(Boolean);
+                const cover = photos[0] || currentHeroImg;
+                const roomPhotos = photos.length ? photos : [cover];
+                return (
+                  <div
+                    key={room.id}
+                    className="overflow-hidden border shadow-sm hover:shadow-xl transition-all flex flex-col text-left group"
+                    style={{
+                      backgroundColor: cardBg,
+                      borderColor: cardBorder,
+                      borderRadius: btnRadius,
+                    }}
+                  >
+                    <div className="aspect-[16/10] overflow-hidden relative bg-slate-200">
+                      <SwipeablePhotoSlider
+                        photos={roomPhotos}
+                        alt={room.name}
+                        className="w-full h-full"
+                        arrowsMode="desktop-hover"
+                        showCounter={roomPhotos.length > 1}
+                        counterPositionClass="top-3 right-3"
+                        onTapPhoto={(pIdx) => openLightbox(roomPhotos, pIdx, room.name)}
+                      />
+                      <span
+                        className="absolute bottom-3 left-3 z-10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] pointer-events-none shadow-sm"
+                        style={{
+                          backgroundColor: primaryColor,
+                          color: primaryText,
+                          borderRadius: btnRadius,
+                        }}
+                      >
+                        Boutique Room 0{idx + 1}
+                      </span>
+                    </div>
+
+                    <div className="p-5 @3xl:p-7 space-y-4 flex-1 flex flex-col justify-between">
+                      <div className="space-y-2.5">
+                        <h3
+                          className="text-xl @3xl:text-2xl font-normal tracking-wide"
+                          style={{ color: textColor, fontFamily: fontStack }}
+                        >
+                          {room.name}
+                        </h3>
+                        <div className="w-12 h-[2px]" style={{ backgroundColor: accentColor }} />
+                        <p className="text-xs @3xl:text-[13px] leading-relaxed line-clamp-3" style={{ color: mutedText }}>
+                          {room.description}
+                        </p>
+                      </div>
+
+                      <div className="space-y-4 pt-2">
+                        <div
+                          className="py-3 border-y flex flex-wrap items-center gap-4 text-[11px] font-semibold uppercase tracking-wider"
+                          style={{ borderColor: cardBorder, color: mutedText }}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <Maximize2 className="w-3.5 h-3.5" style={{ color: accentColor }} />
+                            {room.room_size} m²
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5" style={{ color: accentColor }} />
+                            Max {room.max_guests} Guests
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <BedDouble className="w-3.5 h-3.5" style={{ color: accentColor }} />
+                            {room.bed_type}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-end justify-between gap-3">
+                          {renderRoomPrice(room)}
+                          <a
+                            href={getReserveHref(room.id)}
+                            className="px-6 py-3 text-xs font-bold uppercase tracking-[0.16em] whitespace-nowrap hover:opacity-90 transition-opacity shadow-sm"
+                            style={{
+                              backgroundColor: primaryColor,
+                              color: primaryText,
+                              borderRadius: btnRadius,
+                            }}
+                          >
+                            BOOK NOW
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
     );
@@ -2364,6 +2706,338 @@ export default function HotelTemplateHome({
   // DISTINCT ABOUT / STORY SECTION LAYOUTS
   // =========================================================================
   const renderAboutSection = () => {
+    // #17 HOTEL INDIGO 2-TIER COASTAL BRUSHSTROKE STORY + FULL-BLEED ZERO-GAP 50/50 PHOTO MOSAIC
+    if (template.aboutLayout === 'indigo-coastal-story') {
+      const storyLinkColor = isDark ? accentColor : '#D95326';
+      const mosaicTiles = [
+        {
+          title: facilitiesData[0]?.title || 'Locally Inspired Dining',
+          desc:
+            facilitiesData[0]?.desc ||
+            `Savor fresh local ingredients, signature culinary creations, and warm coastal ambiance crafted daily at ${hotel.name}.`,
+          image: galleryPhotosPool[1 % galleryPhotosPool.length] || aboutData.primaryImage,
+          href: isPreview ? '#rooms' : getReserveHref(),
+        },
+        {
+          title: facilitiesData[1]?.title || 'Poolside & Social Lounge',
+          desc:
+            facilitiesData[1]?.desc ||
+            `Unwind by shimmering waters with refreshing handcrafted drinks, sun loungers, and tranquil tropical breezes.`,
+          image: galleryPhotosPool[2 % galleryPhotosPool.length] || aboutData.secondaryImage,
+          href: isPreview ? '#gallery' : `${tenantPrefix}/gallery`,
+        },
+        {
+          title: 'Inspiring Boutique Rooms',
+          desc: `Our neighborhood story takes shape through locally inspired interiors, plush bedding, and serene garden & pool views at ${hotel.name}.`,
+          image:
+            cleanImg(rooms[0]?.gallery?.[0]) ||
+            galleryPhotosPool[3 % galleryPhotosPool.length] ||
+            currentHeroImg,
+          href: '#rooms',
+        },
+        {
+          title: facilitiesData[2]?.title || 'Exclusive Direct Privileges',
+          desc:
+            facilitiesData[2]?.desc ||
+            `Enjoy guaranteed lowest direct rates, priority room selection, and personalized concierge assistance throughout your stay.`,
+          image:
+            cleanImg(rooms[1]?.gallery?.[0]) ||
+            galleryPhotosPool[4 % galleryPhotosPool.length] ||
+            aboutData.primaryImage,
+          href: getReserveHref(),
+        },
+      ];
+
+      return (
+        <>
+          {/* TIER 1: COASTAL BOUTIQUE STORY + LONGTAIL BOAT WATERCOLOR ARTWORK */}
+          <section
+            id="neighborhood-story"
+            className="relative w-full overflow-hidden py-12 @3xl:py-20 px-5 @3xl:px-10"
+            style={{ backgroundColor: bgColor }}
+          >
+            {/* Subtle Organic Brushstroke Watermark */}
+            <svg
+              viewBox="0 0 1200 320"
+              fill="none"
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 top-4 w-full h-auto opacity-[0.045]"
+            >
+              <path
+                d="M-40 120C180 30 420 210 690 110C920 25 1090 140 1260 80"
+                stroke={primaryColor}
+                strokeWidth="56"
+                strokeLinecap="round"
+              />
+              <path
+                d="M60 240C310 165 560 285 860 195C1020 145 1140 210 1250 185"
+                stroke={primaryColor}
+                strokeWidth="36"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            <div className="relative max-w-6xl mx-auto space-y-12 @3xl:space-y-16">
+              <div className="grid grid-cols-1 @3xl:grid-cols-12 gap-8 @3xl:gap-12 items-center">
+                {/* Left Editorial Narrative */}
+                <div className="@3xl:col-span-7 space-y-4 @3xl:space-y-5 text-left">
+                  <h2
+                    className="text-3xl @3xl:text-[42px] font-normal leading-[1.16] tracking-tight"
+                    style={{ color: isDark ? textColor : primaryColor, fontFamily: fontStack }}
+                  >
+                    {aboutData.title === hotel.name
+                      ? `Boutique Sanctuary\nAt ${hotel.name}`
+                      : aboutData.title}
+                  </h2>
+
+                  <div className="space-y-4 text-xs @3xl:text-[14px] leading-[1.8]" style={{ color: mutedText }}>
+                    <p>{aboutData.description}</p>
+                    <p>
+                      Thoughtfully situated at{' '}
+                      <strong style={{ color: textColor }}>{hotel.address || hotel.name}</strong>, our
+                      property blends relaxing resort comfort with authentic local charm, lush tropical
+                      surroundings, and effortless access to nearby beaches and cultural sights.
+                    </p>
+                    <p>
+                      Unwind in spacious rooms with plush bedding, refreshing pool vistas, and
+                      complimentary high-speed Wi-Fi. Reserve directly on our official website for{' '}
+                      <a
+                        href="#rooms"
+                        className="underline underline-offset-4 font-semibold hover:opacity-80"
+                        style={{ color: storyLinkColor }}
+                      >
+                        guaranteed lowest direct rates
+                      </a>{' '}
+                      and attentive concierge care.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right Coastal Longtail Boat & Waves Brushstroke Illustration */}
+                <div className="@3xl:col-span-5 flex items-center justify-center">
+                  <svg
+                    viewBox="0 0 420 340"
+                    className="w-full max-w-[330px] @3xl:max-w-[390px] h-auto drop-shadow-xs"
+                    role="img"
+                    aria-label="Coastal Heritage Illustration"
+                  >
+                    {/* Canopy & Frame */}
+                    <path
+                      d="M142 152 L152 115 L235 112 L226 152"
+                      stroke={primaryColor}
+                      strokeWidth="3.5"
+                      fill="none"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M134 116 Q190 100 246 113 L238 122 Q188 112 142 123 Z"
+                      fill={primaryColor}
+                    />
+                    {/* Tall Iconic Longtail Bow Post */}
+                    <path
+                      d="M272 192 L322 52 L338 58 L286 196 Z"
+                      fill={primaryColor}
+                    />
+                    {/* Traditional Colorful Thai Ribbons on Bow */}
+                    <path
+                      d="M300 108 C315 128 318 158 326 184"
+                      stroke="#E11D48"
+                      strokeWidth="7"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d="M296 112 C305 138 306 165 312 190"
+                      stroke={accentColor}
+                      strokeWidth="7"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    <path
+                      d="M305 104 C322 122 328 148 335 174"
+                      stroke="#F97316"
+                      strokeWidth="5"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    {/* Boat Hull */}
+                    <path
+                      d="M112 172 Q195 162 296 135 L272 198 Q195 212 132 196 Z"
+                      fill={primaryColor}
+                    />
+                    <path
+                      d="M124 178 Q198 170 278 149"
+                      stroke="#ffffff"
+                      strokeWidth="2"
+                      strokeOpacity="0.55"
+                      fill="none"
+                    />
+                    {/* Rippling Watercolor Brushstroke Sea Waves */}
+                    {[
+                      { x: 90, y: 212, w: 46, op: 0.85 },
+                      { x: 150, y: 214, w: 58, op: 0.95 },
+                      { x: 222, y: 210, w: 52, op: 0.85 },
+                      { x: 286, y: 214, w: 40, op: 0.7 },
+                      { x: 68, y: 228, w: 52, op: 0.65 },
+                      { x: 132, y: 230, w: 64, op: 0.88 },
+                      { x: 208, y: 228, w: 56, op: 0.92 },
+                      { x: 276, y: 230, w: 48, op: 0.75 },
+                      { x: 84, y: 246, w: 48, op: 0.55 },
+                      { x: 146, y: 248, w: 58, op: 0.78 },
+                      { x: 218, y: 246, w: 62, op: 0.82 },
+                      { x: 292, y: 248, w: 38, op: 0.58 },
+                      { x: 108, y: 264, w: 54, op: 0.45 },
+                      { x: 176, y: 266, w: 60, op: 0.68 },
+                      { x: 248, y: 264, w: 48, op: 0.52 },
+                      { x: 136, y: 282, w: 52, op: 0.4 },
+                      { x: 202, y: 282, w: 56, op: 0.48 },
+                    ].map((wave, idx) => (
+                      <rect
+                        key={idx}
+                        x={wave.x}
+                        y={wave.y}
+                        width={wave.w}
+                        height="7"
+                        rx="3.5"
+                        fill={idx % 3 === 0 ? accentColor : primaryColor}
+                        fillOpacity={idx % 3 === 0 ? wave.op * 0.45 : wave.op}
+                      />
+                    ))}
+                  </svg>
+                </div>
+              </div>
+
+              {/* TIER 2: INSET LIGHT-GREY "SETTLE IN, THEN SET OUT" EDITORIAL BLOCK */}
+              <div
+                id="settle-in"
+                className="p-6 @3xl:p-14 grid grid-cols-1 @3xl:grid-cols-12 gap-8 @3xl:gap-12 items-center"
+                style={{
+                  backgroundColor: subtleSurface,
+                  borderRadius: btnRadius,
+                }}
+              >
+                {/* Left Ink-Brush Lifestyle & Gathering Motif */}
+                <div className="@3xl:col-span-4 flex items-center justify-center">
+                  <svg
+                    viewBox="0 0 280 220"
+                    className="w-full max-w-[230px] h-auto"
+                    role="img"
+                    aria-label="Neighborhood Experience Illustration"
+                  >
+                    {/* Tropical Palm & Sun Arch */}
+                    <circle cx="140" cy="95" r="64" fill={withAlpha(accentColor, 0.16)} />
+                    <path
+                      d="M72 182 C76 136 92 118 106 118 C120 118 130 142 132 182"
+                      fill={primaryColor}
+                    />
+                    <circle cx="103" cy="94" r="16" fill={primaryColor} />
+                    <path
+                      d="M148 182 C150 132 166 112 182 112 C198 112 210 136 214 182"
+                      fill={primaryColor}
+                    />
+                    <circle cx="180" cy="88" r="17" fill={primaryColor} />
+                    {/* Center Cocktail / Refreshment Table */}
+                    <path d="M122 146 L158 146 L144 166 L144 182 L136 182 L136 166 Z" fill={accentColor} />
+                    <path
+                      d="M52 184 Q140 176 228 184"
+                      stroke={primaryColor}
+                      strokeWidth="5"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                  </svg>
+                </div>
+
+                {/* Right Editorial Story Copy */}
+                <div className="@3xl:col-span-8 space-y-4 text-left">
+                  <h3
+                    className="text-2xl @3xl:text-4xl font-normal tracking-tight"
+                    style={{ color: isDark ? textColor : primaryColor, fontFamily: fontStack }}
+                  >
+                    Settle In, Then Set Out
+                  </h3>
+                  <p className="text-xs @3xl:text-[14px] leading-[1.8]" style={{ color: mutedText }}>
+                    Discover sandy beaches, local flavors, and vibrant neighborhood culture right from{' '}
+                    <strong style={{ color: textColor }}>{hotel.name}</strong>.
+                  </p>
+                  <p className="text-xs @3xl:text-[14px] leading-[1.8]" style={{ color: mutedText }}>
+                    Explore our{' '}
+                    <a
+                      href="#rooms"
+                      className="underline underline-offset-4 font-semibold hover:opacity-80"
+                      style={{ color: storyLinkColor }}
+                    >
+                      curated rooms &amp; villas
+                    </a>{' '}
+                    to plan your stay, or check our{' '}
+                    <a
+                      href={isPreview ? '#location' : mapDirectionsHref}
+                      target={isPreview ? undefined : '_blank'}
+                      rel={isPreview ? undefined : 'noopener noreferrer'}
+                      className="underline underline-offset-4 font-semibold hover:opacity-80"
+                      style={{ color: storyLinkColor }}
+                    >
+                      exact GPS location &amp; neighborhood map
+                    </a>{' '}
+                    for effortless arrival and local transport tips.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* TIER 3: FULL-BLEED ZERO-GAP 50/50 PHOTO SHOWCASE MOSAIC (Edge-to-Edge) */}
+          <section id="experience-mosaic" className="w-full grid grid-cols-1 @3xl:grid-cols-2 gap-0">
+            {mosaicTiles.map((tile, idx) => (
+              <div
+                key={idx}
+                className="relative min-h-[270px] @3xl:min-h-[400px] overflow-hidden group flex items-center justify-center p-6 @3xl:p-12 text-center bg-slate-900"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={tile.image}
+                  alt={tile.title}
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                <div
+                  className="absolute inset-0 transition-opacity duration-300"
+                  style={{
+                    background:
+                      'linear-gradient(180deg, rgba(8,20,30,0.32) 0%, rgba(8,20,30,0.68) 100%)',
+                  }}
+                />
+                <div className="relative z-10 max-w-lg mx-auto space-y-4">
+                  <h3
+                    className="text-2xl @3xl:text-4xl font-normal text-white tracking-wide drop-shadow-sm"
+                    style={{ fontFamily: fontStack }}
+                  >
+                    {tile.title}
+                  </h3>
+                  <p className="text-xs @3xl:text-sm text-white/90 leading-relaxed line-clamp-3">
+                    {tile.desc}
+                  </p>
+                  <div className="pt-1">
+                    <a
+                      href={tile.href}
+                      className="inline-block px-7 py-2.5 text-xs font-bold uppercase tracking-[0.16em] shadow-md transition-transform group-hover:-translate-y-0.5"
+                      style={{
+                        backgroundColor: primaryColor,
+                        color: primaryText,
+                        borderRadius: btnRadius,
+                      }}
+                    >
+                      VIEW MORE
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </section>
+        </>
+      );
+    }
+
     if (template.aboutLayout === 'bento-highlights') {
       return (
         <section className="max-w-7xl mx-auto px-3 @3xl:px-6 py-8 @3xl:py-12">
@@ -2682,6 +3356,58 @@ export default function HotelTemplateHome({
         <div id="promotions">
           <PromotionsSection promotions={promotions} bookingUrl={bookingUrl} />
         </div>
+      )}
+      {template.id === 'indigo-neighborhood' && (
+        <section className="max-w-7xl mx-auto px-4 @3xl:px-8 pt-4 @3xl:pt-8">
+          <div className="relative w-full h-[260px] @3xl:h-[400px] overflow-hidden bg-slate-900 shadow-md">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={galleryPhotosPool[0] || currentHeroImg}
+              alt={`${hotel.name} Virtual Photo Tour`}
+              loading="lazy"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
+            {/* Signature Hotel Indigo Deep-Teal / Primary Floating Tour Card */}
+            <div
+              className="absolute left-4 right-4 @xl:right-auto @3xl:left-12 bottom-4 @3xl:bottom-10 p-5 @3xl:p-8 shadow-2xl flex items-center gap-4 @3xl:gap-6 max-w-md text-left"
+              style={{
+                backgroundColor: withAlpha(primaryColor, 0.95),
+                color: primaryText,
+                borderRadius: btnRadius,
+              }}
+            >
+              <div
+                className="w-12 h-12 @3xl:w-14 @3xl:h-14 rounded-full border-2 flex flex-col items-center justify-center shrink-0"
+                style={{ borderColor: withAlpha(primaryText, 0.5) }}
+              >
+                <Camera className="w-5 h-5" />
+                <span className="text-[9px] font-bold tracking-wider mt-0.5">360°</span>
+              </div>
+              <div className="space-y-2.5">
+                <h3
+                  className="text-lg @3xl:text-2xl font-normal leading-snug"
+                  style={{ fontFamily: fontStack, color: primaryText }}
+                >
+                  Explore Full Photo Tour
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => openLightbox(galleryPhotosPool, 0, hotel.name)}
+                  className="px-5 py-2 text-[11px] font-bold uppercase tracking-[0.16em] cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
+                  style={{
+                    backgroundColor: accentColor,
+                    color: accentText,
+                    borderRadius: btnRadius,
+                  }}
+                >
+                  CLICK VIEW
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
       )}
       {renderGalleryStrip()}
       {!isPreview && (

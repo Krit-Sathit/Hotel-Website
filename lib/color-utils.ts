@@ -13,9 +13,20 @@ export interface ColorPalettePreset {
 }
 
 /**
- * 12 Curated Luxury & Boutique Brand Color Palettes that can be applied to ANY of the 16 Structural Layouts
+ * Curated Luxury & Boutique Brand Color Palettes that can be applied to ANY Structural Layout
  */
 export const COLOR_PALETTE_PRESETS: ColorPalettePreset[] = [
+  {
+    id: 'indigo-boutique',
+    nameTh: 'อินดิโก้ บูทีค & ทองอำพัน',
+    nameEn: 'Hotel Indigo Teal & Amber',
+    primary_color: '#102B3C',
+    secondary_color: '#0D2230',
+    accent_color: '#D59B2D',
+    background_color: '#FCFCFA',
+    text_color: '#102B3C',
+    dark_mode: false,
+  },
   {
     id: 'navy-gold',
     nameTh: 'เนวี่ & แชมเปญโกลด์',

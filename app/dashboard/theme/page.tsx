@@ -75,6 +75,57 @@ function LayoutBlueprintThumbnail({
   const line = isDark ? 'rgba(255,255,255,0.2)' : '#cbd5e1';
   const block = isDark ? '#1e293b' : '#f1f5f9';
 
+  // #17 HOTEL INDIGO BOUTIQUE STORY + 50/50 ZERO-GAP MOSAIC
+  if (template.heroLayout === 'indigo-story-hero') {
+    return (
+      <div className="h-36 w-full flex flex-col overflow-hidden" style={{ backgroundColor: bg }}>
+        {/* Deep Indigo Header + Gold HOME Pill + White BOOK Button */}
+        <div
+          className="h-4 px-2 flex items-center justify-between"
+          style={{ backgroundColor: theme.primary_color }}
+        >
+          <span className="h-1.5 w-8 bg-white/90" />
+          <div className="flex items-center gap-1">
+            <span className="h-2 w-5" style={{ backgroundColor: theme.accent_color }} />
+            <span className="h-1 w-4 bg-white/70" />
+            <span className="h-1 w-4 bg-white/70" />
+          </div>
+          <span className="h-2.5 w-7 bg-white" />
+        </div>
+        {/* Full-Bleed Hero with Centered Serif Display */}
+        <div className="relative h-14 w-full overflow-hidden">
+          <img src={p0} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center space-y-0.5 px-4">
+            <span className="h-2 w-24 bg-white/95" />
+            <span className="h-1 w-32 bg-white/75" />
+          </div>
+        </div>
+        {/* Coastal Story + Boat Artwork Row */}
+        <div className="grid grid-cols-3 gap-2 px-2.5 py-1.5 items-center">
+          <div className="col-span-2 space-y-1">
+            <div className="h-1.5 w-16" style={{ backgroundColor: theme.primary_color }} />
+            <div className="h-1 w-24 bg-slate-300" />
+          </div>
+          <div className="col-span-1 flex justify-center">
+            <div className="w-6 h-4 rounded-b-full" style={{ backgroundColor: theme.primary_color }} />
+          </div>
+        </div>
+        {/* Edge-to-Edge Zero-Gap 50/50 Mosaic */}
+        <div className="grid grid-cols-2 gap-0 flex-1 overflow-hidden">
+          {[p1, p2].map((u, i) => (
+            <div key={i} className="relative w-full h-full overflow-hidden">
+              <img src={u} alt="" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/35 flex flex-col items-center justify-center gap-0.5">
+                <span className="h-1.5 w-12 bg-white/90" />
+                <span className="h-2 w-8" style={{ backgroundColor: theme.primary_color }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   // #08 LEFT SIDEBAR ATELIER
   if (template.shellStyle === 'left-sidebar') {
     return (
@@ -839,7 +890,7 @@ export default function ThemePage() {
   if (isLoading) {
     return (
       <div className="py-24 text-center text-slate-500 font-medium">
-        กำลังโหลดรายการ Website Design & Layout ทั้ง 16 แบบ...
+        กำลังโหลดรายการ Website Design & Layout ทั้ง {HOTEL_WEBSITE_TEMPLATES.length} แบบ...
       </div>
     );
   }
@@ -857,7 +908,7 @@ export default function ThemePage() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
               <LayoutTemplate className="w-3 h-3" />
-              16 Layouts + ปรับสีได้ทุกแบบ
+              {HOTEL_WEBSITE_TEMPLATES.length} Layouts + ปรับสีได้ทุกแบบ
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <Check className="w-3 h-3" />
@@ -868,7 +919,7 @@ export default function ThemePage() {
             เลือกรูปแบบ Layout เว็บไซต์ & ปรับแต่งสีแบรนด์โรงแรม
           </h1>
           <p className="text-xs text-slate-500">
-            เลือกโครงสร้างหน้าเว็บได้ <strong>16 แบบ</strong> เปลี่ยนสีได้อิสระทุกแบบ รองรับมือถือครบถ้วน และดึงราคาต่ำสุดจริงหลังหักโปรฯ จาก Channel Manager อัตโนมัติ
+            เลือกโครงสร้างหน้าเว็บได้ <strong>{HOTEL_WEBSITE_TEMPLATES.length} แบบ</strong> เปลี่ยนสีได้อิสระทุกแบบ รองรับมือถือครบถ้วน และดึงราคาต่ำสุดจริงหลังหักโปรฯ จาก Channel Manager อัตโนมัติ
           </p>
         </div>
 
@@ -935,7 +986,7 @@ export default function ThemePage() {
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-900">
-                ปรับโทนสีเว็บไซต์ (เปลี่ยนสีได้กับทุก Template ทั้ง 16 แบบ)
+                ปรับโทนสีเว็บไซต์ (เปลี่ยนสีได้กับทุก Template ทั้ง {HOTEL_WEBSITE_TEMPLATES.length} แบบ)
               </h2>
               <p className="text-[11px] text-slate-500">
                 คลิกชุดสีสำเร็จรูปด้านล่าง หรือจิ้มเลือกสีแบรนด์เองได้ทันที — ตัวอย่างด้านขวาจะเปลี่ยนสีตามแบบเรียลไทม์

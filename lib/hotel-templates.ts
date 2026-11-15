@@ -24,7 +24,8 @@ export type HeroLayoutVariant =
   | 'story-above-hero'
   | 'compact-direct'
   | 'triptych-panels'
-  | 'bento-stack';
+  | 'bento-stack'
+  | 'indigo-story-hero';
 
 export type RoomsLayoutVariant =
   | 'grid-2'
@@ -36,7 +37,8 @@ export type RoomsLayoutVariant =
   | 'villa-multi-thumb'
   | 'arched-cards'
   | 'portrait-posters'
-  | 'rate-table-pro';
+  | 'rate-table-pro'
+  | 'indigo-boutique-suites';
 
 export type AboutLayoutVariant =
   | 'overlapping-photos'
@@ -44,13 +46,15 @@ export type AboutLayoutVariant =
   | 'bento-highlights'
   | 'arched-trio'
   | 'split-sticky'
-  | 'minimal-zen';
+  | 'minimal-zen'
+  | 'indigo-coastal-story';
 
 export type ShellStyleVariant =
   | 'standard'
   | 'left-sidebar'
   | 'floating-pill-nav'
-  | 'card-stack-canvas';
+  | 'card-stack-canvas'
+  | 'indigo-boutique';
 
 export interface HotelWebsiteTemplate {
   id: string;
@@ -71,7 +75,7 @@ export interface HotelWebsiteTemplate {
 }
 
 export const TEMPLATE_CATEGORIES: Array<{ id: TemplateCategory; label: string }> = [
-  { id: 'all', label: 'ทั้งหมด (16 Layout)' },
+  { id: 'all', label: 'ทั้งหมด (17 Layout)' },
   { id: 'resort', label: 'รีสอร์ท & พูลวิลล่า' },
   { id: 'editorial', label: 'นิตยสาร & สปลิตสกรีน' },
   { id: 'boutique', label: 'บูทีค & โมเสกแกลเลอรี' },
@@ -574,6 +578,43 @@ export const HOTEL_WEBSITE_TEMPLATES: HotelWebsiteTemplate[] = [
       header_layout: 'minimal',
       footer_layout: 'simple',
       animation_style: 'slide',
+    },
+  },
+  {
+    id: 'indigo-neighborhood',
+    number: 17,
+    name: 'Hotel Indigo Boutique Story & Mosaic',
+    nameTh: 'แบบที่ 17: อินดิโก้ บูทีค สตอรี่ & โมเสกเต็มจอ (Hotel Indigo Style)',
+    layoutBadge: 'Indigo Nav + Brushstroke Story + 50/50 Mosaic',
+    category: 'boutique',
+    categoryLabel: 'บูทีค & โมเสกแกลเลอรี',
+    tagline:
+      'สไตล์ Hotel Indigo บูทีคระดับสากล แถบเมนูสีน้ำเงินครามพร้อมป้าย HOME สีทองและปุ่ม BOOK NOW สีขาว พาดหัวใหญ่กลางภาพปก สตอรี่ภาพวาดพู่กัน โมเสกภาพเต็มขอบจอ 50/50 ไร้ช่องว่าง และแบนเนอร์ทัวร์ภาพมุมกว้าง',
+    features: [
+      'หัวเว็บ Indigo + ป้าย HOME ทอง & ปุ่มขาว',
+      'สตอรี่ภาพวาดพู่กันชายฝั่ง 2 ชั้น',
+      'ตารางภาพเต็มจอ 50/50 ไร้ขอบคั่น + 360° Tour',
+    ],
+    shellStyle: 'indigo-boutique',
+    heroLayout: 'indigo-story-hero',
+    aboutLayout: 'indigo-coastal-story',
+    roomsLayout: 'indigo-boutique-suites',
+    fallbackHeroImage:
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1600&q=80',
+    theme: {
+      template_id: 'indigo-neighborhood',
+      primary_color: '#102B3C',
+      secondary_color: '#0D2230',
+      accent_color: '#D59B2D',
+      background_color: '#FCFCFA',
+      text_color: '#102B3C',
+      button_style: 'square',
+      border_radius: '2px',
+      font_family: 'Playfair Display',
+      dark_mode: false,
+      header_layout: 'luxury',
+      footer_layout: 'columns',
+      animation_style: 'fade',
     },
   },
 ];
