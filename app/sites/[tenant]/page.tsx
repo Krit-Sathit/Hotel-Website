@@ -14,7 +14,7 @@ import {
 import PageViewTracker from '@/components/analytics/page-view-tracker';
 import HotelTemplateHome from '@/components/templates/hotel-template-home';
 import { HOTEL_WEBSITE_TEMPLATES } from '@/lib/hotel-templates';
-import { getBookingEngineUrl } from '@/lib/booking-engine';
+import { getBookingEngineUrl, resolveTenantPrefix } from '@/lib/booking-engine';
 import { resolveHotelSeo } from '@/lib/hotel-seo-highlights';
 
 interface TenantPageProps {
@@ -75,13 +75,7 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
 
   const headerList = await headers();
   const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
-  const host = rawHost.split(',')[0].trim().toLowerCase();
-  const isMainDomain =
-    !host ||
-    host.includes('vercel.app') ||
-    host.includes('localhost') ||
-    host.includes('127.0.0.1');
-  const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
+  const tenantPrefix = resolveTenantPrefix(rawHost, tenant);
   const bookingUrl = getBookingEngineUrl(hotel.slug, tenantPrefix);
 
   const [slides, dbSections, rooms, promotions, gallery] = await Promise.all([

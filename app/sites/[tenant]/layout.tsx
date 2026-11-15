@@ -9,7 +9,7 @@ import HotelThemeProvider from '@/components/hotel-theme-provider';
 import BookingWidget from '@/components/booking-widget';
 import MobileNavigation from '@/components/mobile-navigation';
 import TenantChromeGuard from '@/components/templates/tenant-chrome-guard';
-import { getBookingEngineUrl } from '@/lib/booking-engine';
+import { getBookingEngineUrl, resolveTenantPrefix } from '@/lib/booking-engine';
 import {
   buildGoogleDirectionsUrl,
   extractLatLng,
@@ -70,8 +70,7 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
   const headerList = await headers();
   const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
   const host = rawHost.split(',')[0].trim().toLowerCase();
-  const isMainDomain = !host || host.includes('vercel.app') || host.includes('localhost') || host.includes('127.0.0.1');
-  const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
+  const tenantPrefix = resolveTenantPrefix(rawHost, tenant);
   const bookingUrl = getBookingEngineUrl(hotel.slug, tenantPrefix);
   const mapDirectionsHref = buildGoogleDirectionsUrl(
     hotel.google_map_url,

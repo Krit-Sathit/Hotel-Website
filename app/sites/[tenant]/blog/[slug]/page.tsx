@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import Link from 'next/link';
 import { ChevronLeft, Calendar, User, Tag } from 'lucide-react';
 import { getHotelBySlug, getBlogPostBySlug } from '@/lib/db/mock-data';
+import { resolveTenantPrefix } from '@/lib/booking-engine';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
 
 interface BlogPostDetailPageProps {
@@ -25,9 +26,8 @@ export default async function BlogPostDetailPage({ params }: BlogPostDetailPageP
 
   // Compute tenantPrefix for internal navigation links
   const headerList = await headers();
-  const host = headerList.get('host') || '';
-  const isMainDomain = host.includes('vercel.app') || host.includes('localhost') || !host.includes(tenant);
-  const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
+  const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
+  const tenantPrefix = resolveTenantPrefix(rawHost, tenant);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

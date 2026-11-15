@@ -8,7 +8,7 @@ import { getHotelBySlug, getRooms, getRoomById } from '@/lib/db/mock-data';
 import BookingWidget from '@/components/booking-widget';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
 import RoomDetailGallery from '@/components/sections/room-detail-gallery';
-import { getBookingEngineUrl } from '@/lib/booking-engine';
+import { getBookingEngineUrl, resolveTenantPrefix } from '@/lib/booking-engine';
 
 interface RoomDetailPageProps {
   params: Promise<{ tenant: string; id: string }>;
@@ -33,9 +33,7 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
   // Compute tenantPrefix for internal navigation links
   const headerList = await headers();
   const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
-  const host = rawHost.split(',')[0].trim().toLowerCase();
-  const isMainDomain = !host || host.includes('vercel.app') || host.includes('localhost') || host.includes('127.0.0.1');
-  const tenantPrefix = isMainDomain ? `/sites/${tenant}` : '';
+  const tenantPrefix = resolveTenantPrefix(rawHost, tenant);
 
   return (
     <div className="bg-slate-50 dark:bg-slate-900/20 text-slate-800 dark:text-slate-200 py-12 px-6">
