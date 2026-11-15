@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Calendar, Users, Home, Tag, ArrowRight } from 'lucide-react';
+import { isHostelProperty } from '@/lib/booking-engine';
 
 interface BookingWidgetProps {
   hotelId: string;
@@ -25,13 +26,18 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
     return `${year}-${month}-${day}`;
   };
 
+  const defaultAdults = isHostelProperty(hotelName, hotelId, bookingUrl) ? '1' : '2';
   const [checkIn, setCheckIn] = useState(getFormattedDate(1));
   const [checkOut, setCheckOut] = useState(getFormattedDate(2));
-  const [adults, setAdults] = useState('2');
+  const [adults, setAdults] = useState(defaultAdults);
   const [children, setChildren] = useState('0');
   const [rooms, setRooms] = useState('1');
   const [promoCode, setPromoCode] = useState('');
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
+
+  useEffect(() => {
+    setAdults(defaultAdults);
+  }, [defaultAdults]);
 
   // Format ISO date (YYYY-MM-DD) into DD/MM/YY display format
   const formatDateDisplay = (dateStr: string) => {
@@ -306,7 +312,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
                       onChange={(e) => setAdults(e.target.value)}
                       className="bg-transparent border-none outline-none font-semibold text-slate-850 dark:text-slate-150 text-sm cursor-pointer"
                     >
-                      {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n} className="dark:bg-slate-900">{n} Adults</option>)}
+                      {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n} className="dark:bg-slate-900">{n} Adult{n > 1 ? 's' : ''}</option>)}
                     </select>
                   </div>
                   <div className="flex flex-col text-left bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded p-3">

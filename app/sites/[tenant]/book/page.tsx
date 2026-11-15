@@ -1,6 +1,7 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { getHotelBySlug } from '@/lib/db/mock-data';
+import { isHostelProperty } from '@/lib/booking-engine';
 import HotelBookingEngine from '@/components/booking/hotel-booking-engine';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
 
@@ -61,7 +62,7 @@ export default async function TenantBookPage({ params, searchParams }: BookPageP
     pickIsoDate(query.checkOut, query.checkout, query.check_out) ||
     (resolvedCheckIn ? addDaysIso(resolvedCheckIn, stayNights > 0 ? stayNights : 1) : undefined);
 
-  const isHostel = /hostel|โฮสเทล/i.test(`${hotel.name || ''} ${hotel.slug || ''} ${tenant}`);
+  const isHostel = isHostelProperty(hotel.name, hotel.slug, tenant, hotel.custom_domain);
   const defaultAdults = isHostel ? 1 : 2;
   const rawAdults = query.adults || query.guests || String(defaultAdults);
   const initialAdults = Math.max(1, parseInt(rawAdults, 10) || defaultAdults);

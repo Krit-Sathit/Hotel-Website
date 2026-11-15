@@ -247,8 +247,7 @@ export default function HotelBookingEngine({
           setSelectedRooms({});
           if (! new URLSearchParams(window.location.search).get('adults')) {
             const isHostelProperty =
-              /hostel|โฮสเทล/i.test(`${fetchedHotel?.name || ''} ${fetchedHotel?.nameTh || ''} ${fetchedHotel?.slug || ''} ${tenantSlug}`) ||
-              fetchedRooms.some((r: any) => /dorm|bunk/i.test(`${r.name || ''} ${r.nameEn || ''} ${r.bedType || ''}`));
+              /hostel|โฮสเทล/i.test(`${fetchedHotel?.name || ''} ${fetchedHotel?.nameTh || ''} ${fetchedHotel?.slug || ''} ${tenantSlug}`);
             if (isHostelProperty) {
               setAdults(1);
             }

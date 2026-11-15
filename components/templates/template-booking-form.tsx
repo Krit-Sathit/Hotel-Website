@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Calendar, Users, Tag, ArrowRight, Sparkles } from 'lucide-react';
 import type { HotelTheme } from '@/lib/db/mock-data';
 import { deriveSurfacePalette, mixHex, withAlpha } from '@/lib/color-utils';
+import { isHostelProperty } from '@/lib/booking-engine';
 
 export type BookingFormVariant =
   | 'horizontal'
@@ -46,11 +47,17 @@ export default function TemplateBookingForm({
   isPreview = false,
 }: TemplateBookingFormProps) {
   const router = useRouter();
+  const isHostel = isHostelProperty(hotelName, hotelId, bookingUrl);
+  const defaultAdults = isHostel ? '1' : '2';
   const [checkIn, setCheckIn] = useState(getFormattedDate(1));
   const [checkOut, setCheckOut] = useState(getFormattedDate(2));
-  const [adults, setAdults] = useState('2');
+  const [adults, setAdults] = useState(defaultAdults);
   const [children] = useState('0');
   const [promoCode, setPromoCode] = useState('');
+
+  useEffect(() => {
+    setAdults(defaultAdults);
+  }, [defaultAdults]);
 
   const radius = getButtonRadius(theme);
   const palette = deriveSurfacePalette(theme);
@@ -317,10 +324,10 @@ export default function TemplateBookingForm({
                 borderColor: withAlpha(barText, 0.25),
               }}
             >
-              <option value="1">1 Guest • 1 Suite</option>
-              <option value="2">2 Guests • 1 Suite</option>
-              <option value="3">3 Guests • 1 Suite</option>
-              <option value="4">4 Guests • 2 Suites</option>
+              <option value="1">{isHostel ? '1 Adult' : '1 Guest • 1 Suite'}</option>
+              <option value="2">{isHostel ? '2 Adults' : '2 Guests • 1 Suite'}</option>
+              <option value="3">{isHostel ? '3 Adults' : '3 Guests • 1 Suite'}</option>
+              <option value="4">{isHostel ? '4 Adults' : '4 Guests • 2 Suites'}</option>
             </select>
           </label>
         </div>
@@ -515,10 +522,10 @@ export default function TemplateBookingForm({
                 backgroundColor: inputSurfaceBg,
               }}
             >
-              <option value="1">1 Adult • 1 Room</option>
-              <option value="2">2 Adults • 1 Room</option>
-              <option value="3">3 Adults • 1 Room</option>
-              <option value="4">4 Adults • 2 Rooms</option>
+              <option value="1">{isHostel ? '1 Adult' : '1 Adult • 1 Room'}</option>
+              <option value="2">{isHostel ? '2 Adults' : '2 Adults • 1 Room'}</option>
+              <option value="3">{isHostel ? '3 Adults' : '3 Adults • 1 Room'}</option>
+              <option value="4">{isHostel ? '4 Adults' : '4 Adults • 2 Rooms'}</option>
             </select>
           </label>
         </div>
