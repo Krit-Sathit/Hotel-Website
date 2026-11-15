@@ -10,6 +10,7 @@ import {
 } from '@/lib/db/mock-data';
 import { buildGoogleDirectionsUrl } from '@/lib/map-utils';
 import { resolveHotelHighlights } from '@/lib/hotel-seo-highlights';
+import { resolveTenantPrefix } from '@/lib/booking-engine';
 
 const FLOWSTAY_API_BASE = (
   process.env.FLOWSTAY_API_URL ||
@@ -167,7 +168,12 @@ function isUpstreamErrorReply(text: string): boolean {
     normalized.includes("i'm having trouble responding right now") ||
     normalized.includes('could not generate a response') ||
     normalized.includes('hotel information is not available') ||
-    normalized.includes('something went wrong')
+    normalized.includes('something went wrong') ||
+    normalized.includes('ไม่มีระบบจอง') ||
+    normalized.includes('agoda') ||
+    normalized.includes('booking.com') ||
+    normalized.includes('traveloka') ||
+    normalized.includes('expedia')
   );
 }
 
@@ -180,13 +186,26 @@ async function invokeDirectGeminiConcierge(
   slug: string,
   message: string,
   history: ChatTurn[],
-  fsHotel: CachedFlowStayHotel
+  fsHotel: CachedFlowStayHotel,
+  websiteUrl: string,
+  bookingUrl: string
 ): Promise<string | null> {
   const apiKey = getGeminiApiKey();
   if (!apiKey) return null;
 
   const hotel = await getHotelBySlug(slug);
   if (!hotel) return null;
+
+  const nowBkk = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+  const todayStr = `${nowBkk.getFullYear()}-${String(nowBkk.getMonth() + 1).padStart(2, '0')}-${String(
+    nowBkk.getDate()
+  ).padStart(2, '0')}`;
+  const tmrBkk = new Date(nowBkk.getTime() + 86400000);
+  const tomorrowStr = `${tmrBkk.getFullYear()}-${String(tmrBkk.getMonth() + 1).padStart(2, '0')}-${String(
+    tmrBkk.getDate()
+  ).padStart(2, '0')}`;
+  const sep = bookingUrl.includes('?') ? '&' : '?';
+  const tonightBookingUrl = `${bookingUrl}${sep}checkin=${todayStr}&checkout=${tomorrowStr}`;
 
   const [rooms, promotions, sections] = await Promise.all([
     getRooms(hotel.id).catch((): Room[] => []),
@@ -203,7 +222,11 @@ async function invokeDirectGeminiConcierge(
     hotel.address || fsHotel.address
   );
 
-  const roomsContext = rooms
+  const sortedRooms = [...rooms].sort(
+    (a, b) => (Number(a.price) || Infinity) - (Number(b.price) || Infinity)
+  );
+
+  const roomsContext = sortedRooms
     .map(
       (r: Room) =>
         `- ${r.name}: from THB ${Math.round(Number(r.price || 0)).toLocaleString()}/night, up to ${
@@ -232,6 +255,16 @@ async function invokeDirectGeminiConcierge(
   }.
 Speak warmly, accurately, and concisely as "we" (the hotel team). Always reply in the SAME language the guest uses (e.g., polite Thai with ครับ/ค่ะ if asked in Thai, English if asked in English, etc.).
 
+## Official Direct Online Booking System (CRITICAL — MUST FOLLOW)
+- Current Date in Thailand (GMT+7): ${todayStr}
+- Official Hotel Website: ${websiteUrl}
+- Official Direct Online Booking Engine (24/7 Instant Confirmation): ${bookingUrl}
+- Quick Direct Booking Link for Tonight (${todayStr} to ${tomorrowStr}): ${tonightBookingUrl}
+- YES! Guests CAN book rooms directly online right here on our official website (${bookingUrl}) 24 hours a day — including same-day / tonight check-in — with instant confirmation and **Best Rate Guaranteed (การันตีราคาดีที่สุด ถูกกว่าจองผ่านเอเจนซี่)**.
+- Online Payment Methods Supported on Website: Credit/Debit Cards (Visa, Mastercard, JCB) and Thai QR PromptPay, with instant confirmation email.
+- How Guests Book on Website: Click the **"Book Now"** button on this website or click ${bookingUrl}, choose check-in & check-out dates and number of guests, select your room & rate plan (Room Only or Breakfast Included), and confirm online immediately.
+- **STRICT PROHIBITION:** NEVER say or imply that the hotel has no online website booking system! NEVER refer, suggest, or send guests to Agoda, Booking.com, Traveloka, Expedia, Trip.com, or any third-party OTA! Always guide guests to book directly on our official website (${bookingUrl}) for the best direct promotional rates.
+
 ## Official Hotel Details
 - Hotel Name: ${hotel.name}${fsHotel.name ? ` / ${fsHotel.name}` : ''}
 - Address (TH/EN): ${fsHotel.address || hotel.address || 'N/A'}${
@@ -245,6 +278,8 @@ Speak warmly, accurately, and concisely as "we" (the hotel team). Always reply i
 - Email: ${hotel.email || fsHotel.email || 'N/A'}
 - LINE ID: ${fsHotel.lineId || hotel.social_links?.line || 'N/A'}
 - WhatsApp: ${fsHotel.whatsapp || hotel.social_links?.whatsapp || 'N/A'}
+- Official Website: ${websiteUrl}
+- Direct Booking URL: ${bookingUrl}
 
 ## About & Highlights
 ${fsHotel.description || aboutContent?.description || ''}
@@ -259,8 +294,9 @@ ${promosContext || 'Best Rate Guaranteed when booking directly on our official w
 
 ## Guidelines
 - Give specific, factual answers based ONLY on the hotel details above.
-- For live room availability or exact nightly totals on specific dates, invite the guest to select their check-in & check-out dates via the "Book Now" button on this website.
-- Never invent policies or facilities not mentioned above; if unsure, offer our phone/LINE/WhatsApp contact.`;
+- Whenever a guest asks if they can book on the website, how to book, or checks availability/rates, confirm they can book directly online right now and share ${bookingUrl} (or ${tonightBookingUrl} if asking about tonight).
+- When asked to share location / Google Maps pin ("แชร์โล", "ขอพิกัด", "แผนที่"), always include ${mapUrl}.
+- Never invent policies or facilities not mentioned above, and NEVER mention third-party OTAs (Agoda, Booking.com, etc.).`;
 
   const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
   for (const turn of history.slice(-10)) {
@@ -578,6 +614,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Empty message' }, { status: 400 });
     }
 
+    const proto =
+      request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() ||
+      (request.url.startsWith('https') ? 'https' : 'http');
+    const rawHost =
+      request.headers.get('x-forwarded-host')?.split(',')[0]?.trim() ||
+      request.headers.get('host') ||
+      'flowweb.flowhubhotel.com';
+    const tenantPrefix = resolveTenantPrefix(rawHost, slug);
+    const websiteUrl = `${proto}://${rawHost}${tenantPrefix}`.replace(/\/+$/, '');
+    const bookingUrl = `${websiteUrl}/book`;
+
     // 1. Delegate to FlowStay hotelAiChat.send first (logs guest chat in FlowStay DB & invokes Gemini with live calendar/promo rates)
     if (resolvedFlowstayId && sessionId) {
       const controller = new AbortController();
@@ -594,6 +641,8 @@ export async function POST(request: NextRequest) {
               hotelId: resolvedFlowstayId,
               sessionId,
               message: message.slice(0, 2000),
+              websiteUrl,
+              bookingUrl,
             },
           }),
           signal: controller.signal,
@@ -619,7 +668,9 @@ export async function POST(request: NextRequest) {
       slug,
       message.slice(0, 2000),
       history,
-      fsHotel
+      fsHotel,
+      websiteUrl,
+      bookingUrl
     );
     if (directGeminiReply) {
       return NextResponse.json({ response: directGeminiReply });
