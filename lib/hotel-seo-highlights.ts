@@ -82,9 +82,10 @@ export const THE_PAR_PHUKET_DEFAULT_HIGHLIGHTS: HighlightStripItem[] = [
 ];
 
 export const THE_PAR_PHUKET_DEFAULT_SEO = {
-  seo_title: 'The Par Phuket | Golf & Lifestyle Hotel in Phuket',
+  seo_title:
+    'The Par Phuket | Golf & Lifestyle Hotel in Phuket (โรงแรมในสนามกอล์ฟภูเก็ต กะทู้)',
   seo_description:
-    'Stay at The Par Phuket, surrounded by Phuket Country Club Golf Course. Enjoy scenic views, Muay Thai training, meeting facilities and easy access to Central Phuket.',
+    'Stay at The Par Phuket (เดอะ พาร์ ภูเก็ต), a golf & lifestyle hotel in Kathu surrounded by Phuket Country Club Golf Course (โรงแรมติดสนามกอล์ฟ ภูเก็ต คันทรี คลับ). Enjoy scenic golf views, Muay Thai training, meeting facilities, and easy access to Central Phuket.',
 };
 
 export function resolveHotelHighlights(

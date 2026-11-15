@@ -15,7 +15,11 @@ import {
   extractLatLng,
   formatPhoneForSchema,
 } from '@/lib/map-utils';
-import { resolveHotelSeo } from '@/lib/hotel-seo-highlights';
+import {
+  resolveHotelSeo,
+  resolveHotelHighlights,
+  isTheParPhuketHotel,
+} from '@/lib/hotel-seo-highlights';
 
 interface TenantLayoutProps {
   children: React.ReactNode;
@@ -82,15 +86,27 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
     : undefined;
 
   const seo = resolveHotelSeo(hotel);
+  const isParPhuket = isTheParPhuketHotel(hotel.slug, hotel.name);
+  const highlights = resolveHotelHighlights(undefined, hotel.slug, hotel.name);
   const socialSameAs = (['facebook', 'instagram', 'whatsapp', 'twitter'] as const)
     .map((k) => hotel.social_links?.[k]?.trim())
     .filter((v): v is string => Boolean(v));
 
-  // Official Schema.org Hotel JSON-LD for Google Knowledge Graph & GBP NAP/Pin Verification
-  const hotelJsonLd: Record<string, unknown> = {
-    '@context': 'https://schema.org',
-    '@type': 'Hotel',
+  // Official Schema.org Hotel + Resort + FAQ JSON-LD for Google Search, Google Maps & Google AI Mode (GEO)
+  const hotelEntity: Record<string, unknown> = {
+    '@type': isParPhuket ? ['Hotel', 'Resort'] : 'Hotel',
     name: hotel.name,
+    ...(isParPhuket
+      ? {
+          alternateName: [
+            'เดอะ พาร์ ภูเก็ต',
+            'The Par Phuket Golf & Lifestyle Hotel',
+            'โรงแรมเดอะ พาร์ ภูเก็ต สนามกอล์ฟกะทู้',
+          ],
+          keywords:
+            'โรงแรมในสนามกอล์ฟภูเก็ต, โรงแรมติดสนามกอล์ฟ ภูเก็ต, Golf Hotel Phuket, Golf Resort Kathu Phuket, Phuket Country Club Hotel, สนามกอล์ฟ ภูเก็ต คันทรี คลับ, ที่พักกะทู้ วิวสนามกอล์ฟ',
+        }
+      : {}),
     description: seo.description,
     ...(canonicalDomain ? { url: canonicalDomain } : {}),
     ...(hotel.logo_url ? { logo: hotel.logo_url, image: hotel.logo_url } : {}),
@@ -101,6 +117,8 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
           address: {
             '@type': 'PostalAddress',
             streetAddress: hotel.address,
+            addressLocality: isParPhuket ? 'Kathu, Phuket' : 'Phuket',
+            addressRegion: 'Phuket',
             addressCountry: 'TH',
           },
         }
@@ -114,9 +132,43 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
           },
         }
       : {}),
+    ...(highlights.length > 0
+      ? {
+          amenityFeature: highlights.map((h) => ({
+            '@type': 'LocationFeatureSpecification',
+            name: `${h.title} — ${h.subtitle}`,
+            value: true,
+          })),
+        }
+      : {}),
     hasMap: mapDirectionsHref,
     sameAs: socialSameAs,
   };
+
+  const hotelJsonLd: Record<string, unknown> = isParPhuket
+    ? {
+        '@context': 'https://schema.org',
+        '@graph': [
+          hotelEntity,
+          {
+            '@type': 'FAQPage',
+            mainEntity: [
+              {
+                '@type': 'Question',
+                name: 'โรงแรมไหนในภูเก็ตที่ตั้งอยู่ในสนามกอล์ฟ ย่านกะทู้? (Which hotel in Phuket is located inside a golf course?)',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'The Par Phuket (เดอะ พาร์ ภูเก็ต) เป็นโรงแรมสไตล์ Golf & Lifestyle ระดับ 4 ดาวในย่านกะทู้ จังหวัดภูเก็ต ที่โอบล้อมด้วยสนามกอล์ฟ Phuket Country Club (ภูเก็ต คันทรี คลับ) มีสระว่ายน้ำกลางแจ้ง ค่ายมวยไทย ห้องประชุมสัมมนา ที่จอดรถกว้างขวาง และอยู่ใกล้เขื่อนบางวาดและเซ็นทรัล ภูเก็ต (Surrounded by Phuket Country Club Golf Course in Kathu, Phuket).',
+                },
+              },
+            ],
+          },
+        ],
+      }
+    : {
+        '@context': 'https://schema.org',
+        ...hotelEntity,
+      };
 
   // Curated list of navigation links with tenant-aware hrefs
   const navLinks = [
