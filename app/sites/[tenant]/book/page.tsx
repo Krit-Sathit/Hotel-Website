@@ -23,6 +23,18 @@ interface BookPageProps {
   }>;
 }
 
+function pickIsoDate(...candidates: Array<string | undefined>): string | undefined {
+  for (const val of candidates) {
+    if (!val) continue;
+    const trimmed = val.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const dt = new Date(`${trimmed}T00:00:00Z`);
+      if (!Number.isNaN(dt.getTime())) return trimmed;
+    }
+  }
+  return undefined;
+}
+
 function addDaysIso(isoDate: string, days: number): string | undefined {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate.trim());
   if (!m) return undefined;
@@ -42,13 +54,12 @@ export default async function TenantBookPage({ params, searchParams }: BookPageP
   }
 
   // Support both internal camelCase params and Google Hotel Center / Channex Free Booking Link params
-  const resolvedCheckIn = query.checkIn || query.checkin || query.check_in;
-  const stayNights = parseInt(query.nights || query.los || '0', 10);
+  const resolvedCheckIn = pickIsoDate(query.checkIn, query.checkin, query.check_in);
+  const parsedNights = parseInt(query.nights || query.los || '0', 10);
+  const stayNights = Number.isFinite(parsedNights) && parsedNights > 0 ? parsedNights : 0;
   const resolvedCheckOut =
-    query.checkOut ||
-    query.checkout ||
-    query.check_out ||
-    (resolvedCheckIn && stayNights > 0 ? addDaysIso(resolvedCheckIn, stayNights) : undefined);
+    pickIsoDate(query.checkOut, query.checkout, query.check_out) ||
+    (resolvedCheckIn ? addDaysIso(resolvedCheckIn, stayNights > 0 ? stayNights : 1) : undefined);
 
   const isHostel = /hostel|โฮสเทล/i.test(`${hotel.name || ''} ${hotel.slug || ''} ${tenant}`);
   const defaultAdults = isHostel ? 1 : 2;
