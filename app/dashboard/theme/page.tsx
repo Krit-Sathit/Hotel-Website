@@ -75,6 +75,59 @@ function LayoutBlueprintThumbnail({
   const line = isDark ? 'rgba(255,255,255,0.2)' : '#cbd5e1';
   const block = isDark ? '#1e293b' : '#f1f5f9';
 
+  // #18 ROSEWOOD HERITAGE 2-TIER IVORY HEADER + PORTRAIT SANCTUARY CARDS
+  if (template.heroLayout === 'rosewood-cinema-tabs') {
+    return (
+      <div className="h-36 w-full flex flex-col overflow-hidden" style={{ backgroundColor: bg }}>
+        {/* Tier 1: Global Ivory Brand Bar with Hairline Border */}
+        <div
+          className="h-3 px-2 flex items-center justify-between border-b"
+          style={{ backgroundColor: bg, borderColor: line }}
+        >
+          <span className="h-1 w-6 bg-slate-400" />
+          <span className="h-1.5 w-12" style={{ backgroundColor: theme.text_color }} />
+          <span className="h-1 w-5 bg-slate-400" />
+        </div>
+        {/* Tier 2: Property Sub-Nav Bar + Sharp Forest Jade RESERVE Button */}
+        <div
+          className="h-4 px-2 flex items-center justify-between border-b"
+          style={{ backgroundColor: bg, borderColor: line }}
+        >
+          <div className="space-y-0.5">
+            <span className="block h-1 w-8" style={{ backgroundColor: theme.text_color }} />
+            <span className="block h-0.5 w-6 bg-slate-400" />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-1 w-4 bg-slate-500" />
+            <span className="h-1 w-4 bg-slate-500" />
+            <span className="h-1 w-4 bg-slate-500" />
+          </div>
+          <span className="h-2.5 w-7" style={{ backgroundColor: theme.primary_color }} />
+        </div>
+        {/* Full-Bleed Cinema Hero with Lower-Center Tracked Eyebrow & Solid Dark DISCOVER CTA */}
+        <div className="relative h-16 w-full overflow-hidden">
+          <img src={p0} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent flex flex-col items-center justify-end pb-1.5 space-y-0.5">
+            <span className="h-1 w-16 bg-white/95" />
+            <span className="h-1.5 w-24 bg-white/90" />
+            <span className="h-2 w-8 bg-neutral-900 border border-white/20" />
+          </div>
+        </div>
+        {/* 3 Vertical Portrait Cards on Warm Ivory Canvas */}
+        <div className="grid grid-cols-3 gap-1.5 px-2.5 py-1.5 flex-1 overflow-hidden">
+          {[p0, p1, p2].map((u, i) => (
+            <div key={i} className="flex flex-col space-y-0.5 overflow-hidden">
+              <div className="flex-1 w-full overflow-hidden">
+                <img src={u} alt="" className="w-full h-full object-cover" />
+              </div>
+              <span className="h-1 w-10" style={{ backgroundColor: theme.text_color }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   // #17 HOTEL INDIGO BOUTIQUE STORY + 50/50 ZERO-GAP MOSAIC
   if (template.heroLayout === 'indigo-story-hero') {
     return (

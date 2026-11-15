@@ -88,6 +88,7 @@ export default function HotelTemplateHome({
 
   const [slideIdx, setSlideIdx] = useState(0);
   const [galleryIdx, setGalleryIdx] = useState(0);
+  const [rosewoodTabIdx, setRosewoodTabIdx] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
@@ -381,6 +382,176 @@ export default function HotelTemplateHome({
     template.heroLayout === 'triptych-panels';
 
   const renderTopHeader = () => {
+    // -1. Rosewood Heritage 2-Tier Ivory Header (#18: Global Brand Bar + Sticky Serif Sub-Nav + Forest Jade RESERVE Button)
+    if (template.shellStyle === 'rosewood-heritage') {
+      const nameWords = (hotel.name || 'Luxury Sanctuary').trim().split(/\s+/);
+      const brandLine1 = nameWords[0] || hotel.name;
+      const brandLine2 = nameWords.length > 1 ? nameWords.slice(1).join(' ') : 'OFFICIAL SANCTUARY';
+      const rosewoodLinks = [
+        { label: 'Discover', href: '#sense-of-place' },
+        { label: 'Overview', href: isPreview ? '#top' : tenantPrefix || '/' },
+        { label: 'Offers', href: '#full-width-carousel' },
+        { label: 'Accommodation', href: isPreview ? '#rooms' : `${tenantPrefix}/rooms` },
+        { label: 'Experiences', href: '#sense-of-place' },
+        { label: 'Gallery', href: isPreview ? '#gallery' : `${tenantPrefix}/gallery` },
+        { label: 'Location', href: isPreview ? '#location' : `${tenantPrefix}/contact` },
+      ];
+
+      return (
+        <>
+          {/* TIER 1: GLOBAL BRAND BAR (Scrolls away gently on scroll down, matching Rosewood!) */}
+          <div
+            className="hidden @3xl:block w-full border-b px-8 py-3.5 transition-colors"
+            style={{
+              backgroundColor: bgColor,
+              color: textColor,
+              borderColor: cardBorder,
+            }}
+          >
+            <div className="max-w-7xl mx-auto grid grid-cols-3 items-center">
+              <div className="text-left">
+                <a
+                  href={isPreview ? '#sense-of-place' : mapDirectionsHref}
+                  target={isPreview ? undefined : '_blank'}
+                  rel={isPreview ? undefined : 'noopener noreferrer'}
+                  className="text-[10px] font-semibold uppercase tracking-[0.18em] pb-1 border-b hover:opacity-70 transition-opacity font-sans"
+                  style={{ color: textColor, borderColor: textColor }}
+                >
+                  OFFICIAL COLLECTION
+                </a>
+              </div>
+
+              <div className="text-center">
+                <a
+                  href={isPreview ? '#top' : tenantPrefix || '/'}
+                  className="text-base @5xl:text-lg font-bold uppercase tracking-[0.3em] font-sans"
+                  style={{ color: textColor }}
+                >
+                  {hotel.name}
+                </a>
+              </div>
+
+              <div className="text-right">
+                <span
+                  className="text-[10px] font-semibold uppercase tracking-[0.18em] pb-1 border-b font-sans"
+                  style={{ color: textColor, borderColor: textColor }}
+                >
+                  {hotel.phone ? `TEL ${hotel.phone}` : 'ENGLISH'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* TIER 2: STICKY PROPERTY SUB-NAVIGATION BAR */}
+          <header
+            className="sticky top-0 z-40 border-b backdrop-blur-md transition-all"
+            style={{
+              backgroundColor: withAlpha(bgColor, 0.97),
+              color: textColor,
+              borderColor: cardBorder,
+            }}
+          >
+            {/* Mobile Sleek Header (< @3xl) */}
+            <div className="@3xl:hidden px-4 py-3 flex items-center justify-between gap-2.5">
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen((p) => !p)}
+                className="p-2 cursor-pointer"
+                style={{ color: textColor }}
+                aria-label="Toggle Menu"
+              >
+                {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              </button>
+
+              <a
+                href={isPreview ? '#top' : tenantPrefix || '/'}
+                className="text-xs font-bold uppercase tracking-[0.24em] truncate font-sans text-center"
+                style={{ color: textColor }}
+              >
+                {hotel.name}
+              </a>
+
+              <a
+                href={getReserveHref()}
+                className="px-3.5 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] font-sans shrink-0"
+                style={{
+                  backgroundColor: primaryColor,
+                  color: primaryText,
+                  borderRadius: btnRadius,
+                }}
+              >
+                RESERVE
+              </a>
+            </div>
+
+            {/* Desktop Tier-2 Sub-Nav (@3xl+) */}
+            <div className="hidden @3xl:flex max-w-7xl mx-auto px-8 py-4 items-center justify-between gap-6">
+              {/* Left Stacked Property Selector Identity */}
+              <a
+                href={isPreview ? '#top' : tenantPrefix || '/'}
+                className="flex items-center gap-3 text-left shrink-0 group"
+              >
+                {hotel.logo_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={cleanImg(hotel.logo_url)}
+                    alt={hotel.name}
+                    className="w-8 h-8 object-contain shrink-0"
+                  />
+                )}
+                <div className="flex items-center gap-2.5">
+                  <div className="flex flex-col leading-snug font-sans">
+                    <span
+                      className="text-[11px] font-semibold uppercase tracking-[0.2em]"
+                      style={{ color: textColor }}
+                    >
+                      {brandLine1}
+                    </span>
+                    <span
+                      className="text-[11px] font-semibold uppercase tracking-[0.2em] truncate max-w-[180px]"
+                      style={{ color: textColor }}
+                    >
+                      {brandLine2}
+                    </span>
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" style={{ color: textColor }} />
+                </div>
+              </a>
+
+              {/* Center Delicate Title-Case High-Contrast Serif Links */}
+              <nav className="flex flex-wrap items-center justify-center gap-6 @5xl:gap-8">
+                {rosewoodLinks.map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="text-[15px] @5xl:text-[16px] font-normal tracking-normal hover:opacity-65 underline-offset-8 hover:underline transition-all"
+                    style={{ color: textColor, fontFamily: fontStack }}
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
+
+              {/* Right Deep Forest Jade / Primary Sharp RESERVE Button */}
+              <a
+                href={getReserveHref()}
+                className="px-7 py-3.5 text-[11px] font-semibold uppercase tracking-[0.2em] font-sans hover:opacity-90 transition-opacity shrink-0"
+                style={{
+                  backgroundColor: primaryColor,
+                  color: primaryText,
+                  borderRadius: btnRadius,
+                }}
+              >
+                RESERVE
+              </a>
+            </div>
+
+            {renderMobileNavDrawer()}
+          </header>
+        </>
+      );
+    }
+
     // 0. Hotel Indigo Boutique Header (#17: Deep Teal/Primary Bar + Gold Active HOME Pill + White BOOK NOW Button)
     if (template.shellStyle === 'indigo-boutique') {
       const indigoHeaderIsDark = isDarkColor(primaryColor);
@@ -1745,6 +1916,88 @@ export default function HotelTemplateHome({
           </section>
         );
 
+      // #18 ROSEWOOD CINEMATIC TABBED HERO (Full-Bleed Atmospheric Photo + Wide-Tracked Sans Eyebrow + Poetic Serif + Solid Dark DISCOVER CTA)
+      case 'rosewood-cinema-tabs': {
+        const activeSlideNum = (slideIdx % heroPhotos.length) + 1;
+        const discoverBg = isDarkColor(secondaryColor) ? secondaryColor : '#1A1A1A';
+        return (
+          <section className="relative w-full h-[430px] @3xl:h-[640px] @5xl:h-[720px] overflow-hidden bg-stone-900">
+            <SwipeablePhotoSlider
+              photos={heroPhotos}
+              alt={hotel.name}
+              className="w-full h-full"
+              controlledIndex={slideIdx}
+              onIndexChange={setSlideIdx}
+              arrowsMode="desktop-hover"
+              showCounter={false}
+              onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
+            />
+
+            {/* Soft Heritage Lower-Half Scrim (pointer-events-none so finger swipe works effortlessly!) */}
+            <div
+              className="absolute inset-0 pointer-events-none flex flex-col items-center justify-end pb-12 @3xl:pb-20 px-6 text-center"
+              style={{
+                background:
+                  'linear-gradient(180deg, rgba(15,15,15,0.12) 0%, rgba(15,15,15,0.34) 55%, rgba(15,15,15,0.68) 100%)',
+              }}
+            >
+              <div className="max-w-3xl mx-auto space-y-3.5 @3xl:space-y-5">
+                <p className="text-sm @3xl:text-2xl font-bold uppercase tracking-[0.22em] text-white font-sans drop-shadow-xs">
+                  SANCTUARY AT {hotel.name}
+                </p>
+                <h1
+                  className="text-2xl @3xl:text-[38px] font-light leading-[1.22] text-white/95 drop-shadow-xs"
+                  style={{ fontFamily: fontStack }}
+                >
+                  {aboutData.subtitle && aboutData.subtitle !== `Welcome to ${hotel.name}`
+                    ? aboutData.subtitle
+                    : `Make the most of your stay at timeless ${hotel.name}`}
+                </h1>
+                <div className="pt-2">
+                  <a
+                    href={getReserveHref()}
+                    className="pointer-events-auto inline-block px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-white font-sans hover:opacity-90 transition-opacity shadow-md"
+                    style={{
+                      backgroundColor: discoverBg,
+                      borderRadius: btnRadius,
+                    }}
+                  >
+                    DISCOVER
+                  </a>
+                </div>
+              </div>
+
+              {/* Minimalist Rosewood Slide Counter ("1 · 3") */}
+              {heroPhotos.length > 1 && (
+                <div className="pointer-events-auto mt-6 flex items-center gap-3 text-[11px] font-medium tracking-[0.22em] text-white/90 font-sans">
+                  <span>
+                    {activeSlideNum} &middot; {heroPhotos.length}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {heroPhotos.slice(0, 6).map((_, idx) => {
+                      const isCurr = idx === slideIdx % heroPhotos.length;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setSlideIdx(idx)}
+                          aria-label={`Slide ${idx + 1}`}
+                          className="h-[2px] transition-all cursor-pointer"
+                          style={{
+                            width: isCurr ? '28px' : '12px',
+                            backgroundColor: isCurr ? '#ffffff' : 'rgba(255,255,255,0.4)',
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      }
+
       // #17 HOTEL INDIGO BOUTIQUE STORY HERO (Full-Bleed Swipeable Photo + Centered Serif Display & Story Copy)
       case 'indigo-story-hero': {
         const inlineLinkColor = isDarkColor(accentColor) ? '#F59E0B' : accentColor;
@@ -2697,6 +2950,86 @@ export default function HotelTemplateHome({
               })}
             </div>
           )}
+          {/* LAYOUT L: ROSEWOOD PORTRAIT RESIDENCES (#18 — 3:4 Vertical Portrait Cards + Tracked Sans Title + Poetic Serif + Dual CTA) */}
+          {template.roomsLayout === 'rosewood-portrait-residences' && (
+            <div className="grid grid-cols-1 @xl:grid-cols-2 @5xl:grid-cols-3 gap-7 @3xl:gap-10">
+              {rooms.map((room) => {
+                const photos = (room.gallery || []).map(cleanImg).filter(Boolean);
+                const cover = photos[0] || currentHeroImg;
+                const roomPhotos = photos.length ? photos : [cover];
+                return (
+                  <div key={room.id} className="flex flex-col text-left group space-y-4">
+                    <div
+                      className="aspect-[3/4] w-full overflow-hidden relative bg-stone-200"
+                      style={{ borderRadius: btnRadius }}
+                    >
+                      <SwipeablePhotoSlider
+                        photos={roomPhotos}
+                        alt={room.name}
+                        className="w-full h-full"
+                        arrowsMode="desktop-hover"
+                        showCounter={roomPhotos.length > 1}
+                        counterPositionClass="bottom-3 right-3"
+                        onTapPhoto={(pIdx) => openLightbox(roomPhotos, pIdx, room.name)}
+                      />
+                    </div>
+
+                    <div className="space-y-2.5 flex-1 flex flex-col justify-between pt-1">
+                      <div className="space-y-2">
+                        <span
+                          className="text-[10px] font-semibold uppercase tracking-[0.2em] block font-sans"
+                          style={{ color: accentColor }}
+                        >
+                          {room.room_size} M² &middot; UP TO {room.max_guests} GUESTS &middot; {room.bed_type}
+                        </span>
+                        <h3
+                          className="text-sm @3xl:text-base font-semibold uppercase tracking-[0.16em] font-sans"
+                          style={{ color: textColor }}
+                        >
+                          {room.name}
+                        </h3>
+                        <p
+                          className="text-sm @3xl:text-base font-light leading-relaxed line-clamp-3"
+                          style={{ color: mutedText, fontFamily: fontStack }}
+                        >
+                          {room.description}
+                        </p>
+                      </div>
+
+                      <div
+                        className="pt-4 border-t flex flex-wrap items-end justify-between gap-3"
+                        style={{ borderColor: cardBorder }}
+                      >
+                        {renderRoomPrice(room)}
+
+                        <div className="flex items-center gap-4">
+                          <button
+                            type="button"
+                            onClick={() => openLightbox(roomPhotos, 0, room.name)}
+                            className="text-xs underline underline-offset-4 hover:opacity-70 cursor-pointer"
+                            style={{ color: textColor, fontFamily: fontStack }}
+                          >
+                            Details
+                          </button>
+                          <a
+                            href={getReserveHref(room.id)}
+                            className="px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] font-sans hover:opacity-90 transition-opacity whitespace-nowrap"
+                            style={{
+                              backgroundColor: primaryColor,
+                              color: primaryText,
+                              borderRadius: btnRadius,
+                            }}
+                          >
+                            RESERVE
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
     );
@@ -2706,6 +3039,235 @@ export default function HotelTemplateHome({
   // DISTINCT ABOUT / STORY SECTION LAYOUTS
   // =========================================================================
   const renderAboutSection = () => {
+    // #18 ROSEWOOD "SENSE OF PLACE / WHAT'S ON" 3-COL PORTRAIT OVERVIEW + FULL-WIDTH TABBED CAROUSEL
+    if (template.aboutLayout === 'rosewood-sense-of-place') {
+      const darkBtnBg = isDarkColor(secondaryColor) ? secondaryColor : '#1A1A1A';
+      const discoveryCards = [0, 1, 2].map((idx) => ({
+        tag:
+          idx === 0
+            ? 'SENSE OF PLACE · HERITAGE'
+            : idx === 1
+            ? 'CURATED COMFORT · SANCTUARY'
+            : 'PRIVILEGES · DIRECT STAY',
+        title:
+          facilitiesData[idx]?.title ||
+          (idx === 0
+            ? 'Timeless Sanctuary'
+            : idx === 1
+            ? 'Bespoke Hospitality'
+            : 'Direct Guest Privileges'),
+        desc:
+          facilitiesData[idx]?.desc ||
+          aboutData.description,
+        image:
+          galleryPhotosPool[(idx + 1) % galleryPhotosPool.length] ||
+          heroPhotos[idx % heroPhotos.length] ||
+          aboutData.primaryImage,
+      }));
+
+      const carouselTabs = [
+        {
+          tabLabel: 'Offers & Direct Rates',
+          eyebrow: `OFFERS AT ${hotel.name.toUpperCase()}`,
+          subtitle:
+            promotions[0]?.title
+              ? `${promotions[0].title} — ${promotions[0].description || 'Exclusive privileges when reserving directly'}`
+              : `Make the most of your stay with exclusive direct booking privileges at ${hotel.name}`,
+          ctaLabel: 'DISCOVER',
+          href: promotions.length > 0 && !isPreview ? `${tenantPrefix}/promotions` : getReserveHref(),
+          image: galleryPhotosPool[0] || currentHeroImg,
+        },
+        {
+          tabLabel: 'A Sense of Place',
+          eyebrow: 'A SENSE OF TRANQUILITY',
+          subtitle:
+            aboutData.description.slice(0, 115) +
+            (aboutData.description.length > 115 ? '…' : ''),
+          ctaLabel: 'EXPLORE ROOMS',
+          href: '#rooms',
+          image: aboutData.primaryImage || galleryPhotosPool[1 % galleryPhotosPool.length] || currentHeroImg,
+        },
+        {
+          tabLabel: 'Visual Journey',
+          eyebrow: 'ARCHITECTURAL HARMONY',
+          subtitle: `Immerse yourself in serene pools, lush tropical landscapes, and refined interiors at ${hotel.name}`,
+          ctaLabel: 'VIEW GALLERY',
+          href: isPreview ? '#gallery' : `${tenantPrefix}/gallery`,
+          image: aboutData.secondaryImage || galleryPhotosPool[2 % galleryPhotosPool.length] || currentHeroImg,
+        },
+      ];
+      const activeTab = carouselTabs[rosewoodTabIdx % carouselTabs.length];
+
+      return (
+        <>
+          {/* PART 1: WARM IVORY "WHAT'S ON / SENSE OF PLACE" EDITORIAL + 3 PORTRAIT CARDS */}
+          <section
+            id="sense-of-place"
+            className="w-full py-14 @3xl:py-24 px-5 @3xl:px-10"
+            style={{ backgroundColor: bgColor }}
+          >
+            <div className="max-w-7xl mx-auto space-y-12 @3xl:space-y-16">
+              {/* Centered Poetic Serif Header */}
+              <div className="max-w-3xl mx-auto text-center space-y-4">
+                <span
+                  className="text-[11px] font-semibold uppercase tracking-[0.24em] block font-sans"
+                  style={{ color: accentColor }}
+                >
+                  WHAT&rsquo;S ON &middot; SENSE OF PLACE
+                </span>
+                <h2
+                  className="text-2xl @3xl:text-[40px] font-light leading-[1.24]"
+                  style={{ color: textColor, fontFamily: fontStack }}
+                >
+                  Glimpses of {hotel.name}&rsquo;s magic&mdash;a tranquil destination of warm hospitality
+                  and effortless discovery
+                </h2>
+              </div>
+
+              {/* 3-Column 4:5 Portrait Editorial Cards */}
+              <div className="grid grid-cols-1 @3xl:grid-cols-3 gap-8 @3xl:gap-10">
+                {discoveryCards.map((card, idx) => (
+                  <div key={idx} className="flex flex-col text-left group space-y-4">
+                    <div
+                      onClick={() => openLightbox(galleryPhotosPool, idx, card.title)}
+                      className="aspect-[4/5] w-full overflow-hidden bg-stone-200 cursor-pointer"
+                      style={{ borderRadius: btnRadius }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={card.image}
+                        alt={card.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700"
+                      />
+                    </div>
+
+                    <div className="space-y-2.5 flex-1 flex flex-col justify-between pt-1">
+                      <div className="space-y-2">
+                        <span
+                          className="text-[10px] font-semibold uppercase tracking-[0.2em] block font-sans"
+                          style={{ color: accentColor }}
+                        >
+                          {card.tag}
+                        </span>
+                        <h3
+                          className="text-xl @3xl:text-2xl font-normal"
+                          style={{ color: textColor, fontFamily: fontStack }}
+                        >
+                          {card.title}
+                        </h3>
+                        <p
+                          className="text-xs @3xl:text-sm leading-relaxed line-clamp-3"
+                          style={{ color: mutedText }}
+                        >
+                          {card.desc}
+                        </p>
+                      </div>
+
+                      <div className="pt-3 flex items-center gap-5">
+                        <a
+                          href={getReserveHref()}
+                          className="px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white font-sans hover:opacity-90 transition-opacity"
+                          style={{
+                            backgroundColor: darkBtnBg,
+                            borderRadius: btnRadius,
+                          }}
+                        >
+                          DISCOVER
+                        </a>
+                        <a
+                          href="#rooms"
+                          className="text-xs underline underline-offset-4 hover:opacity-70"
+                          style={{ color: textColor, fontFamily: fontStack }}
+                        >
+                          Details &rarr;
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* PART 2: ROSEWOOD FULL-WIDTH TABBED FEATURE CAROUSEL (#full-width-carousel) */}
+          <section id="full-width-carousel" className="w-full">
+            {/* Top Minimalist Story Tabs */}
+            <div
+              className="w-full border-y px-4 overflow-x-auto"
+              style={{ backgroundColor: bgColor, borderColor: cardBorder }}
+            >
+              <div className="max-w-5xl mx-auto flex items-center justify-center gap-6 @3xl:gap-12">
+                {carouselTabs.map((tab, idx) => {
+                  const isActive = idx === rosewoodTabIdx % carouselTabs.length;
+                  return (
+                    <button
+                      key={tab.tabLabel}
+                      type="button"
+                      onClick={() => setRosewoodTabIdx(idx)}
+                      className="py-4 text-xs @3xl:text-[15px] whitespace-nowrap border-b-2 transition-all cursor-pointer"
+                      style={{
+                        fontFamily: fontStack,
+                        color: isActive ? textColor : mutedText,
+                        borderColor: isActive ? primaryColor : 'transparent',
+                        fontWeight: isActive ? 600 : 400,
+                      }}
+                    >
+                      {tab.tabLabel}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Full-Width Atmospheric Feature Frame */}
+            <div className="relative w-full h-[360px] @3xl:h-[540px] overflow-hidden bg-stone-900">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={activeTab.image}
+                alt={activeTab.eyebrow}
+                className="w-full h-full object-cover transition-all duration-700"
+              />
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-end pb-10 @3xl:pb-16 px-6 text-center"
+                style={{
+                  background:
+                    'linear-gradient(180deg, rgba(12,12,12,0.12) 0%, rgba(12,12,12,0.58) 100%)',
+                }}
+              >
+                <div className="max-w-2xl mx-auto space-y-3 @3xl:space-y-4">
+                  <p className="text-sm @3xl:text-2xl font-bold uppercase tracking-[0.22em] text-white font-sans">
+                    {activeTab.eyebrow}
+                  </p>
+                  <h3
+                    className="text-xl @3xl:text-[34px] font-light leading-snug text-white/95"
+                    style={{ fontFamily: fontStack }}
+                  >
+                    {activeTab.subtitle}
+                  </h3>
+                  <div className="pt-2">
+                    <a
+                      href={activeTab.href}
+                      className="inline-block px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-white font-sans hover:opacity-90 transition-opacity"
+                      style={{
+                        backgroundColor: darkBtnBg,
+                        borderRadius: btnRadius,
+                      }}
+                    >
+                      {activeTab.ctaLabel}
+                    </a>
+                  </div>
+                  <div className="pt-2 text-[11px] tracking-[0.22em] text-white/85 font-sans">
+                    {(rosewoodTabIdx % carouselTabs.length) + 1} &middot; {carouselTabs.length}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      );
+    }
+
     // #17 HOTEL INDIGO 2-TIER COASTAL BRUSHSTROKE STORY + FULL-BLEED ZERO-GAP 50/50 PHOTO MOSAIC
     if (template.aboutLayout === 'indigo-coastal-story') {
       const storyLinkColor = isDark ? accentColor : '#D95326';
@@ -3274,67 +3836,216 @@ export default function HotelTemplateHome({
   const footerBg = isDark ? subtleSurface : primaryColor;
   const footerText = isDark ? textColor : primaryText;
 
-  const renderFooter = () => (
-    <footer
-      className="pt-10 @3xl:pt-14 pb-12 @3xl:pb-16 px-4 @3xl:px-6 border-t"
-      style={{
-        backgroundColor: footerBg,
-        color: withAlpha(footerText, 0.9),
-        borderColor: withAlpha(footerText, 0.1),
-      }}
-    >
-      <div className="max-w-7xl mx-auto space-y-8 @3xl:space-y-10">
-        {activeTheme.footer_layout === 'luxury' ? (
-          <div
-            className="text-center space-y-3.5 pb-7 border-b"
-            style={{ borderColor: withAlpha(footerText, 0.12) }}
-          >
-            <h3
-              className="text-xl @3xl:text-3xl font-bold uppercase tracking-[0.18em] @3xl:tracking-[0.22em]"
-              style={{ color: accentColor, fontFamily: fontStack }}
+  const renderFooter = () => {
+    // #18 ROSEWOOD HERITAGE IVORY / ALABASTER ULTRA-LUXURY FOOTER
+    if (template.id === 'rosewood-sanctuary') {
+      const rwFooterBg = isDark ? subtleSurface : bgColor;
+      const rwFooterText = textColor;
+      const rwBorder = withAlpha(textColor, 0.14);
+      const monogram =
+        hotel.name
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((w) => w[0]?.toUpperCase() || '')
+          .join('') || 'RW';
+
+      return (
+        <footer
+          className="pt-12 @3xl:pt-20 pb-12 @3xl:pb-16 px-4 @3xl:px-10 border-t"
+          style={{
+            backgroundColor: rwFooterBg,
+            color: rwFooterText,
+            borderColor: rwBorder,
+          }}
+        >
+          <div className="max-w-7xl mx-auto space-y-10 @3xl:space-y-14">
+            {/* Top Invitation Banner */}
+            <div
+              className="flex flex-col @3xl:flex-row items-start @3xl:items-center justify-between gap-6 pb-10 border-b"
+              style={{ borderColor: rwBorder }}
             >
-              {hotel.name}
-            </h3>
-            {hotel.address && <p className="text-xs opacity-75">{hotel.address}</p>}
-            <div className="flex flex-wrap justify-center gap-5 text-xs uppercase tracking-widest opacity-85 pt-2">
-              {navLinks.map((l) => (
-                <a key={l.label} href={l.href}>
-                  {l.label}
-                </a>
-              ))}
+              <div className="space-y-2 text-left max-w-2xl">
+                <span
+                  className="text-[10px] font-semibold uppercase tracking-[0.26em] block font-sans"
+                  style={{ color: accentColor }}
+                >
+                  A SENSE OF PLACE &middot; OFFICIAL DIRECT RESERVATIONS
+                </span>
+                <h3
+                  className="text-2xl @3xl:text-4xl font-light leading-snug"
+                  style={{ fontFamily: fontStack, color: rwFooterText }}
+                >
+                  Stay connected to the world of {hotel.name}
+                </h3>
+              </div>
+              <a
+                href={bookingUrl}
+                className="px-7 py-3.5 text-[11px] font-semibold uppercase tracking-[0.22em] font-sans hover:opacity-90 transition-opacity shrink-0"
+                style={{
+                  backgroundColor: primaryColor,
+                  color: primaryText,
+                  borderRadius: btnRadius,
+                }}
+              >
+                RESERVE YOUR STAY
+              </a>
+            </div>
+
+            {/* 4-Column Ultra-Luxury Directory */}
+            <div className="grid grid-cols-2 @3xl:grid-cols-4 gap-8 text-left">
+              <div className="space-y-3">
+                <h4
+                  className="text-[10px] font-semibold uppercase tracking-[0.24em] font-sans"
+                  style={{ color: accentColor }}
+                >
+                  CONTACT US
+                </h4>
+                <div className="space-y-1.5 text-sm font-light" style={{ fontFamily: fontStack }}>
+                  {hotel.phone && (
+                    <a href={`tel:${hotel.phone}`} className="block hover:opacity-70">
+                      Tel: {hotel.phone}
+                    </a>
+                  )}
+                  {hotel.email && (
+                    <a href={`mailto:${hotel.email}`} className="block hover:opacity-70 break-all">
+                      {hotel.email}
+                    </a>
+                  )}
+                  <a href={isPreview ? '#contact' : `${tenantPrefix}/contact`} className="block underline underline-offset-4 pt-1 text-xs">
+                    Direct Concierge
+                  </a>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4
+                  className="text-[10px] font-semibold uppercase tracking-[0.24em] font-sans"
+                  style={{ color: accentColor }}
+                >
+                  DISCOVER
+                </h4>
+                <div className="space-y-1.5 text-sm font-light" style={{ fontFamily: fontStack }}>
+                  {navLinks.map((l) => (
+                    <a key={l.label} href={l.href} className="block hover:opacity-70">
+                      {l.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4
+                  className="text-[10px] font-semibold uppercase tracking-[0.24em] font-sans"
+                  style={{ color: accentColor }}
+                >
+                  PRIVILEGES
+                </h4>
+                <div className="space-y-1.5 text-sm font-light" style={{ fontFamily: fontStack, color: mutedText }}>
+                  <p>Best Direct Rate Guaranteed</p>
+                  <p>Instant Channel Manager Sync</p>
+                  <p>Exclusive Direct Offers</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4
+                  className="text-[10px] font-semibold uppercase tracking-[0.24em] font-sans"
+                  style={{ color: accentColor }}
+                >
+                  SANCTUARY ADDRESS
+                </h4>
+                <p className="text-sm font-light leading-relaxed" style={{ fontFamily: fontStack, color: mutedText }}>
+                  {hotel.address || hotel.name}
+                </p>
+              </div>
+            </div>
+
+            {/* Centered Rosewood Monogram Crest & Hairline Divider */}
+            <div className="space-y-6 pt-2">
+              <div className="flex items-center gap-6">
+                <div className="flex-1 h-px" style={{ backgroundColor: rwBorder }} />
+                <div
+                  className="w-12 h-12 border flex items-center justify-center text-lg italic font-light tracking-widest"
+                  style={{ borderColor: rwBorder, fontFamily: fontStack, color: rwFooterText }}
+                >
+                  {monogram}
+                </div>
+                <div className="flex-1 h-px" style={{ backgroundColor: rwBorder }} />
+              </div>
+
+              <div className="flex flex-col @xl:flex-row justify-between items-center gap-2 text-[11px] uppercase tracking-[0.16em] font-sans opacity-65 text-center @xl:text-left">
+                <span>&copy; {new Date().getFullYear()} {hotel.name}</span>
+                <span>OFFICIAL SANCTUARY &middot; DIRECT RESERVATIONS</span>
+              </div>
             </div>
           </div>
-        ) : (
-          <div
-            className="flex flex-col @3xl:flex-row justify-between items-start @3xl:items-center gap-5 pb-7 border-b"
-            style={{ borderColor: withAlpha(footerText, 0.12) }}
-          >
-            <div className="text-left space-y-1">
+        </footer>
+      );
+    }
+
+    return (
+      <footer
+        className="pt-10 @3xl:pt-14 pb-12 @3xl:pb-16 px-4 @3xl:px-6 border-t"
+        style={{
+          backgroundColor: footerBg,
+          color: withAlpha(footerText, 0.9),
+          borderColor: withAlpha(footerText, 0.1),
+        }}
+      >
+        <div className="max-w-7xl mx-auto space-y-8 @3xl:space-y-10">
+          {activeTheme.footer_layout === 'luxury' ? (
+            <div
+              className="text-center space-y-3.5 pb-7 border-b"
+              style={{ borderColor: withAlpha(footerText, 0.12) }}
+            >
               <h3
-                className="text-base @3xl:text-lg font-bold uppercase tracking-widest"
+                className="text-xl @3xl:text-3xl font-bold uppercase tracking-[0.18em] @3xl:tracking-[0.22em]"
                 style={{ color: accentColor, fontFamily: fontStack }}
               >
                 {hotel.name}
               </h3>
-              {hotel.address && <p className="text-xs opacity-70">{hotel.address}</p>}
+              {hotel.address && <p className="text-xs opacity-75">{hotel.address}</p>}
+              <div className="flex flex-wrap justify-center gap-5 text-xs uppercase tracking-widest opacity-85 pt-2">
+                {navLinks.map((l) => (
+                  <a key={l.label} href={l.href}>
+                    {l.label}
+                  </a>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-5 text-xs font-semibold uppercase tracking-widest opacity-85">
-              {navLinks.map((l) => (
-                <a key={l.label} href={l.href}>
-                  {l.label}
-                </a>
-              ))}
+          ) : (
+            <div
+              className="flex flex-col @3xl:flex-row justify-between items-start @3xl:items-center gap-5 pb-7 border-b"
+              style={{ borderColor: withAlpha(footerText, 0.12) }}
+            >
+              <div className="text-left space-y-1">
+                <h3
+                  className="text-base @3xl:text-lg font-bold uppercase tracking-widest"
+                  style={{ color: accentColor, fontFamily: fontStack }}
+                >
+                  {hotel.name}
+                </h3>
+                {hotel.address && <p className="text-xs opacity-70">{hotel.address}</p>}
+              </div>
+              <div className="flex flex-wrap gap-5 text-xs font-semibold uppercase tracking-widest opacity-85">
+                {navLinks.map((l) => (
+                  <a key={l.label} href={l.href}>
+                    {l.label}
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="flex flex-col @xl:flex-row justify-between items-center gap-2 text-[11px] opacity-60 text-center @xl:text-left">
-          <span>© {new Date().getFullYear()} {hotel.name}. All Rights Reserved.</span>
-          <span>Official Direct Website • Best Rate Guaranteed</span>
+          <div className="flex flex-col @xl:flex-row justify-between items-center gap-2 text-[11px] opacity-60 text-center @xl:text-left">
+            <span>© {new Date().getFullYear()} {hotel.name}. All Rights Reserved.</span>
+            <span>Official Direct Website • Best Rate Guaranteed</span>
+          </div>
         </div>
-      </div>
-    </footer>
-  );
+      </footer>
+    );
+  };
 
   const roomsFirst = template.id === 'booking-first' || template.id === 'bento-mosaic';
 

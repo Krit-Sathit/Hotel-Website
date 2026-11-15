@@ -17,6 +17,17 @@ export interface ColorPalettePreset {
  */
 export const COLOR_PALETTE_PRESETS: ColorPalettePreset[] = [
   {
+    id: 'rosewood-jade',
+    nameTh: 'โรสวูด ไอวอรี่ & เขียวเจด',
+    nameEn: 'Rosewood Ivory & Forest Jade',
+    primary_color: '#083B2C',
+    secondary_color: '#1A1A1A',
+    accent_color: '#8C7355',
+    background_color: '#FAF8F4',
+    text_color: '#1F1F1F',
+    dark_mode: false,
+  },
+  {
     id: 'indigo-boutique',
     nameTh: 'อินดิโก้ บูทีค & ทองอำพัน',
     nameEn: 'Hotel Indigo Teal & Amber',

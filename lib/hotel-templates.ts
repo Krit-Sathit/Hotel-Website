@@ -25,7 +25,8 @@ export type HeroLayoutVariant =
   | 'compact-direct'
   | 'triptych-panels'
   | 'bento-stack'
-  | 'indigo-story-hero';
+  | 'indigo-story-hero'
+  | 'rosewood-cinema-tabs';
 
 export type RoomsLayoutVariant =
   | 'grid-2'
@@ -38,7 +39,8 @@ export type RoomsLayoutVariant =
   | 'arched-cards'
   | 'portrait-posters'
   | 'rate-table-pro'
-  | 'indigo-boutique-suites';
+  | 'indigo-boutique-suites'
+  | 'rosewood-portrait-residences';
 
 export type AboutLayoutVariant =
   | 'overlapping-photos'
@@ -47,14 +49,16 @@ export type AboutLayoutVariant =
   | 'arched-trio'
   | 'split-sticky'
   | 'minimal-zen'
-  | 'indigo-coastal-story';
+  | 'indigo-coastal-story'
+  | 'rosewood-sense-of-place';
 
 export type ShellStyleVariant =
   | 'standard'
   | 'left-sidebar'
   | 'floating-pill-nav'
   | 'card-stack-canvas'
-  | 'indigo-boutique';
+  | 'indigo-boutique'
+  | 'rosewood-heritage';
 
 export interface HotelWebsiteTemplate {
   id: string;
@@ -75,7 +79,7 @@ export interface HotelWebsiteTemplate {
 }
 
 export const TEMPLATE_CATEGORIES: Array<{ id: TemplateCategory; label: string }> = [
-  { id: 'all', label: 'ทั้งหมด (17 Layout)' },
+  { id: 'all', label: 'ทั้งหมด (18 Layout)' },
   { id: 'resort', label: 'รีสอร์ท & พูลวิลล่า' },
   { id: 'editorial', label: 'นิตยสาร & สปลิตสกรีน' },
   { id: 'boutique', label: 'บูทีค & โมเสกแกลเลอรี' },
@@ -614,6 +618,43 @@ export const HOTEL_WEBSITE_TEMPLATES: HotelWebsiteTemplate[] = [
       dark_mode: false,
       header_layout: 'luxury',
       footer_layout: 'columns',
+      animation_style: 'fade',
+    },
+  },
+  {
+    id: 'rosewood-sanctuary',
+    number: 18,
+    name: 'Rosewood Heritage 2-Tier Ivory Sanctuary',
+    nameTh: 'แบบที่ 18: โรสวูด เฮอริเทจ หัวเว็บ 2 ชั้น & การ์ดแนวตั้งอัลตร้าลักชัวรี (Rosewood Style)',
+    layoutBadge: '2-Tier Ivory Header + Tabbed Carousel + 3:4 Suites',
+    category: 'resort',
+    categoryLabel: 'รีสอร์ท & พูลวิลล่า',
+    tagline:
+      'อัลตร้าลักชัวรีสไตล์ Rosewood พื้นสีงาช้างอบอุ่น หัวเว็บ 2 ชั้นคั่นเส้นบางพร้อมเมนูฟอนต์ Serif และปุ่ม RESERVE สีเขียวเจด สไลด์เต็มจอสลับแท็บเรื่องราว และการ์ดห้องพักแนวตั้ง 3:4 สุดประณีต',
+    features: [
+      'หัวเว็บสีงาช้าง 2 ชั้น + ปุ่มเขียวเจด',
+      'แบนเนอร์สลับแท็บ + การ์ด Sense of Place',
+      'ห้องพักแนวตั้ง 3:4 สไลด์นิ้วได้ + ฟุตเตอร์ตราประทับ',
+    ],
+    shellStyle: 'rosewood-heritage',
+    heroLayout: 'rosewood-cinema-tabs',
+    aboutLayout: 'rosewood-sense-of-place',
+    roomsLayout: 'rosewood-portrait-residences',
+    fallbackHeroImage:
+      'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1600&q=80',
+    theme: {
+      template_id: 'rosewood-sanctuary',
+      primary_color: '#083B2C',
+      secondary_color: '#1A1A1A',
+      accent_color: '#8C7355',
+      background_color: '#FAF8F4',
+      text_color: '#1F1F1F',
+      button_style: 'square',
+      border_radius: '0px',
+      font_family: 'Cormorant Garamond',
+      dark_mode: false,
+      header_layout: 'centered',
+      footer_layout: 'luxury',
       animation_style: 'fade',
     },
   },
