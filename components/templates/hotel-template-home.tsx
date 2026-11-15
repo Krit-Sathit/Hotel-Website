@@ -163,24 +163,59 @@ export default function HotelTemplateHome({
   const aboutData = useMemo(() => {
     const found = sections.find((s) => s.section_type === 'about' && s.is_enabled);
     const content = found?.content || {};
+    const rawDesc =
+      typeof content.description === 'string' && content.description.trim()
+        ? content.description.trim()
+        : `Welcome to ${hotel.name}. Experience warm hospitality, thoughtfully designed accommodations, and effortless comfort. Book directly on our official website for exclusive direct rates and privileges.`;
+    const parsedParagraphs = rawDesc
+      .split(/\n+/)
+      .map((p: string) => p.trim())
+      .filter(Boolean);
+
+    const rawStory2Desc =
+      typeof content.story2_description === 'string' && content.story2_description.trim()
+        ? content.story2_description.trim()
+        : '';
+    const story2Paragraphs = rawStory2Desc
+      ? rawStory2Desc
+          .split(/\n+/)
+          .map((p: string) => p.trim())
+          .filter(Boolean)
+      : [];
+
+    const fallbackImg1 =
+      galleryPhotosPool[1] || heroPhotos[1] || galleryPhotosPool[0] || heroPhotos[0];
+    const fallbackImg2 =
+      galleryPhotosPool[2] ||
+      heroPhotos[2] ||
+      (galleryPhotosPool[0] !== fallbackImg1 ? galleryPhotosPool[0] : heroPhotos[0]);
+
+    const customFeatures: Array<{ title: string; desc: string; image_url?: string }> =
+      Array.isArray(content.features) && content.features.length > 0
+        ? content.features
+        : [];
+
     return {
       badge: content.badge || 'Official Hotel Website',
       subtitle: content.subtitle || `Welcome to ${hotel.name}`,
       title: content.title || hotel.name,
-      description:
-        content.description ||
-        `Experience warm hospitality, thoughtfully designed accommodations, and effortless comfort at ${hotel.name}. Book directly on our official website for exclusive rates and privileges.`,
-      primaryImage: cleanImg(content.primary_image_url) || heroPhotos[1] || heroPhotos[0],
-      secondaryImage: cleanImg(content.secondary_image_url) || heroPhotos[2] || heroPhotos[0],
+      description: rawDesc,
+      paragraphs: parsedParagraphs,
+      hasCustomStory2: Boolean(content.story2_title?.trim() || rawStory2Desc),
+      story2Title: content.story2_title?.trim() || `Plan Your Stay at ${hotel.name}`,
+      story2Paragraphs,
+      primaryImage: cleanImg(content.primary_image_url) || fallbackImg1,
+      secondaryImage: cleanImg(content.secondary_image_url) || fallbackImg2,
+      customFeatures,
       features:
-        Array.isArray(content.features) && content.features.length > 0
-          ? content.features
+        customFeatures.length > 0
+          ? customFeatures
           : [
               { title: 'Best Rate Guaranteed', desc: 'Exclusive direct booking rates & perks.' },
-              { title: 'Prime Location', desc: hotel.address || 'Conveniently situated for your stay.' },
+              { title: 'Convenient Location', desc: hotel.address || 'Thoughtfully situated for your stay.' },
             ],
     };
-  }, [sections, hotel.name, hotel.address, heroPhotos]);
+  }, [sections, hotel.name, hotel.address, heroPhotos, galleryPhotosPool]);
 
   const facilitiesData = useMemo(() => {
     const found = sections.find((s) => s.section_type === 'facilities' && s.is_enabled);
@@ -1998,9 +2033,14 @@ export default function HotelTemplateHome({
         );
       }
 
-      // #17 HOTEL INDIGO BOUTIQUE STORY HERO (Full-Bleed Swipeable Photo + Centered Serif Display & Story Copy)
+      // #17 BOUTIQUE NEIGHBORHOOD STORY HERO (Full-Bleed Swipeable Photo + Centered Serif Display & Editable Story Copy)
       case 'indigo-story-hero': {
         const inlineLinkColor = isDarkColor(accentColor) ? '#F59E0B' : accentColor;
+        const activeSlide = slides.length > 0 ? slides[slideIdx % slides.length] : null;
+        const heroHeadline =
+          activeSlide?.headline && activeSlide.headline.trim()
+            ? activeSlide.headline.trim()
+            : hotel.name;
         return (
           <section className="relative w-full h-[420px] @3xl:h-[620px] @5xl:h-[700px] overflow-hidden bg-slate-900">
             <SwipeablePhotoSlider
@@ -2028,14 +2068,22 @@ export default function HotelTemplateHome({
                   className="text-2xl @xl:text-3xl @3xl:text-5xl @5xl:text-6xl font-normal uppercase tracking-[0.08em] leading-tight text-white drop-shadow-md"
                   style={{ fontFamily: fontStack }}
                 >
-                  {hotel.name}
+                  {heroHeadline}
                 </h1>
 
                 <div className="max-w-3xl mx-auto space-y-3 text-xs @3xl:text-[15px] leading-relaxed text-white/95 font-normal drop-shadow-xs">
-                  <p>{aboutData.description}</p>
+                  <p>{aboutData.paragraphs[0] || aboutData.description}</p>
                   <p className="hidden @xl:block">
-                    Coastal heritage, thoughtful architecture, and warm local character shape our
-                    curated rooms, relaxing spaces, and neighborhood experience.{' '}
+                    {aboutData.paragraphs[1] ? (
+                      <>
+                        {aboutData.paragraphs[1]}{' '}
+                      </>
+                    ) : (
+                      <>
+                        Thoughtful architecture, serene surroundings, and attentive hospitality shape
+                        every stay at {hotel.name}.{' '}
+                      </>
+                    )}
                     <a
                       href="#neighborhood-story"
                       className="pointer-events-auto underline underline-offset-4 font-semibold hover:opacity-85"
@@ -2045,7 +2093,7 @@ export default function HotelTemplateHome({
                     </a>
                   </p>
                   <p className="text-[11px] @3xl:text-sm">
-                    Book directly on our official website for guaranteed lowest rates &amp; member perks.{' '}
+                    Book directly on our official website for guaranteed lowest rates &amp; exclusive privileges.{' '}
                     <a
                       href={getReserveHref()}
                       className="pointer-events-auto underline underline-offset-4 font-semibold hover:opacity-85"
@@ -3268,43 +3316,66 @@ export default function HotelTemplateHome({
       );
     }
 
-    // #17 HOTEL INDIGO 2-TIER COASTAL BRUSHSTROKE STORY + FULL-BLEED ZERO-GAP 50/50 PHOTO MOSAIC
+    // #17 BOUTIQUE NEIGHBORHOOD 2-TIER EDITORIAL STORY (Authentic Property Photos) + FULL-BLEED 50/50 PHOTO MOSAIC
     if (template.aboutLayout === 'indigo-coastal-story') {
       const storyLinkColor = isDark ? accentColor : '#D95326';
+      const customTiles = aboutData.customFeatures;
       const mosaicTiles = [
         {
-          title: facilitiesData[0]?.title || 'Locally Inspired Dining',
+          title:
+            customTiles[0]?.title ||
+            facilitiesData[0]?.title ||
+            'Signature Dining & Refreshments',
           desc:
+            customTiles[0]?.desc ||
             facilitiesData[0]?.desc ||
-            `Savor fresh local ingredients, signature culinary creations, and warm coastal ambiance crafted daily at ${hotel.name}.`,
-          image: galleryPhotosPool[1 % galleryPhotosPool.length] || aboutData.primaryImage,
+            `Enjoy curated dining, fresh local ingredients, and welcoming ambiance crafted daily at ${hotel.name}.`,
+          image:
+            cleanImg(customTiles[0]?.image_url) ||
+            galleryPhotosPool[3 % galleryPhotosPool.length] ||
+            aboutData.primaryImage,
           href: isPreview ? '#rooms' : getReserveHref(),
         },
         {
-          title: facilitiesData[1]?.title || 'Poolside & Social Lounge',
+          title:
+            customTiles[1]?.title ||
+            facilitiesData[1]?.title ||
+            'Leisure & Relaxation Spaces',
           desc:
+            customTiles[1]?.desc ||
             facilitiesData[1]?.desc ||
-            `Unwind by shimmering waters with refreshing handcrafted drinks, sun loungers, and tranquil tropical breezes.`,
-          image: galleryPhotosPool[2 % galleryPhotosPool.length] || aboutData.secondaryImage,
+            `Unwind in tranquil surroundings designed for restful mornings, leisurely afternoons, and effortless comfort.`,
+          image:
+            cleanImg(customTiles[1]?.image_url) ||
+            galleryPhotosPool[4 % galleryPhotosPool.length] ||
+            aboutData.secondaryImage,
           href: isPreview ? '#gallery' : `${tenantPrefix}/gallery`,
         },
         {
-          title: 'Inspiring Boutique Rooms',
-          desc: `Our neighborhood story takes shape through locally inspired interiors, plush bedding, and serene garden & pool views at ${hotel.name}.`,
+          title: customTiles[2]?.title || 'Curated Rooms & Suites',
+          desc:
+            customTiles[2]?.desc ||
+            `Thoughtfully appointed accommodations featuring plush bedding, modern amenities, and peaceful views at ${hotel.name}.`,
           image:
+            cleanImg(customTiles[2]?.image_url) ||
             cleanImg(rooms[0]?.gallery?.[0]) ||
-            galleryPhotosPool[3 % galleryPhotosPool.length] ||
+            galleryPhotosPool[5 % galleryPhotosPool.length] ||
             currentHeroImg,
           href: '#rooms',
         },
         {
-          title: facilitiesData[2]?.title || 'Exclusive Direct Privileges',
+          title:
+            customTiles[3]?.title ||
+            facilitiesData[2]?.title ||
+            'Official Direct Privileges',
           desc:
+            customTiles[3]?.desc ||
             facilitiesData[2]?.desc ||
-            `Enjoy guaranteed lowest direct rates, priority room selection, and personalized concierge assistance throughout your stay.`,
+            `Reserve directly on our official website for guaranteed lowest rates, live room availability, and attentive guest care.`,
           image:
+            cleanImg(customTiles[3]?.image_url) ||
             cleanImg(rooms[1]?.gallery?.[0]) ||
-            galleryPhotosPool[4 % galleryPhotosPool.length] ||
+            galleryPhotosPool[6 % galleryPhotosPool.length] ||
             aboutData.primaryImage,
           href: getReserveHref(),
         },
@@ -3312,216 +3383,175 @@ export default function HotelTemplateHome({
 
       return (
         <>
-          {/* TIER 1: COASTAL BOUTIQUE STORY + LONGTAIL BOAT WATERCOLOR ARTWORK */}
+          {/* TIER 1: BOUTIQUE EDITORIAL STORY + AUTHENTIC HOTEL ARCHITECTURAL PHOTO FRAME */}
           <section
             id="neighborhood-story"
             className="relative w-full overflow-hidden py-12 @3xl:py-20 px-5 @3xl:px-10"
             style={{ backgroundColor: bgColor }}
           >
-            {/* Subtle Organic Brushstroke Watermark */}
-            <svg
-              viewBox="0 0 1200 320"
-              fill="none"
+            {/* Subtle Architectural Line Watermark (Original Minimalist Geometry) */}
+            <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 top-4 w-full h-auto opacity-[0.045]"
-            >
-              <path
-                d="M-40 120C180 30 420 210 690 110C920 25 1090 140 1260 80"
-                stroke={primaryColor}
-                strokeWidth="56"
-                strokeLinecap="round"
-              />
-              <path
-                d="M60 240C310 165 560 285 860 195C1020 145 1140 210 1250 185"
-                stroke={primaryColor}
-                strokeWidth="36"
-                strokeLinecap="round"
-              />
-            </svg>
+              className="pointer-events-none absolute -right-24 -top-24 w-96 h-96 rounded-full border opacity-[0.06]"
+              style={{ borderColor: primaryColor }}
+            />
 
             <div className="relative max-w-6xl mx-auto space-y-12 @3xl:space-y-16">
               <div className="grid grid-cols-1 @3xl:grid-cols-12 gap-8 @3xl:gap-12 items-center">
-                {/* Left Editorial Narrative */}
+                {/* Left Editable Editorial Narrative */}
                 <div className="@3xl:col-span-7 space-y-4 @3xl:space-y-5 text-left">
+                  {aboutData.badge && (
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-[0.24em] block"
+                      style={{ color: accentColor }}
+                    >
+                      {aboutData.badge}
+                    </span>
+                  )}
                   <h2
-                    className="text-3xl @3xl:text-[42px] font-normal leading-[1.16] tracking-tight"
+                    className="text-3xl @3xl:text-[42px] font-normal leading-[1.16] tracking-tight whitespace-pre-line"
                     style={{ color: isDark ? textColor : primaryColor, fontFamily: fontStack }}
                   >
                     {aboutData.title === hotel.name
-                      ? `Boutique Sanctuary\nAt ${hotel.name}`
+                      ? `Welcome to ${hotel.name}`
                       : aboutData.title}
                   </h2>
 
                   <div className="space-y-4 text-xs @3xl:text-[14px] leading-[1.8]" style={{ color: mutedText }}>
-                    <p>{aboutData.description}</p>
-                    <p>
-                      Thoughtfully situated at{' '}
-                      <strong style={{ color: textColor }}>{hotel.address || hotel.name}</strong>, our
-                      property blends relaxing resort comfort with authentic local charm, lush tropical
-                      surroundings, and effortless access to nearby beaches and cultural sights.
-                    </p>
-                    <p>
-                      Unwind in spacious rooms with plush bedding, refreshing pool vistas, and
-                      complimentary high-speed Wi-Fi. Reserve directly on our official website for{' '}
-                      <a
-                        href="#rooms"
-                        className="underline underline-offset-4 font-semibold hover:opacity-80"
-                        style={{ color: storyLinkColor }}
-                      >
-                        guaranteed lowest direct rates
-                      </a>{' '}
-                      and attentive concierge care.
-                    </p>
+                    {aboutData.paragraphs.map((para: string, idx: number) => (
+                      <p key={idx}>{para}</p>
+                    ))}
+                    {aboutData.paragraphs.length === 1 && (
+                      <p>
+                        {hotel.address ? (
+                          <>
+                            Conveniently located at{' '}
+                            <strong style={{ color: textColor }}>{hotel.address}</strong>,{' '}
+                            {hotel.name} offers spacious, well-appointed accommodations with
+                            complimentary Wi-Fi and{' '}
+                          </>
+                        ) : (
+                          <>
+                            {hotel.name} offers spacious, well-appointed accommodations with
+                            complimentary Wi-Fi and{' '}
+                          </>
+                        )}
+                        <a
+                          href="#rooms"
+                          className="underline underline-offset-4 font-semibold hover:opacity-80"
+                          style={{ color: storyLinkColor }}
+                        >
+                          guaranteed lowest direct rates
+                        </a>{' '}
+                        when booking on our official website.
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                {/* Right Coastal Longtail Boat & Waves Brushstroke Illustration */}
+                {/* Right Authentic Property Photo in Original Architectural Offset Frame */}
                 <div className="@3xl:col-span-5 flex items-center justify-center">
-                  <svg
-                    viewBox="0 0 420 340"
-                    className="w-full max-w-[330px] @3xl:max-w-[390px] h-auto drop-shadow-xs"
-                    role="img"
-                    aria-label="Coastal Heritage Illustration"
-                  >
-                    {/* Canopy & Frame */}
-                    <path
-                      d="M142 152 L152 115 L235 112 L226 152"
-                      stroke={primaryColor}
-                      strokeWidth="3.5"
-                      fill="none"
-                      strokeLinecap="round"
+                  <div className="relative w-full max-w-[420px] pt-3 pr-3">
+                    <div
+                      aria-hidden="true"
+                      className="absolute top-0 right-0 w-[88%] h-[88%] border-2"
+                      style={{
+                        borderColor: withAlpha(accentColor, 0.45),
+                        borderRadius: btnRadius,
+                      }}
                     />
-                    <path
-                      d="M134 116 Q190 100 246 113 L238 122 Q188 112 142 123 Z"
-                      fill={primaryColor}
-                    />
-                    {/* Tall Iconic Longtail Bow Post */}
-                    <path
-                      d="M272 192 L322 52 L338 58 L286 196 Z"
-                      fill={primaryColor}
-                    />
-                    {/* Traditional Colorful Thai Ribbons on Bow */}
-                    <path
-                      d="M300 108 C315 128 318 158 326 184"
-                      stroke="#E11D48"
-                      strokeWidth="7"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d="M296 112 C305 138 306 165 312 190"
-                      stroke={accentColor}
-                      strokeWidth="7"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d="M305 104 C322 122 328 148 335 174"
-                      stroke="#F97316"
-                      strokeWidth="5"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    {/* Boat Hull */}
-                    <path
-                      d="M112 172 Q195 162 296 135 L272 198 Q195 212 132 196 Z"
-                      fill={primaryColor}
-                    />
-                    <path
-                      d="M124 178 Q198 170 278 149"
-                      stroke="#ffffff"
-                      strokeWidth="2"
-                      strokeOpacity="0.55"
-                      fill="none"
-                    />
-                    {/* Rippling Watercolor Brushstroke Sea Waves */}
-                    {[
-                      { x: 90, y: 212, w: 46, op: 0.85 },
-                      { x: 150, y: 214, w: 58, op: 0.95 },
-                      { x: 222, y: 210, w: 52, op: 0.85 },
-                      { x: 286, y: 214, w: 40, op: 0.7 },
-                      { x: 68, y: 228, w: 52, op: 0.65 },
-                      { x: 132, y: 230, w: 64, op: 0.88 },
-                      { x: 208, y: 228, w: 56, op: 0.92 },
-                      { x: 276, y: 230, w: 48, op: 0.75 },
-                      { x: 84, y: 246, w: 48, op: 0.55 },
-                      { x: 146, y: 248, w: 58, op: 0.78 },
-                      { x: 218, y: 246, w: 62, op: 0.82 },
-                      { x: 292, y: 248, w: 38, op: 0.58 },
-                      { x: 108, y: 264, w: 54, op: 0.45 },
-                      { x: 176, y: 266, w: 60, op: 0.68 },
-                      { x: 248, y: 264, w: 48, op: 0.52 },
-                      { x: 136, y: 282, w: 52, op: 0.4 },
-                      { x: 202, y: 282, w: 56, op: 0.48 },
-                    ].map((wave, idx) => (
-                      <rect
-                        key={idx}
-                        x={wave.x}
-                        y={wave.y}
-                        width={wave.w}
-                        height="7"
-                        rx="3.5"
-                        fill={idx % 3 === 0 ? accentColor : primaryColor}
-                        fillOpacity={idx % 3 === 0 ? wave.op * 0.45 : wave.op}
+                    <div
+                      onClick={() =>
+                        openLightbox(
+                          [aboutData.primaryImage, ...galleryPhotosPool],
+                          0,
+                          hotel.name
+                        )
+                      }
+                      className="relative aspect-[4/3] w-full overflow-hidden shadow-lg cursor-pointer group bg-slate-200"
+                      style={{ borderRadius: btnRadius }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={aboutData.primaryImage}
+                        alt={aboutData.title || hotel.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />
-                    ))}
-                  </svg>
+                      <div
+                        className="absolute bottom-3 left-3 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] backdrop-blur-xs"
+                        style={{
+                          backgroundColor: withAlpha(primaryColor, 0.88),
+                          color: primaryText,
+                          borderRadius: btnRadius,
+                        }}
+                      >
+                        {aboutData.subtitle || hotel.name}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* TIER 2: INSET LIGHT-GREY "SETTLE IN, THEN SET OUT" EDITORIAL BLOCK */}
+              {/* TIER 2: INSET EDITORIAL SECONDARY STORY BLOCK + SECOND AUTHENTIC HOTEL PHOTO */}
               <div
                 id="settle-in"
-                className="p-6 @3xl:p-14 grid grid-cols-1 @3xl:grid-cols-12 gap-8 @3xl:gap-12 items-center"
+                className="p-6 @3xl:p-12 grid grid-cols-1 @3xl:grid-cols-12 gap-8 @3xl:gap-10 items-center"
                 style={{
                   backgroundColor: subtleSurface,
                   borderRadius: btnRadius,
                 }}
               >
-                {/* Left Ink-Brush Lifestyle & Gathering Motif */}
-                <div className="@3xl:col-span-4 flex items-center justify-center">
-                  <svg
-                    viewBox="0 0 280 220"
-                    className="w-full max-w-[230px] h-auto"
-                    role="img"
-                    aria-label="Neighborhood Experience Illustration"
+                {/* Left Second Authentic Hotel Photo */}
+                <div className="@3xl:col-span-5">
+                  <div
+                    onClick={() =>
+                      openLightbox(
+                        [aboutData.secondaryImage, ...galleryPhotosPool],
+                        0,
+                        hotel.name
+                      )
+                    }
+                    className="relative aspect-[16/10] w-full overflow-hidden shadow-md cursor-pointer group bg-slate-200 border"
+                    style={{
+                      borderColor: cardBorder,
+                      borderRadius: btnRadius,
+                    }}
                   >
-                    {/* Tropical Palm & Sun Arch */}
-                    <circle cx="140" cy="95" r="64" fill={withAlpha(accentColor, 0.16)} />
-                    <path
-                      d="M72 182 C76 136 92 118 106 118 C120 118 130 142 132 182"
-                      fill={primaryColor}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={aboutData.secondaryImage}
+                      alt={`${hotel.name} sanctuary`}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     />
-                    <circle cx="103" cy="94" r="16" fill={primaryColor} />
-                    <path
-                      d="M148 182 C150 132 166 112 182 112 C198 112 210 136 214 182"
-                      fill={primaryColor}
-                    />
-                    <circle cx="180" cy="88" r="17" fill={primaryColor} />
-                    {/* Center Cocktail / Refreshment Table */}
-                    <path d="M122 146 L158 146 L144 166 L144 182 L136 182 L136 166 Z" fill={accentColor} />
-                    <path
-                      d="M52 184 Q140 176 228 184"
-                      stroke={primaryColor}
-                      strokeWidth="5"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                  </svg>
+                  </div>
                 </div>
 
-                {/* Right Editorial Story Copy */}
-                <div className="@3xl:col-span-8 space-y-4 text-left">
+                {/* Right Editable Secondary Story Copy */}
+                <div className="@3xl:col-span-7 space-y-4 text-left">
                   <h3
                     className="text-2xl @3xl:text-4xl font-normal tracking-tight"
                     style={{ color: isDark ? textColor : primaryColor, fontFamily: fontStack }}
                   >
-                    Settle In, Then Set Out
+                    {aboutData.story2Title}
                   </h3>
-                  <p className="text-xs @3xl:text-[14px] leading-[1.8]" style={{ color: mutedText }}>
-                    Discover sandy beaches, local flavors, and vibrant neighborhood culture right from{' '}
-                    <strong style={{ color: textColor }}>{hotel.name}</strong>.
-                  </p>
+                  {aboutData.story2Paragraphs.length > 0 ? (
+                    aboutData.story2Paragraphs.map((para: string, idx: number) => (
+                      <p
+                        key={idx}
+                        className="text-xs @3xl:text-[14px] leading-[1.8]"
+                        style={{ color: mutedText }}
+                      >
+                        {para}
+                      </p>
+                    ))
+                  ) : (
+                    <p className="text-xs @3xl:text-[14px] leading-[1.8]" style={{ color: mutedText }}>
+                      Experience personalized comfort and seamless hospitality at{' '}
+                      <strong style={{ color: textColor }}>{hotel.name}</strong>.
+                    </p>
+                  )}
                   <p className="text-xs @3xl:text-[14px] leading-[1.8]" style={{ color: mutedText }}>
                     Explore our{' '}
                     <a
@@ -3529,9 +3559,9 @@ export default function HotelTemplateHome({
                       className="underline underline-offset-4 font-semibold hover:opacity-80"
                       style={{ color: storyLinkColor }}
                     >
-                      curated rooms &amp; villas
+                      curated rooms &amp; live rates
                     </a>{' '}
-                    to plan your stay, or check our{' '}
+                    to plan your stay, or view our{' '}
                     <a
                       href={isPreview ? '#location' : mapDirectionsHref}
                       target={isPreview ? undefined : '_blank'}
@@ -3539,9 +3569,9 @@ export default function HotelTemplateHome({
                       className="underline underline-offset-4 font-semibold hover:opacity-80"
                       style={{ color: storyLinkColor }}
                     >
-                      exact GPS location &amp; neighborhood map
+                      exact GPS location &amp; directions
                     </a>{' '}
-                    for effortless arrival and local transport tips.
+                    for effortless arrival.
                   </p>
                 </div>
               </div>

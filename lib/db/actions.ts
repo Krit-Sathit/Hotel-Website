@@ -119,9 +119,11 @@ export async function saveAboutSectionAction(
     subtitle?: string;
     description: string;
     badge?: string;
+    story2_title?: string;
+    story2_description?: string;
     primary_image_url?: string;
     secondary_image_url?: string;
-    features?: Array<{ title: string; desc: string }>;
+    features?: Array<{ title: string; desc: string; image_url?: string }>;
   }
 ) {
   try {
