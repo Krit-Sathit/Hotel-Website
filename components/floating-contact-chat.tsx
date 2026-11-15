@@ -30,24 +30,35 @@ export interface FloatingContactChatProps {
 }
 
 function renderMessageWithLinks(content: string, isUser: boolean): React.ReactNode {
-  const urlRegex = /(https?:\/\/[^\s<>)]+)/g;
-  const parts = content.split(urlRegex);
+  const tokenRegex = /(\[[^\]]+\]\(https?:\/\/[^\s)]+\)|https?:\/\/[^\s<>)]+|\*\*[^*\n]+\*\*)/g;
+  const parts = content.split(tokenRegex);
   if (parts.length === 1) return content;
 
+  const linkClass = `underline font-medium break-all ${
+    isUser ? 'text-blue-200 hover:text-white' : 'text-blue-600 hover:text-blue-800'
+  }`;
+
   return parts.map((part, i) => {
+    const mdMatch = part.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
+    if (mdMatch) {
+      return (
+        <a key={i} href={mdMatch[2]} target="_blank" rel="noopener noreferrer" className={linkClass}>
+          {mdMatch[1]}
+        </a>
+      );
+    }
     if (/^https?:\/\//i.test(part)) {
       return (
-        <a
-          key={i}
-          href={part}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`underline font-medium break-all ${
-            isUser ? 'text-blue-200 hover:text-white' : 'text-blue-600 hover:text-blue-800'
-          }`}
-        >
+        <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={linkClass}>
           {part}
         </a>
+      );
+    }
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return (
+        <strong key={i} className="font-semibold">
+          {part.slice(2, -2)}
+        </strong>
       );
     }
     return <React.Fragment key={i}>{part}</React.Fragment>;

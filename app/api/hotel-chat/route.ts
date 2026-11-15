@@ -577,18 +577,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Empty message' }, { status: 400 });
     }
 
-    // 1. Direct Gemini LLM Concierge on Hotel Website if GEMINI_API_KEY is configured
-    const directGeminiReply = await invokeDirectGeminiConcierge(
-      slug,
-      message.slice(0, 2000),
-      history,
-      fsHotel
-    );
-    if (directGeminiReply) {
-      return NextResponse.json({ response: directGeminiReply });
-    }
-
-    // 2. Delegate to FlowStay hotelAiChat.send (which logs guest chat in FlowStay DB & invokes LLM)
+    // 1. Delegate to FlowStay hotelAiChat.send first (logs guest chat in FlowStay DB & invokes Gemini with live calendar/promo rates)
     if (resolvedFlowstayId && sessionId) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 16000);
@@ -618,10 +607,21 @@ export async function POST(request: NextRequest) {
           }
         }
       } catch {
-        // Fall through to local concierge responder
+        // Fall through to direct Gemini concierge
       } finally {
         clearTimeout(timer);
       }
+    }
+
+    // 2. Direct Gemini LLM Concierge on Hotel Website as backup or for local-only hotels
+    const directGeminiReply = await invokeDirectGeminiConcierge(
+      slug,
+      message.slice(0, 2000),
+      history,
+      fsHotel
+    );
+    if (directGeminiReply) {
+      return NextResponse.json({ response: directGeminiReply });
     }
 
     // 3. Guaranteed rich hotel knowledge concierge responder
