@@ -153,6 +153,7 @@ export default function FloatingContactChat({
     if (rawContent === undefined) {
       setChatInput('');
     }
+    const priorHistory = chatMessages.slice(-10);
     setChatMessages((prev) => [...prev, { role: 'user', content }]);
     setChatLoading(true);
 
@@ -166,6 +167,7 @@ export default function FloatingContactChat({
           slug,
           sessionId,
           message: content,
+          history: priorHistory,
         }),
       });
       const data = await res.json();
