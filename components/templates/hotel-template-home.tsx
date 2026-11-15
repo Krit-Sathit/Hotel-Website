@@ -2672,7 +2672,7 @@ export default function HotelTemplateHome({
                             borderRadius: btnRadius,
                           }}
                         >
-                          Reserve Villa
+                          Reserve
                         </a>
                       </div>
                     </div>
