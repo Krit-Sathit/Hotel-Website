@@ -283,15 +283,14 @@ ${promosContext || 'Best Rate Guaranteed when booking directly on our official w
 
   const candidateModels = [
     process.env.GEMINI_CHAT_MODEL?.trim(),
-    'gemini-3.5-flash',
-    'gemini-3.1-flash-lite',
-    'gemini-flash-latest',
-    'gemini-2.5-flash',
+    'gemini-3-flash-preview',
+    'gemini-3.1-flash-lite-preview',
+    'gemini-flash-lite-latest',
   ].filter((m): m is string => Boolean(m && m !== 'gemini-3.8-flash'));
 
   for (const model of candidateModels) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12000);
+    const timer = setTimeout(() => controller.abort(), 8000);
     try {
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
@@ -306,6 +305,7 @@ ${promosContext || 'Best Rate Guaranteed when booking directly on our official w
             generationConfig: {
               temperature: 0.35,
               maxOutputTokens: 900,
+              ...(model.includes('3-flash') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
             },
           }),
           signal: controller.signal,
@@ -316,6 +316,7 @@ ${promosContext || 'Best Rate Guaranteed when booking directly on our official w
       const data = await res.json();
       const reply =
         data?.candidates?.[0]?.content?.parts
+          ?.filter((p: { thought?: boolean }) => !p?.thought)
           ?.map((p: { text?: string }) => p?.text || '')
           .join('')
           .trim() || '';
