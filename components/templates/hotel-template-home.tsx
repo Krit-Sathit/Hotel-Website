@@ -21,6 +21,17 @@ import {
   Tag,
   Camera,
   ChevronDown,
+  Flag,
+  Trees,
+  Dumbbell,
+  Presentation,
+  ShoppingBag,
+  Car,
+  Waves,
+  Utensils,
+  Plane,
+  Wifi,
+  Sparkles,
 } from 'lucide-react';
 import type {
   Hotel,
@@ -36,6 +47,11 @@ import {
   type HotelWebsiteTemplate,
 } from '@/lib/hotel-templates';
 import { buildGoogleDirectionsUrl } from '@/lib/map-utils';
+import {
+  resolveHotelHighlights,
+  isTheParPhuketHotel,
+  type HighlightIconKey,
+} from '@/lib/hotel-seo-highlights';
 import { deriveSurfacePalette, isDarkColor, withAlpha } from '@/lib/color-utils';
 import { SwipeablePhotoSlider, SwipeableLightbox } from '@/components/ui/swipeable-photo-slider';
 import TemplateBookingForm from './template-booking-form';
@@ -163,9 +179,18 @@ export default function HotelTemplateHome({
   const aboutData = useMemo(() => {
     const found = sections.find((s) => s.section_type === 'about' && s.is_enabled);
     const content = found?.content || {};
+    const isParPhuket = isTheParPhuketHotel(hotel.slug, hotel.name);
+    const isGenericFlowstayPlaceholder =
+      typeof content.description === 'string' &&
+      content.description.includes('Experience warm hospitality, thoughtfully designed rooms');
+
     const rawDesc =
-      typeof content.description === 'string' && content.description.trim()
+      typeof content.description === 'string' &&
+      content.description.trim() &&
+      !(isParPhuket && isGenericFlowstayPlaceholder)
         ? content.description.trim()
+        : isParPhuket
+        ? `Surrounded by the lush fairways of Phuket Country Club Golf Course in Kathu, The Par Phuket is a distinctive golf and lifestyle hotel blending serene greenery views with modern boutique comfort.\n\nGuests enjoy an on-site Muay Thai training camp, dedicated meeting & conference facilities, spacious on-site parking, and convenient proximity to Bang Wad Reservoir and Central Festival Phuket.`
         : `Welcome to ${hotel.name}. Experience warm hospitality, thoughtfully designed accommodations, and effortless comfort. Book directly on our official website for exclusive direct rates and privileges.`;
     const parsedParagraphs = rawDesc
       .split(/\n+/)
@@ -195,10 +220,23 @@ export default function HotelTemplateHome({
         ? content.features
         : [];
 
+    const highlights = resolveHotelHighlights(
+      content.highlights,
+      hotel.slug,
+      hotel.name
+    );
+
     return {
-      badge: content.badge || 'Official Hotel Website',
+      badge:
+        content.badge ||
+        (isParPhuket ? 'Golf & Lifestyle Hotel in Phuket' : 'Official Hotel Website'),
       subtitle: content.subtitle || `Welcome to ${hotel.name}`,
-      title: content.title || hotel.name,
+      title:
+        content.title && !(isParPhuket && content.title === hotel.name)
+          ? content.title
+          : isParPhuket
+          ? 'Golf & Lifestyle Sanctuary At The Par Phuket'
+          : hotel.name,
       description: rawDesc,
       paragraphs: parsedParagraphs,
       hasCustomStory2: Boolean(content.story2_title?.trim() || rawStory2Desc),
@@ -207,6 +245,7 @@ export default function HotelTemplateHome({
       primaryImage: cleanImg(content.primary_image_url) || fallbackImg1,
       secondaryImage: cleanImg(content.secondary_image_url) || fallbackImg2,
       customFeatures,
+      highlights,
       features:
         customFeatures.length > 0
           ? customFeatures
@@ -215,7 +254,7 @@ export default function HotelTemplateHome({
               { title: 'Convenient Location', desc: hotel.address || 'Thoughtfully situated for your stay.' },
             ],
     };
-  }, [sections, hotel.name, hotel.address, heroPhotos, galleryPhotosPool]);
+  }, [sections, hotel.slug, hotel.name, hotel.address, heroPhotos, galleryPhotosPool]);
 
   const facilitiesData = useMemo(() => {
     const found = sections.find((s) => s.section_type === 'facilities' && s.is_enabled);
@@ -3087,6 +3126,82 @@ export default function HotelTemplateHome({
   // DISTINCT ABOUT / STORY SECTION LAYOUTS
   // =========================================================================
   const renderAboutSection = () => {
+    const renderHighlightIcon = (iconKey: HighlightIconKey) => {
+      const cls = 'w-5 h-5 shrink-0';
+      switch (iconKey) {
+        case 'flag':
+          return <Flag className={cls} />;
+        case 'trees':
+          return <Trees className={cls} />;
+        case 'dumbbell':
+          return <Dumbbell className={cls} />;
+        case 'presentation':
+          return <Presentation className={cls} />;
+        case 'shopping':
+          return <ShoppingBag className={cls} />;
+        case 'car':
+          return <Car className={cls} />;
+        case 'waves':
+          return <Waves className={cls} />;
+        case 'utensils':
+          return <Utensils className={cls} />;
+        case 'plane':
+          return <Plane className={cls} />;
+        case 'wifi':
+          return <Wifi className={cls} />;
+        case 'mappin':
+          return <MapPin className={cls} />;
+        case 'sparkles':
+        default:
+          return <Sparkles className={cls} />;
+      }
+    };
+
+    const renderHighlightsStrip = () => {
+      if (!aboutData.highlights || aboutData.highlights.length === 0) return null;
+      return (
+        <div
+          id="hotel-highlights"
+          className="w-full p-5 @3xl:p-8 border shadow-2xs grid grid-cols-1 @xl:grid-cols-2 gap-x-10 gap-y-5 text-left"
+          style={{
+            backgroundColor: cardBg,
+            borderColor: cardBorder,
+            borderRadius: btnRadius === '0px' ? '12px' : '16px',
+          }}
+        >
+          {aboutData.highlights.map((item, idx) => (
+            <div key={idx} className="flex items-start gap-3.5">
+              <div
+                className="mt-0.5 p-2 rounded-lg shrink-0"
+                style={{
+                  backgroundColor: withAlpha(accentColor, 0.14),
+                  color: isDark ? accentColor : primaryColor,
+                }}
+              >
+                {renderHighlightIcon(item.icon)}
+              </div>
+              <div className="min-w-0">
+                <h4
+                  className="text-sm @3xl:text-[15px] font-semibold leading-snug font-sans"
+                  style={{ color: textColor }}
+                >
+                  {item.title}
+                </h4>
+                {item.subtitle && (
+                  <p
+                    className="text-xs @3xl:text-[13px] leading-relaxed mt-0.5 font-sans"
+                    style={{ color: mutedText }}
+                  >
+                    {item.subtitle}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    };
+
     // #18 ROSEWOOD "SENSE OF PLACE / WHAT'S ON" 3-COL PORTRAIT OVERVIEW + FULL-WIDTH TABBED CAROUSEL
     if (template.aboutLayout === 'rosewood-sense-of-place') {
       const darkBtnBg = isDarkColor(secondaryColor) ? secondaryColor : '#1A1A1A';
@@ -3493,6 +3608,9 @@ export default function HotelTemplateHome({
                 </div>
               </div>
 
+              {/* HOTEL KEY HIGHLIGHTS BAR BELOW STORY ARTICLE */}
+              {renderHighlightsStrip()}
+
               {/* TIER 2: INSET EDITORIAL SECONDARY STORY BLOCK + SECOND AUTHENTIC HOTEL PHOTO */}
               <div
                 id="settle-in"
@@ -3668,7 +3786,7 @@ export default function HotelTemplateHome({
 
     if (template.aboutLayout === 'centered-manifesto') {
       return (
-        <section className="py-10 @3xl:py-20 px-4 @3xl:px-6 border-b" style={{ borderColor: cardBorder }}>
+        <section className="py-10 @3xl:py-20 px-4 @3xl:px-6 border-b space-y-8" style={{ borderColor: cardBorder }}>
           <div className="max-w-3xl mx-auto text-center space-y-4 @3xl:space-y-5">
             <span
               className="text-[10px] @3xl:text-xs font-bold uppercase tracking-[0.28em]"
@@ -3687,12 +3805,16 @@ export default function HotelTemplateHome({
               {aboutData.description}
             </p>
           </div>
+          {aboutData.highlights.length > 0 && (
+            <div className="max-w-5xl mx-auto">{renderHighlightsStrip()}</div>
+          )}
         </section>
       );
     }
 
     return (
-      <section className="max-w-7xl mx-auto px-4 @3xl:px-6 py-10 @3xl:py-20 grid grid-cols-1 @5xl:grid-cols-12 gap-8 @3xl:gap-12 items-center">
+      <section className="max-w-7xl mx-auto px-4 @3xl:px-6 py-10 @3xl:py-20 space-y-10">
+        <div className="grid grid-cols-1 @5xl:grid-cols-12 gap-8 @3xl:gap-12 items-center">
         <div className="@5xl:col-span-6 space-y-4 @3xl:space-y-5 text-left">
           <span
             className="text-[10px] @3xl:text-[11px] font-bold uppercase tracking-[0.28em]"
@@ -3746,6 +3868,8 @@ export default function HotelTemplateHome({
             <img src={aboutData.secondaryImage} alt={hotel.name} className="w-full h-full object-cover" />
           </div>
         </div>
+        </div>
+        {renderHighlightsStrip()}
       </section>
     );
   };

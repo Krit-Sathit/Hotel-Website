@@ -74,6 +74,8 @@ export interface Hotel {
     instagram: string;
     whatsapp: string;
     twitter: string;
+    seo_title?: string;
+    seo_description?: string;
   };
   theme: HotelTheme;
   homepage_layout: string[];
@@ -944,7 +946,14 @@ async function applyHotelThemeOverride(hotel: Hotel): Promise<Hotel> {
 
   const mergedSocials = { ...hotel.social_links };
   if (override.social_links) {
-    for (const key of ['facebook', 'instagram', 'whatsapp', 'twitter'] as const) {
+    for (const key of [
+      'facebook',
+      'instagram',
+      'whatsapp',
+      'twitter',
+      'seo_title',
+      'seo_description',
+    ] as const) {
       const val = override.social_links[key];
       if (typeof val === 'string' && val.trim() !== '') {
         mergedSocials[key] = val.trim();

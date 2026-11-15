@@ -15,6 +15,7 @@ import PageViewTracker from '@/components/analytics/page-view-tracker';
 import HotelTemplateHome from '@/components/templates/hotel-template-home';
 import { HOTEL_WEBSITE_TEMPLATES } from '@/lib/hotel-templates';
 import { getBookingEngineUrl } from '@/lib/booking-engine';
+import { resolveHotelSeo } from '@/lib/hotel-seo-highlights';
 
 interface TenantPageProps {
   params: Promise<{ tenant: string }>;
@@ -34,38 +35,34 @@ export async function generateMetadata({
   params,
 }: Pick<TenantPageProps, 'params'>): Promise<Metadata> {
   const { tenant } = await params;
+  const hotel = await getHotelBySlug(tenant);
+  if (!hotel) return {};
 
-  if (tenant === 'the-par-phuket') {
-    return {
-      title: 'The Par Phuket – Luxury Boutique Hotel | ที่พักหรูภูเก็ต',
-      description:
-        'The Par Phuket – โรงแรมบูติคสุดหรูในภูเก็ต ประเทศไทย สัมผัสประสบการณ์ความหรูหราท่ามกลางธรรมชาติ',
-      alternates: {
-        canonical: 'https://theparphuket.com',
-      },
-      robots: {
-        index: true,
-        follow: true,
-      },
-    };
-  }
+  const seo = resolveHotelSeo(hotel);
+  const canonicalUrl = hotel.custom_domain
+    ? `https://${hotel.custom_domain.replace(/^https?:\/\//i, '').replace(/\/+$/, '')}`
+    : undefined;
 
-  if (tenant === 'phuket-airport-villa') {
-    return {
-      title: 'Phuket Airport Villa – Luxury Villa & Resort | ที่พักใกล้สนามบินภูเก็ต',
-      description:
-        'Phuket Airport Villa – วิลล่าหรูส่วนตัวใกล้สนามบินภูเก็ต สัมผัสการพักผ่อนอันเงียบสงบและสะดวกสบาย',
-      alternates: {
-        canonical: 'https://phuketairportvilla.com',
-      },
-      robots: {
-        index: true,
-        follow: true,
-      },
-    };
-  }
-
-  return {};
+  return {
+    title: seo.title,
+    description: seo.description,
+    ...(canonicalUrl ? { alternates: { canonical: canonicalUrl } } : {}),
+    openGraph: {
+      title: seo.title,
+      description: seo.description,
+      type: 'website',
+      ...(canonicalUrl ? { url: canonicalUrl } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: seo.title,
+      description: seo.description,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
 }
 
 export default async function TenantPage({ params, searchParams }: TenantPageProps) {

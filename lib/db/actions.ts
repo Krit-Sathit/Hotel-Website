@@ -57,6 +57,8 @@ export async function saveGeneralSettingsAction(
     instagram: string;
     whatsapp: string;
     twitter: string;
+    seo_title?: string;
+    seo_description?: string;
   }
 ) {
   try {
@@ -71,7 +73,9 @@ export async function saveGeneralSettingsAction(
         facebook: data.facebook,
         instagram: data.instagram,
         whatsapp: data.whatsapp,
-        twitter: data.twitter
+        twitter: data.twitter,
+        seo_title: data.seo_title?.trim() || '',
+        seo_description: data.seo_description?.trim() || '',
       }
     });
 
@@ -124,6 +128,7 @@ export async function saveAboutSectionAction(
     primary_image_url?: string;
     secondary_image_url?: string;
     features?: Array<{ title: string; desc: string; image_url?: string }>;
+    highlights?: Array<{ icon: string; title: string; subtitle: string }>;
   }
 ) {
   try {

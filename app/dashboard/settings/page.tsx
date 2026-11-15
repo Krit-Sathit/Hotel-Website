@@ -12,6 +12,7 @@ import {
   Navigation,
   Compass,
   ExternalLink,
+  Search,
 } from 'lucide-react';
 import { saveGeneralSettingsAction, deleteHotelAction, getAllHotelsAction } from '@/lib/db/actions';
 import { peekAdminBundle, loadAdminBundle, invalidateAdminCache } from '@/lib/admin-client-cache';
@@ -20,11 +21,13 @@ import {
   extractLatLng,
   normalizeMapEmbedUrl,
 } from '@/lib/map-utils';
+import { resolveHotelSeo } from '@/lib/hotel-seo-highlights';
 import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
   const router = useRouter();
   const initialHotel = peekAdminBundle()?.hotel;
+  const initialSeo = resolveHotelSeo(initialHotel);
   const [hotelId, setHotelId] = useState(initialHotel?.id || '');
   const [formData, setFormData] = useState({
     name: initialHotel?.name || '',
@@ -37,6 +40,8 @@ export default function SettingsPage() {
     instagram: initialHotel?.social_links?.instagram || '',
     whatsapp: initialHotel?.social_links?.whatsapp || '',
     twitter: initialHotel?.social_links?.twitter || '',
+    seo_title: initialHotel?.social_links?.seo_title || initialSeo.title,
+    seo_description: initialHotel?.social_links?.seo_description || initialSeo.description,
   });
 
   const [isLoading, setIsLoading] = useState(!initialHotel);
@@ -98,6 +103,7 @@ export default function SettingsPage() {
   // Load active hotel data from client bundle cache / API
   useEffect(() => {
     const applyHotel = (hotel: any) => {
+      const seoDefaults = resolveHotelSeo(hotel);
       setHotelId(hotel.id);
       setFormData({
         name: hotel.name,
@@ -110,6 +116,8 @@ export default function SettingsPage() {
         instagram: hotel.social_links?.instagram || '',
         whatsapp: hotel.social_links?.whatsapp || '',
         twitter: hotel.social_links?.twitter || '',
+        seo_title: hotel.social_links?.seo_title || seoDefaults.title,
+        seo_description: hotel.social_links?.seo_description || seoDefaults.description,
       });
     };
 
@@ -455,6 +463,74 @@ export default function SettingsPage() {
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-xs md:text-sm text-slate-250 placeholder-slate-600 outline-none focus:border-accent transition-colors"
                 placeholder="https://twitter.com/..."
               />
+            </div>
+          </div>
+        </div>
+
+        {/* SEO FOR GOOGLE SEARCH BLOCK */}
+        <div className="bg-slate-900 border border-slate-800/60 p-6 md:p-8 rounded-xl space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-850 pb-3">
+            <div className="flex items-center gap-2">
+              <Search className="w-4 h-4 text-accent" />
+              <h3 className="text-xs font-bold text-slate-200 uppercase tracking-widest">
+                SEO สำหรับ Google Search (SEO Title &amp; Meta Description)
+              </h3>
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] text-slate-450 uppercase font-bold tracking-wider">
+                  SEO Title (หัวข้อที่แสดงบน Google Search)
+                </label>
+                <span className="text-[10px] text-slate-500 font-mono">
+                  {(formData.seo_title || '').length} chars
+                </span>
+              </div>
+              <input
+                type="text"
+                name="seo_title"
+                value={formData.seo_title}
+                onChange={handleChange}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-xs md:text-sm text-slate-200 placeholder-slate-600 outline-none focus:border-accent transition-colors"
+                placeholder={`${formData.name || 'Hotel'} | Official Hotel Website`}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] text-slate-450 uppercase font-bold tracking-wider">
+                  Meta Description (คำอธิบายใต้ชื่อเว็บในผลการค้นหา Google)
+                </label>
+                <span className="text-[10px] text-slate-500 font-mono">
+                  {(formData.seo_description || '').length} chars
+                </span>
+              </div>
+              <textarea
+                name="seo_description"
+                rows={3}
+                value={formData.seo_description}
+                onChange={handleChange}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-xs md:text-sm text-slate-200 placeholder-slate-600 outline-none focus:border-accent transition-colors leading-relaxed"
+                placeholder="Stay at your hotel... Enjoy scenic views, amenities, and direct booking privileges."
+              />
+            </div>
+
+            {/* Live Google Search Snippet Preview */}
+            <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                ตัวอย่างการแสดงผลบน Google Search (Live Preview)
+              </span>
+              <p className="text-xs text-emerald-700 truncate">
+                https://{formData.custom_domain || 'yourhotel.com'}
+              </p>
+              <p className="text-base font-semibold text-[#1a0dab] leading-snug line-clamp-1">
+                {formData.seo_title || `${formData.name} — Official Hotel Website`}
+              </p>
+              <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
+                {formData.seo_description || `Official website for ${formData.name}.`}
+              </p>
             </div>
           </div>
         </div>

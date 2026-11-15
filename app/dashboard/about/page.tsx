@@ -16,6 +16,14 @@ import {
   loadAdminBundle,
   invalidateAdminCache,
 } from '@/lib/admin-client-cache';
+import {
+  HIGHLIGHT_ICON_OPTIONS,
+  THE_PAR_PHUKET_DEFAULT_HIGHLIGHTS,
+  resolveHotelHighlights,
+  isTheParPhuketHotel,
+  type HighlightIconKey,
+  type HighlightStripItem,
+} from '@/lib/hotel-seo-highlights';
 
 type FeatureItem = {
   title: string;
@@ -33,6 +41,7 @@ type AboutContent = {
   primary_image_url?: string;
   secondary_image_url?: string;
   features?: FeatureItem[];
+  highlights?: HighlightStripItem[];
 };
 
 const emptyContent: AboutContent = {
@@ -45,6 +54,7 @@ const emptyContent: AboutContent = {
   primary_image_url: '',
   secondary_image_url: '',
   features: [],
+  highlights: [],
 };
 
 async function compressImageToWebP(
@@ -141,16 +151,32 @@ export default function AboutSectionEditorPage() {
         (section: { section_type: string }) => section.section_type === 'about'
       );
       const hName = data?.hotel?.name || '';
+      const hSlug = data?.hotel?.slug || '';
+      const isParPhuket = isTheParPhuketHotel(hSlug, hName);
+      const isGenericFlowstayPlaceholder =
+        typeof about?.content?.description === 'string' &&
+        about.content.description.includes('Experience warm hospitality, thoughtfully designed rooms');
+
       setHotelId(data?.hotel?.id || '');
       setHotelName(hName);
       setContent({
         ...emptyContent,
-        title: about?.content?.title || `Welcome to ${hName}`,
+        title:
+          about?.content?.title && !(isParPhuket && about.content.title === hName)
+            ? about.content.title
+            : isParPhuket
+            ? 'Golf & Lifestyle Sanctuary At The Par Phuket'
+            : `Welcome to ${hName}`,
         subtitle: about?.content?.subtitle || hName,
-        badge: about?.content?.badge || 'Official Hotel Website',
+        badge:
+          about?.content?.badge ||
+          (isParPhuket ? 'Golf & Lifestyle Hotel in Phuket' : 'Official Hotel Website'),
         description:
-          about?.content?.description ||
-          `Welcome to ${hName}. Experience warm hospitality, thoughtfully designed accommodations, and effortless comfort. Book directly on our official website for exclusive direct rates and privileges.`,
+          about?.content?.description && !(isParPhuket && isGenericFlowstayPlaceholder)
+            ? about.content.description
+            : isParPhuket
+            ? `Surrounded by the lush fairways of Phuket Country Club Golf Course in Kathu, The Par Phuket is a distinctive golf and lifestyle hotel blending serene greenery views with modern boutique comfort.\n\nGuests enjoy an on-site Muay Thai training camp, dedicated meeting & conference facilities, spacious on-site parking, and convenient proximity to Bang Wad Reservoir and Central Festival Phuket.`
+            : `Welcome to ${hName}. Experience warm hospitality, thoughtfully designed accommodations, and effortless comfort. Book directly on our official website for exclusive direct rates and privileges.`,
         story2_title:
           about?.content?.story2_title || `Plan Your Stay at ${hName}`,
         story2_description:
@@ -161,6 +187,11 @@ export default function AboutSectionEditorPage() {
         features: Array.isArray(about?.content?.features)
           ? about.content.features
           : [],
+        highlights: resolveHotelHighlights(
+          about?.content?.highlights,
+          hSlug,
+          hName
+        ),
       });
       setPhotoPool(extractPhotoPool(data));
     };
@@ -275,6 +306,31 @@ export default function AboutSectionEditorPage() {
     );
   };
 
+  const addHighlightItem = () => {
+    const current = content.highlights || [];
+    if (current.length >= 8) return;
+    update('highlights', [
+      ...current,
+      { icon: 'sparkles', title: '', subtitle: '' },
+    ]);
+  };
+
+  const updateHighlightItem = (
+    idx: number,
+    patch: Partial<HighlightStripItem>
+  ) => {
+    const next = [...(content.highlights || [])];
+    next[idx] = { ...next[idx], ...patch };
+    update('highlights', next);
+  };
+
+  const removeHighlightItem = (idx: number) => {
+    update(
+      'highlights',
+      (content.highlights || []).filter((_, i) => i !== idx)
+    );
+  };
+
   const save = async () => {
     if (!hotelId || !content.title.trim() || !content.description.trim()) {
       setNotification({
@@ -288,9 +344,13 @@ export default function AboutSectionEditorPage() {
     const cleanedFeatures = (content.features || []).filter(
       (f) => f.title.trim() || f.desc.trim()
     );
+    const cleanedHighlights = (content.highlights || []).filter(
+      (h) => h.title.trim() || h.subtitle.trim()
+    );
     const result = await saveAboutSectionAction(hotelId, {
       ...content,
       features: cleanedFeatures,
+      highlights: cleanedHighlights,
     });
     if (result.success) {
       invalidateAdminCache(hotelId);
@@ -405,6 +465,98 @@ export default function AboutSectionEditorPage() {
             placeholder="เขียนบรรยายจุดเด่น บรรยากาศ ทำเลที่ตั้งจริงของโรงแรม (เช่น ใกล้สนามกอล์ฟ ภูเขา ตัวเมือง หรือชายหาด)..."
           />
         </label>
+      </div>
+
+      {/* SECTION 1B: HOTEL HIGHLIGHTS STRIP BELOW STORY ARTICLE */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-5 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+              แถบจุดเด่นของโรงแรมใต้บทความ (Hotel Highlights Bar)
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              แสดงเป็นแถบไอคอน 2 คอลัมน์ใต้บทความแนะนำโรงแรม เพื่อให้ลูกค้าเห็นจุดขายสำคัญได้ทันที (เช่น สนามกอล์ฟ มวยไทย ห้องประชุม ที่จอดรถ)
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {(content.highlights?.length || 0) === 0 && (
+              <button
+                type="button"
+                onClick={() =>
+                  update('highlights', [...THE_PAR_PHUKET_DEFAULT_HIGHLIGHTS])
+                }
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-600 cursor-pointer"
+              >
+                โหลดตัวอย่าง 6 จุดเด่น
+              </button>
+            )}
+            {(content.highlights?.length || 0) < 8 && (
+              <button
+                type="button"
+                onClick={addHighlightItem}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 hover:border-slate-400 text-xs font-bold uppercase tracking-wider text-slate-700 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                เพิ่มจุดเด่น ({content.highlights?.length || 0}/8)
+              </button>
+            )}
+          </div>
+        </div>
+
+        {(content.highlights?.length || 0) > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {(content.highlights || []).map((item, idx) => (
+              <div
+                key={idx}
+                className="border border-slate-200 rounded-lg p-4 space-y-3 bg-slate-50/50"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <select
+                    value={item.icon}
+                    onChange={(e) =>
+                      updateHighlightItem(idx, {
+                        icon: e.target.value as HighlightIconKey,
+                      })
+                    }
+                    className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700"
+                  >
+                    {HIGHLIGHT_ICON_OPTIONS.map((opt) => (
+                      <option key={opt.key} value={opt.key}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => removeHighlightItem(idx)}
+                    className="text-xs font-bold text-red-500 hover:text-red-600 inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    ลบ
+                  </button>
+                </div>
+
+                <input
+                  value={item.title}
+                  onChange={(e) =>
+                    updateHighlightItem(idx, { title: e.target.value })
+                  }
+                  className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm font-semibold text-slate-800"
+                  placeholder="หัวข้อ เช่น Golf Course Setting"
+                />
+
+                <input
+                  value={item.subtitle}
+                  onChange={(e) =>
+                    updateHighlightItem(idx, { subtitle: e.target.value })
+                  }
+                  className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-xs text-slate-600"
+                  placeholder="คำอธิบายสั้นๆ เช่น Surrounded by Phuket Country Club"
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* SECTION 2: SECONDARY STORY BOX */}

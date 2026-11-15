@@ -15,6 +15,7 @@ import {
   extractLatLng,
   formatPhoneForSchema,
 } from '@/lib/map-utils';
+import { resolveHotelSeo } from '@/lib/hotel-seo-highlights';
 
 interface TenantLayoutProps {
   children: React.ReactNode;
@@ -24,22 +25,29 @@ interface TenantLayoutProps {
 export async function generateMetadata({ params }: Pick<TenantLayoutProps, 'params'>): Promise<Metadata> {
   const { tenant } = await params;
   const hotel = await getHotelBySlug(tenant);
-  const hotelName = hotel?.name || 'Hotel';
-  const contactSnippet = [
-    hotel?.address ? `Address: ${hotel.address}` : '',
-    hotel?.phone ? `Tel: ${hotel.phone}` : '',
-  ]
-    .filter(Boolean)
-    .join(' | ');
+  const seo = resolveHotelSeo(hotel);
+  const canonicalUrl = hotel?.custom_domain
+    ? `https://${hotel.custom_domain.replace(/^https?:\/\//i, '').replace(/\/+$/, '')}`
+    : undefined;
 
   return {
-    title: `${hotelName} — Official Hotel Website`,
-    description: contactSnippet
-      ? `Official website for ${hotelName}. ${contactSnippet}. Book direct for the best guaranteed rates.`
-      : `Official website for ${hotelName}.`,
+    title: seo.title,
+    description: seo.description,
+    ...(canonicalUrl ? { alternates: { canonical: canonicalUrl } } : {}),
+    openGraph: {
+      title: seo.title,
+      description: seo.description,
+      type: 'website',
+      ...(canonicalUrl ? { url: canonicalUrl } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: seo.title,
+      description: seo.description,
+    },
     icons: {
-      icon: '/hotel-icon.svg'
-    }
+      icon: '/hotel-icon.svg',
+    },
   };
 }
 
@@ -73,11 +81,17 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
     ? `https://${host}${tenantPrefix}`
     : undefined;
 
+  const seo = resolveHotelSeo(hotel);
+  const socialSameAs = (['facebook', 'instagram', 'whatsapp', 'twitter'] as const)
+    .map((k) => hotel.social_links?.[k]?.trim())
+    .filter((v): v is string => Boolean(v));
+
   // Official Schema.org Hotel JSON-LD for Google Knowledge Graph & GBP NAP/Pin Verification
   const hotelJsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Hotel',
     name: hotel.name,
+    description: seo.description,
     ...(canonicalDomain ? { url: canonicalDomain } : {}),
     ...(hotel.logo_url ? { logo: hotel.logo_url, image: hotel.logo_url } : {}),
     ...(hotel.phone ? { telephone: formatPhoneForSchema(hotel.phone) } : {}),
@@ -101,7 +115,7 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
         }
       : {}),
     hasMap: mapDirectionsHref,
-    sameAs: Object.values(hotel.social_links || {}).filter(Boolean),
+    sameAs: socialSameAs,
   };
 
   // Curated list of navigation links with tenant-aware hrefs
