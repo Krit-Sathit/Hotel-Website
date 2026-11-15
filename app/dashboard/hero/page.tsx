@@ -1,7 +1,17 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, memo } from 'react';
-import { Save, Plus, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, AlertCircle, CheckCircle } from 'lucide-react';
+import {
+  Save,
+  Plus,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  GripVertical,
+  Image as ImageIcon,
+  AlertCircle,
+  CheckCircle,
+} from 'lucide-react';
 import { saveHeroSlidesAction } from '@/lib/db/actions';
 import { peekAdminBundle, loadAdminBundle, invalidateAdminCache } from '@/lib/admin-client-cache';
 import type { HeroSlide } from '@/lib/db/mock-data';
@@ -10,24 +20,48 @@ interface SlideEditorCardProps {
   slide: HeroSlide;
   index: number;
   totalSlides: number;
+  isDragOver: boolean;
   onFieldChange: (index: number, field: keyof HeroSlide, value: any) => void;
   onMoveSlide: (index: number, direction: 'up' | 'down') => void;
   onDeleteSlide: (index: number) => void;
+  onDragStartSlide: (index: number) => void;
+  onDragOverSlide: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
+  onDropSlide: (index: number) => void;
+  onDragEndSlide: () => void;
 }
 
 const SlideEditorCard = memo(function SlideEditorCard({
   slide,
   index,
   totalSlides,
+  isDragOver,
   onFieldChange,
   onMoveSlide,
   onDeleteSlide,
+  onDragStartSlide,
+  onDragOverSlide,
+  onDropSlide,
+  onDragEndSlide,
 }: SlideEditorCardProps) {
   return (
-    <div className="bg-slate-900 border border-slate-800/60 p-6 rounded-xl grid grid-cols-1 md:grid-cols-12 gap-6 relative shadow-sm hover:border-slate-750 transition-all">
+    <div
+      onDragOver={(e) => onDragOverSlide(e, index)}
+      onDrop={() => onDropSlide(index)}
+      className={`bg-slate-900 border p-6 rounded-xl grid grid-cols-1 md:grid-cols-12 gap-6 relative shadow-sm transition-all ${
+        isDragOver
+          ? 'border-accent ring-2 ring-accent/30'
+          : 'border-slate-800/60 hover:border-slate-750'
+      }`}
+    >
       {/* Left Column: Image Preview & Sorting Actions (3 cols) */}
       <div className="md:col-span-3 flex flex-col justify-between items-center gap-4">
-        <div className="relative w-full aspect-[16/10] bg-slate-950 rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center text-slate-600">
+        <div
+          draggable
+          onDragStart={() => onDragStartSlide(index)}
+          onDragEnd={onDragEndSlide}
+          title="ลากเพื่อสลับลำดับสไลด์ (Drag to reorder)"
+          className="relative w-full aspect-[16/10] bg-slate-950 rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center text-slate-600 cursor-grab active:cursor-grabbing"
+        >
           {slide.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -35,44 +69,48 @@ const SlideEditorCard = memo(function SlideEditorCard({
               alt="Thumbnail preview"
               loading="lazy"
               decoding="async"
-              className="w-full h-full object-cover"
+              draggable={false}
+              className="w-full h-full object-cover pointer-events-none"
             />
           ) : (
             <ImageIcon className="w-8 h-8" />
           )}
-          <div className="absolute top-2 left-2 bg-black/75 text-accent text-[9px] font-bold px-2 py-0.5 rounded border border-white/10 tracking-widest uppercase">
-            Slide {index + 1}
+          <div className="absolute top-2 left-2 bg-black/80 text-white text-[10px] font-bold px-2.5 py-1 rounded border border-white/15 tracking-widest uppercase flex items-center gap-1">
+            <GripVertical className="w-3 h-3 text-accent" />
+            <span>Slide {index + 1}</span>
           </div>
         </div>
 
-        {/* Move & Trash Buttons */}
-        <div className="flex items-center justify-between w-full border-t border-slate-850 pt-3">
-          <div className="flex items-center bg-slate-950 border border-slate-800 rounded p-1">
+        {/* Prominent Move Up / Move Down & Delete Buttons */}
+        <div className="flex items-center justify-between w-full border-t border-slate-850 pt-3 gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => onMoveSlide(index, 'up')}
               disabled={index === 0}
-              className="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded disabled:opacity-20 transition-colors"
-              title="Move Up"
+              className="px-2.5 py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-700 text-slate-200 rounded-md flex items-center gap-1 text-[11px] font-semibold disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              title="เลื่อนสไลด์ขึ้น (Move Up)"
             >
-              <ChevronUp className="w-3.5 h-3.5" />
+              <ArrowUp className="w-3.5 h-3.5" />
+              <span>ขึ้น</span>
             </button>
             <button
               type="button"
               onClick={() => onMoveSlide(index, 'down')}
               disabled={index === totalSlides - 1}
-              className="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded disabled:opacity-20 transition-colors"
-              title="Move Down"
+              className="px-2.5 py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-700 text-slate-200 rounded-md flex items-center gap-1 text-[11px] font-semibold disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              title="เลื่อนสไลด์ลง (Move Down)"
             >
-              <ChevronDown className="w-3.5 h-3.5" />
+              <ArrowDown className="w-3.5 h-3.5" />
+              <span>ลง</span>
             </button>
           </div>
 
           <button
             type="button"
             onClick={() => onDeleteSlide(index)}
-            className="p-2 bg-red-550/5 hover:bg-red-500/10 text-red-400 hover:text-red-300 border border-red-500/10 rounded transition-colors"
-            title="Delete Slide"
+            className="p-2 bg-red-550/5 hover:bg-red-500/10 text-red-400 hover:text-red-300 border border-red-500/20 rounded-md cursor-pointer transition-colors"
+            title="ลบสไลด์ (Delete Slide)"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -176,6 +214,8 @@ export default function HeroPage() {
   const initialCached = peekAdminBundle();
   const [hotelId, setHotelId] = useState(initialCached?.hotel?.id || '');
   const [slides, setSlides] = useState<HeroSlide[]>(initialCached?.slides || []);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(!initialCached?.complete);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -205,7 +245,7 @@ export default function HeroPage() {
   useEffect(() => {
     void getActiveSlides(false);
     const onHotelChanged = () => {
-      void getActiveSlides(false);
+      void getActiveSlides(true);
     };
     window.addEventListener('active-hotel-changed', onHotelChanged);
     return () => window.removeEventListener('active-hotel-changed', onHotelChanged);
@@ -269,11 +309,47 @@ export default function HeroPage() {
     });
   }, []);
 
+  const handleDragStartSlide = useCallback((index: number) => {
+    setDragIndex(index);
+  }, []);
+
+  const handleDragOverSlide = useCallback((e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  }, []);
+
+  const handleDropSlide = useCallback(
+    (targetIndex: number) => {
+      if (dragIndex === null || dragIndex === targetIndex) {
+        setDragIndex(null);
+        setDragOverIndex(null);
+        return;
+      }
+      setSlides((prev) => {
+        const updated = [...prev];
+        const [moved] = updated.splice(dragIndex, 1);
+        updated.splice(targetIndex, 0, moved);
+        return updated.map((slide, idx) => ({
+          ...slide,
+          sort_order: idx,
+        }));
+      });
+      setDragIndex(null);
+      setDragOverIndex(null);
+    },
+    [dragIndex]
+  );
+
+  const handleDragEndSlide = useCallback(() => {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  }, []);
+
   const handleSaveSlides = async () => {
     setIsSaving(true);
     setNotification(null);
 
-    const invalidSlide = slides.find((s) => !s.image_url.trim());
+    const invalidSlide = slides.find((s) => !s.image_url?.trim());
     if (invalidSlide) {
       setNotification({
         type: 'error',
@@ -283,10 +359,19 @@ export default function HeroPage() {
       return;
     }
 
-    const result = await saveHeroSlidesAction(hotelId, slides);
+    const orderedSlides = slides.map((s, idx) => ({
+      ...s,
+      sort_order: idx,
+    }));
+
+    const result = await saveHeroSlidesAction(hotelId || 'theparphuket', orderedSlides);
 
     if (result.success) {
       invalidateAdminCache(hotelId);
+      const fresh = await loadAdminBundle({ force: true });
+      if (fresh?.slides) {
+        setSlides(fresh.slides);
+      }
       setNotification({
         type: 'success',
         message: 'Hero slider configuration saved successfully. Slider updates are now live.',
@@ -372,9 +457,14 @@ export default function HeroPage() {
               slide={slide}
               index={index}
               totalSlides={slides.length}
+              isDragOver={dragOverIndex === index && dragIndex !== index}
               onFieldChange={handleFieldChange}
               onMoveSlide={moveSlide}
               onDeleteSlide={deleteSlide}
+              onDragStartSlide={handleDragStartSlide}
+              onDragOverSlide={handleDragOverSlide}
+              onDropSlide={handleDropSlide}
+              onDragEndSlide={handleDragEndSlide}
             />
           ))}
         </div>

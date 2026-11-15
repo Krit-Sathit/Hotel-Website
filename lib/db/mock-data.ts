@@ -857,16 +857,14 @@ let hotelCustomizationCache: {
 
 export function clearFlowStayCache(slugOrId?: string) {
   hotelCustomizationCache = null;
-  if (!slugOrId) {
-    flowStayBundleCache.clear();
-    flowStayAllHotelsCache = null;
-    return;
-  }
-  const rawKey = String(slugOrId).trim().toLowerCase();
-  const key = normalizeFlowStayIdentifier(rawKey);
-  flowStayBundleCache.delete(rawKey);
-  flowStayBundleCache.delete(key);
+  // Always clear all FlowStay bundle cache keys (both numeric ID and slug aliases)
+  flowStayBundleCache.clear();
   flowStayAllHotelsCache = null;
+  if (slugOrId) {
+    const rawKey = String(slugOrId).trim().toLowerCase();
+    flowStayInFlight.delete(rawKey);
+    flowStayInFlight.delete(normalizeFlowStayIdentifier(rawKey));
+  }
 }
 
 async function getHotelCustomizationMap(): Promise<Map<string, Partial<Hotel>>> {
@@ -964,14 +962,18 @@ async function applyHotelThemeOverride(hotel: Hotel): Promise<Hotel> {
         ? String(override.custom_domain).trim()
         : hotel.custom_domain,
     social_links: mergedSocials,
-    theme: override.theme
-      ? {
-          ...hotel.theme,
-          ...override.theme,
-        }
-      : hotel.theme,
-  };
-}
+      theme: override.theme
+        ? {
+            ...hotel.theme,
+            ...override.theme,
+          }
+        : hotel.theme,
+      homepage_layout:
+        Array.isArray(override.homepage_layout) && override.homepage_layout.length > 0
+          ? override.homepage_layout
+          : hotel.homepage_layout,
+    };
+  }
 
 function cacheFlowStayBundle(requestedKey: string, bundle: FlowStayWebsiteBundle | null) {
   const ttl = bundle ? FLOWSTAY_CACHE_TTL_MS : FLOWSTAY_NEGATIVE_CACHE_TTL_MS;
@@ -1323,17 +1325,20 @@ export async function getHotelByDomain(domain: string): Promise<Hotel | null> {
 
 export async function getHeroSlides(hotelId: string): Promise<HeroSlide[]> {
   const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
-  if (flowstayBundle?.slides && flowstayBundle.slides.length > 0) {
-    return flowstayBundle.slides;
-  }
 
+  // 1. Highest priority: Admin-saved / reordered Hero Slides in Supabase
   if (isSupabaseConfigured && hotelId !== 'hotel-1784206393534') {
     try {
-      const slides = await getSupabaseHeroSlides(hotelId);
+      const slides = await getSupabaseHeroSlides(hotelId, flowstayBundle?.hotel);
       if (slides && slides.length > 0) return slides;
     } catch (e) {
       console.error('getHeroSlides Supabase error:', e);
     }
+  }
+
+  // 2. Fallback: Auto-generated slides from FlowStay PMS
+  if (flowstayBundle?.slides && flowstayBundle.slides.length > 0) {
+    return flowstayBundle.slides;
   }
 
   const db = getDb();
@@ -1344,17 +1349,36 @@ export async function getHeroSlides(hotelId: string): Promise<HeroSlide[]> {
 
 export async function getHomepageSections(hotelId: string): Promise<HomepageSection[]> {
   const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
-  if (flowstayBundle?.sections && flowstayBundle.sections.length > 0) {
-    return flowstayBundle.sections;
-  }
+  const flowstaySections = Array.isArray(flowstayBundle?.sections)
+    ? flowstayBundle!.sections
+    : [];
 
   if (isSupabaseConfigured && hotelId !== 'hotel-1784206393534') {
     try {
-      const sections = await getSupabaseHomepageSections(hotelId);
-      if (sections && sections.length > 0) return sections;
+      const sbSections = await getSupabaseHomepageSections(
+        hotelId,
+        flowstayBundle?.hotel
+      );
+      if (sbSections && sbSections.length > 0) {
+        if (flowstaySections.length === 0) return sbSections;
+        const byType = new Map<string, HomepageSection>();
+        for (const sec of flowstaySections) {
+          byType.set(sec.section_type, sec);
+        }
+        for (const sec of sbSections) {
+          byType.set(sec.section_type, sec);
+        }
+        return Array.from(byType.values()).sort(
+          (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+        );
+      }
     } catch (e) {
       console.error('getHomepageSections Supabase error:', e);
     }
+  }
+
+  if (flowstaySections.length > 0) {
+    return flowstaySections;
   }
 
   const db = getDb();
@@ -1368,8 +1392,11 @@ export async function saveHomepageSection(
   sectionType: string,
   content: HomepageSection['content']
 ): Promise<void> {
+  const currentHotel = await getHotelBySlug(hotelId);
   if (isSupabaseConfigured) {
-    return saveSupabaseHomepageSection(hotelId, sectionType, content);
+    await saveSupabaseHomepageSection(hotelId, sectionType, content, currentHotel);
+    clearFlowStayCache(hotelId);
+    return;
   }
 
   const db = getDb();
@@ -1389,6 +1416,7 @@ export async function saveHomepageSection(
     });
   }
   saveDb(db);
+  clearFlowStayCache(hotelId);
 }
 
 export async function getRooms(hotelId: string): Promise<Room[]> {
@@ -1579,7 +1607,8 @@ export async function getBlogPostBySlug(hotelId: string, slug: string): Promise<
 
 export async function getContactMessages(hotelId: string): Promise<ContactMessage[]> {
   if (isSupabaseConfigured) {
-    return getSupabaseContactMessages(hotelId);
+    const currentHotel = await getHotelBySlug(hotelId);
+    return getSupabaseContactMessages(hotelId, currentHotel);
   }
   const db = getDb();
   return db.contact_messages
@@ -1589,7 +1618,8 @@ export async function getContactMessages(hotelId: string): Promise<ContactMessag
 
 export async function saveContactMessage(hotelId: string, data: Omit<ContactMessage, 'id' | 'hotel_id' | 'created_at'>): Promise<ContactMessage> {
   if (isSupabaseConfigured) {
-    return saveSupabaseContactMessage(hotelId, data);
+    const currentHotel = await getHotelBySlug(hotelId);
+    return saveSupabaseContactMessage(hotelId, data, currentHotel);
   }
   const db = getDb();
   const newMessage: ContactMessage = {
@@ -1715,7 +1745,8 @@ export async function updateHotelGeneralSettings(
 
 export async function trackAnalyticsEvent(hotelId: string, event_type: AnalyticsEvent['event_type'], page_path: string, room_id?: string): Promise<void> {
   if (isSupabaseConfigured) {
-    return trackSupabaseAnalyticsEvent(hotelId, event_type, page_path, room_id);
+    const currentHotel = await getHotelBySlug(hotelId);
+    return trackSupabaseAnalyticsEvent(hotelId, event_type, page_path, room_id, currentHotel);
   }
   const db = getDb();
   const newEvent: AnalyticsEvent = {
@@ -1732,7 +1763,8 @@ export async function trackAnalyticsEvent(hotelId: string, event_type: Analytics
 
 export async function getAnalyticsOverview(hotelId: string) {
   if (isSupabaseConfigured) {
-    return getSupabaseAnalyticsOverview(hotelId);
+    const currentHotel = await getHotelBySlug(hotelId);
+    return getSupabaseAnalyticsOverview(hotelId, currentHotel);
   }
   const db = getDb();
   const events = db.analytics_events.filter(e => e.hotel_id === hotelId);
@@ -1861,17 +1893,31 @@ export async function getAllHotels(): Promise<Hotel[]> {
 
 export async function getAllPromotions(hotelId: string): Promise<Promotion[]> {
   const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
-  if (flowstayBundle && Array.isArray(flowstayBundle.promotions) && flowstayBundle.promotions.length > 0) {
-    return flowstayBundle.promotions;
-  }
+  const flowstayPromos = Array.isArray(flowstayBundle?.promotions)
+    ? flowstayBundle!.promotions
+    : [];
 
   if (isSupabaseConfigured && hotelId !== 'hotel-1784206393534') {
     try {
-      const promos = await getSupabaseAllPromotions(hotelId);
-      if (promos && promos.length > 0) return promos;
+      const promos = await getSupabaseAllPromotions(
+        hotelId,
+        flowstayBundle?.hotel
+      );
+      if (promos && promos.length > 0) {
+        if (flowstayPromos.length === 0) return promos;
+        const seenIds = new Set(promos.map((p) => p.id));
+        return [
+          ...promos,
+          ...flowstayPromos.filter((p) => !seenIds.has(p.id)),
+        ];
+      }
     } catch (e) {
       console.error('getAllPromotions Supabase error:', e);
     }
+  }
+
+  if (flowstayPromos.length > 0) {
+    return flowstayPromos;
   }
 
   const db = getDb();
@@ -1879,20 +1925,27 @@ export async function getAllPromotions(hotelId: string): Promise<Promotion[]> {
 }
 
 export async function saveHeroSlides(hotelId: string, slides: HeroSlide[]): Promise<void> {
+  const currentHotel = await getHotelBySlug(hotelId);
   if (isSupabaseConfigured) {
-    return saveSupabaseHeroSlides(hotelId, slides);
+    await saveSupabaseHeroSlides(hotelId, slides, currentHotel);
+    clearFlowStayCache(hotelId);
+    return;
   }
   const db = getDb();
   db.hero_slides = [
     ...db.hero_slides.filter(s => s.hotel_id !== hotelId),
-    ...slides
+    ...slides.map((s, idx) => ({ ...s, hotel_id: hotelId, sort_order: idx }))
   ];
   saveDb(db);
+  clearFlowStayCache(hotelId);
 }
 
 export async function saveRoom(hotelId: string, roomData: any): Promise<Room> {
+  const currentHotel = await getHotelBySlug(hotelId);
   if (isSupabaseConfigured) {
-    return saveSupabaseRoom(hotelId, roomData);
+    const saved = await saveSupabaseRoom(hotelId, roomData, currentHotel);
+    clearFlowStayCache(hotelId);
+    return saved;
   }
   const db = getDb();
   const existingIndex = db.rooms.findIndex(r => r.id === roomData.id);
@@ -1923,8 +1976,11 @@ export async function deleteRoom(roomId: string): Promise<void> {
 }
 
 export async function savePromotion(hotelId: string, promoData: any): Promise<Promotion> {
+  const currentHotel = await getHotelBySlug(hotelId);
   if (isSupabaseConfigured) {
-    return saveSupabasePromotion(hotelId, promoData);
+    const saved = await saveSupabasePromotion(hotelId, promoData, currentHotel);
+    clearFlowStayCache(hotelId);
+    return saved;
   }
   const db = getDb();
   const existingIndex = db.promotions.findIndex(p => p.id === promoData.id);
@@ -1954,15 +2010,27 @@ export async function deletePromotion(promoId: string): Promise<void> {
 }
 
 export async function updateHomepageLayout(hotelId: string, layout: string[]): Promise<void> {
+  const currentHotel = await getHotelBySlug(hotelId);
   if (isSupabaseConfigured) {
-    await updateSupabaseHomepageLayout(hotelId, layout);
+    await updateSupabaseHomepageLayout(hotelId, layout, currentHotel);
+    clearFlowStayCache(hotelId);
     return;
   }
   const db = getDb();
-  const idx = db.hotels.findIndex(h => h.id === hotelId);
-  if (idx === -1) throw new Error('Hotel not found');
-  db.hotels[idx].homepage_layout = layout;
+  const norm = (s?: string) => (s || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  const targetSlug = norm(currentHotel?.slug || hotelId);
+  const idx = db.hotels.findIndex(
+    (h) => h.id === hotelId || (targetSlug && norm(h.slug) === targetSlug)
+  );
+  if (idx !== -1) {
+    db.hotels[idx].homepage_layout = layout;
+  } else if (currentHotel) {
+    db.hotels.push({ ...currentHotel, homepage_layout: layout });
+  } else {
+    throw new Error('Hotel not found');
+  }
   saveDb(db);
+  clearFlowStayCache(hotelId);
 }
 
 export async function registerNewHotel(hotelName: string, slug: string, email: string): Promise<string> {
@@ -2070,19 +2138,31 @@ export async function deleteHotel(hotelId: string): Promise<void> {
 
 export async function getMediaItems(hotelId: string): Promise<any[]> {
   const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
-  if (flowstayBundle && Array.isArray(flowstayBundle.media) && flowstayBundle.media.length > 0) {
-    return flowstayBundle.media;
-  }
+  const flowstayMedia = Array.isArray(flowstayBundle?.media)
+    ? flowstayBundle!.media
+    : [];
 
   if (isSupabaseConfigured && hotelId !== 'hotel-1784206393534') {
     try {
-      const supabaseItems = await getSupabaseMediaItems(hotelId);
+      const supabaseItems = await getSupabaseMediaItems(
+        hotelId,
+        flowstayBundle?.hotel
+      );
       if (supabaseItems && supabaseItems.length > 0) {
-        return supabaseItems;
+        if (flowstayMedia.length === 0) return supabaseItems;
+        const seenUrls = new Set(supabaseItems.map((item: any) => item.url));
+        return [
+          ...supabaseItems,
+          ...flowstayMedia.filter((item: any) => !seenUrls.has(item.url)),
+        ];
       }
     } catch (e) {
       console.error('getMediaItems Supabase error:', e);
     }
+  }
+
+  if (flowstayMedia.length > 0) {
+    return flowstayMedia;
   }
 
   requirePersistentMediaStorage();
@@ -2110,7 +2190,10 @@ export async function getMediaItems(hotelId: string): Promise<any[]> {
 
 export async function saveMediaItem(hotelId: string, data: any): Promise<any> {
   if (isSupabaseConfigured) {
-    return saveSupabaseMediaItem(hotelId, data);
+    const currentHotel = await getHotelBySlug(hotelId);
+    const saved = await saveSupabaseMediaItem(hotelId, data, currentHotel);
+    clearFlowStayCache(hotelId);
+    return saved;
   }
   requirePersistentMediaStorage();
   const db = getDb();

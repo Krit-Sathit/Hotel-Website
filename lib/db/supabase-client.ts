@@ -17,8 +17,11 @@ const supabaseServerKey = supabaseServiceRoleKey || supabaseAnonKey;
 
 export const isSupabaseConfigured = !!supabaseUrl && !!supabaseServerKey;
 
-function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+function isUuid(value?: string | null): boolean {
+  if (!value) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value.trim()
+  );
 }
 
 async function supabaseFetch(path: string, options: RequestInit = {}) {
@@ -35,10 +38,8 @@ async function supabaseFetch(path: string, options: RequestInit = {}) {
   const res = await fetch(url, {
     ...options,
     headers,
-    // Public and CMS read operations share this cache. Server Actions invalidate
-    // the tag immediately after every content change, so visitors do not wait on
-    // a Supabase round trip for unchanged content.
-    ...(isReadRequest
+    // Public and CMS read operations share this cache unless 'no-store' is requested.
+    ...(isReadRequest && options.cache !== 'no-store'
       ? { next: { revalidate: 180, tags: ['hotel-content'] } }
       : { cache: 'no-store' })
   });
@@ -51,6 +52,125 @@ async function supabaseFetch(path: string, options: RequestInit = {}) {
 
   if (res.status === 204) return [];
   return res.json();
+}
+
+/**
+ * Resolves any hotel identifier (Supabase UUID, FlowStay numeric ID like "689793",
+ * or slug like "theparphuket") into the canonical `public.hotels.id` UUID in Supabase.
+ * When `createIfMissing` is true and `fallbackHotel` is supplied, automatically
+ * provisions the `public.hotels` row so foreign-key writes (`hero_slides`,
+ * `homepage_sections`, `rooms`, `promotions`, `contact_messages`, etc.) succeed.
+ */
+export async function resolveSupabaseHotelUuid(
+  hotelId: string,
+  fallbackHotel?: Hotel | null,
+  createIfMissing = false
+): Promise<string | null> {
+  if (!isSupabaseConfigured || !hotelId) return null;
+  const trimmedId = String(hotelId).trim();
+  if (isUuid(trimmedId)) return trimmedId;
+
+  const norm = (s?: string | null) =>
+    (s || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normDomain = (d?: string | null) =>
+    (d || '')
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .split('/')[0];
+
+  const candidateSlug = (
+    fallbackHotel?.slug || (!/^\d+$/.test(trimmedId) ? trimmedId : '')
+  ).trim();
+  const targetNormSlug = norm(candidateSlug);
+  const targetDomain = normDomain(fallbackHotel?.custom_domain);
+  const fetchOpts: RequestInit = createIfMissing
+    ? { method: 'GET', cache: 'no-store' }
+    : { method: 'GET' };
+
+  try {
+    if (candidateSlug) {
+      const exact = await supabaseFetch(
+        `/hotels?slug=eq.${encodeURIComponent(candidateSlug)}&select=id`,
+        fetchOpts
+      );
+      if (exact && exact.length > 0 && exact[0]?.id) {
+        return exact[0].id as string;
+      }
+    }
+
+    if (targetNormSlug || targetDomain) {
+      const allRows = await supabaseFetch(
+        '/hotels?select=id,slug,custom_domain',
+        fetchOpts
+      );
+      if (Array.isArray(allRows)) {
+        const matched = allRows.find((r: any) => {
+          if (targetNormSlug && r.slug && norm(r.slug) === targetNormSlug) {
+            return true;
+          }
+          if (
+            targetDomain &&
+            r.custom_domain &&
+            normDomain(r.custom_domain) === targetDomain
+          ) {
+            return true;
+          }
+          return false;
+        });
+        if (matched?.id) {
+          return matched.id as string;
+        }
+      }
+    }
+
+    if (createIfMissing && fallbackHotel && candidateSlug) {
+      const cleanDomain = fallbackHotel.custom_domain?.trim() || null;
+      const inserted = await supabaseFetch('/hotels', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: fallbackHotel.name || candidateSlug,
+          slug: candidateSlug,
+          custom_domain: cleanDomain,
+          status: fallbackHotel.status || 'active',
+          logo_url: fallbackHotel.logo_url || null,
+          favicon_url: fallbackHotel.favicon_url || null,
+          email: fallbackHotel.email || '',
+          phone: fallbackHotel.phone || '',
+          address: fallbackHotel.address || '',
+          google_map_url: fallbackHotel.google_map_url || '',
+          social_links: fallbackHotel.social_links || {
+            facebook: '',
+            instagram: '',
+            whatsapp: '',
+            twitter: '',
+          },
+          theme: fallbackHotel.theme,
+          homepage_layout:
+            Array.isArray(fallbackHotel.homepage_layout) &&
+            fallbackHotel.homepage_layout.length > 0
+              ? fallbackHotel.homepage_layout
+              : [
+                  'hero',
+                  'about',
+                  'rooms',
+                  'promotions',
+                  'facilities',
+                  'gallery',
+                  'contact',
+                ],
+        }),
+      });
+      if (inserted && inserted.length > 0 && inserted[0]?.id) {
+        return inserted[0].id as string;
+      }
+    }
+  } catch (e) {
+    console.error('resolveSupabaseHotelUuid error:', e);
+  }
+
+  return null;
 }
 
 // -----------------------------------------------------------------------------
@@ -97,9 +217,16 @@ export async function getSupabaseAllHotels(): Promise<Hotel[]> {
   }
 }
 
-export async function getSupabaseHeroSlides(hotelId: string): Promise<HeroSlide[]> {
+export async function getSupabaseHeroSlides(
+  hotelId: string,
+  fallbackHotel?: Hotel | null
+): Promise<HeroSlide[]> {
   try {
-    const slides = await supabaseFetch(`/hero_slides?hotel_id=eq.${hotelId}&order=sort_order.asc&select=*`);
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+    if (!targetUuid) return [];
+    const slides = await supabaseFetch(
+      `/hero_slides?hotel_id=eq.${encodeURIComponent(targetUuid)}&order=sort_order.asc&select=*`
+    );
     return (slides || []) as HeroSlide[];
   } catch (e) {
     console.error('getSupabaseHeroSlides error:', e);
@@ -107,9 +234,16 @@ export async function getSupabaseHeroSlides(hotelId: string): Promise<HeroSlide[
   }
 }
 
-export async function getSupabaseHomepageSections(hotelId: string): Promise<HomepageSection[]> {
+export async function getSupabaseHomepageSections(
+  hotelId: string,
+  fallbackHotel?: Hotel | null
+): Promise<HomepageSection[]> {
   try {
-    const sections = await supabaseFetch(`/homepage_sections?hotel_id=eq.${hotelId}&order=sort_order.asc&select=*`);
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+    if (!targetUuid) return [];
+    const sections = await supabaseFetch(
+      `/homepage_sections?hotel_id=eq.${encodeURIComponent(targetUuid)}&order=sort_order.asc&select=*`
+    );
     return (sections || []) as HomepageSection[];
   } catch (e) {
     console.error('getSupabaseHomepageSections error:', e);
@@ -120,10 +254,16 @@ export async function getSupabaseHomepageSections(hotelId: string): Promise<Home
 export async function saveSupabaseHomepageSection(
   hotelId: string,
   sectionType: string,
-  content: HomepageSection['content']
+  content: HomepageSection['content'],
+  fallbackHotel?: Hotel | null
 ): Promise<void> {
+  const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, true);
+  if (!targetUuid) {
+    throw new Error('Could not resolve or create hotel record in Supabase.');
+  }
+
   const updated = await supabaseFetch(
-    `/homepage_sections?hotel_id=eq.${encodeURIComponent(hotelId)}&section_type=eq.${encodeURIComponent(sectionType)}`,
+    `/homepage_sections?hotel_id=eq.${encodeURIComponent(targetUuid)}&section_type=eq.${encodeURIComponent(sectionType)}`,
     { method: 'PATCH', body: JSON.stringify({ content }) }
   );
 
@@ -132,7 +272,7 @@ export async function saveSupabaseHomepageSection(
   await supabaseFetch('/homepage_sections', {
     method: 'POST',
     body: JSON.stringify({
-      hotel_id: hotelId,
+      hotel_id: targetUuid,
       section_type: sectionType,
       content,
       is_enabled: true,
@@ -141,9 +281,16 @@ export async function saveSupabaseHomepageSection(
   });
 }
 
-export async function getSupabaseRooms(hotelId: string): Promise<Room[]> {
+export async function getSupabaseRooms(
+  hotelId: string,
+  fallbackHotel?: Hotel | null
+): Promise<Room[]> {
   try {
-    const rooms = await supabaseFetch(`/rooms?hotel_id=eq.${hotelId}&order=sort_order.asc&select=*`);
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+    if (!targetUuid) return [];
+    const rooms = await supabaseFetch(
+      `/rooms?hotel_id=eq.${encodeURIComponent(targetUuid)}&order=sort_order.asc&select=*`
+    );
     return (rooms || []) as Room[];
   } catch (e) {
     console.error('getSupabaseRooms error:', e);
@@ -153,7 +300,8 @@ export async function getSupabaseRooms(hotelId: string): Promise<Room[]> {
 
 export async function getSupabaseRoomById(id: string): Promise<Room | null> {
   try {
-    const rooms = await supabaseFetch(`/rooms?id=eq.${id}&select=*`);
+    if (!isUuid(id)) return null;
+    const rooms = await supabaseFetch(`/rooms?id=eq.${encodeURIComponent(id)}&select=*`);
     if (!rooms || rooms.length === 0) return null;
     return rooms[0] as Room;
   } catch (e) {
@@ -162,9 +310,16 @@ export async function getSupabaseRoomById(id: string): Promise<Room | null> {
   }
 }
 
-export async function getSupabasePromotions(hotelId: string): Promise<Promotion[]> {
+export async function getSupabasePromotions(
+  hotelId: string,
+  fallbackHotel?: Hotel | null
+): Promise<Promotion[]> {
   try {
-    const promotions = await supabaseFetch(`/promotions?hotel_id=eq.${hotelId}&is_active=eq.true&select=*`);
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+    if (!targetUuid) return [];
+    const promotions = await supabaseFetch(
+      `/promotions?hotel_id=eq.${encodeURIComponent(targetUuid)}&is_active=eq.true&select=*`
+    );
     return (promotions || []) as Promotion[];
   } catch (e) {
     console.error('getSupabasePromotions error:', e);
@@ -172,9 +327,16 @@ export async function getSupabasePromotions(hotelId: string): Promise<Promotion[
   }
 }
 
-export async function getSupabaseGalleryPhotos(hotelId: string): Promise<GalleryPhoto[]> {
+export async function getSupabaseGalleryPhotos(
+  hotelId: string,
+  fallbackHotel?: Hotel | null
+): Promise<GalleryPhoto[]> {
   try {
-    const photos = await supabaseFetch(`/gallery_photos?hotel_id=eq.${hotelId}&order=sort_order.asc&select=*`);
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+    if (!targetUuid) return [];
+    const photos = await supabaseFetch(
+      `/gallery_photos?hotel_id=eq.${encodeURIComponent(targetUuid)}&order=sort_order.asc&select=*`
+    );
     return (photos || []) as GalleryPhoto[];
   } catch (e) {
     console.error('getSupabaseGalleryPhotos error:', e);
@@ -182,9 +344,16 @@ export async function getSupabaseGalleryPhotos(hotelId: string): Promise<Gallery
   }
 }
 
-export async function getSupabaseBlogPosts(hotelId: string): Promise<BlogPost[]> {
+export async function getSupabaseBlogPosts(
+  hotelId: string,
+  fallbackHotel?: Hotel | null
+): Promise<BlogPost[]> {
   try {
-    const posts = await supabaseFetch(`/blog_posts?hotel_id=eq.${hotelId}&order=created_at.desc&select=*`);
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+    if (!targetUuid) return [];
+    const posts = await supabaseFetch(
+      `/blog_posts?hotel_id=eq.${encodeURIComponent(targetUuid)}&order=created_at.desc&select=*`
+    );
     return (posts || []) as BlogPost[];
   } catch (e) {
     console.error('getSupabaseBlogPosts error:', e);
@@ -192,9 +361,17 @@ export async function getSupabaseBlogPosts(hotelId: string): Promise<BlogPost[]>
   }
 }
 
-export async function getSupabaseBlogPostBySlug(hotelId: string, slug: string): Promise<BlogPost | null> {
+export async function getSupabaseBlogPostBySlug(
+  hotelId: string,
+  slug: string,
+  fallbackHotel?: Hotel | null
+): Promise<BlogPost | null> {
   try {
-    const posts = await supabaseFetch(`/blog_posts?hotel_id=eq.${hotelId}&slug=eq.${encodeURIComponent(slug)}&select=*`);
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+    if (!targetUuid) return null;
+    const posts = await supabaseFetch(
+      `/blog_posts?hotel_id=eq.${encodeURIComponent(targetUuid)}&slug=eq.${encodeURIComponent(slug)}&select=*`
+    );
     if (!posts || posts.length === 0) return null;
     return posts[0] as BlogPost;
   } catch (e) {
@@ -213,82 +390,13 @@ export async function updateSupabaseHotelGeneralSettings(
   fallbackHotel?: Hotel | null
 ): Promise<Hotel | null> {
   try {
-    if (isUuid(hotelId)) {
-      const res = await supabaseFetch(`/hotels?id=eq.${hotelId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      });
-      if (res && res.length > 0) return res[0] as Hotel;
-    }
-
-    const slug = fallbackHotel?.slug?.trim();
-    if (slug) {
-      const bySlug = await supabaseFetch(
-        `/hotels?slug=eq.${encodeURIComponent(slug)}&select=id`,
-        { method: 'GET' }
-      );
-      let targetUuid: string | null =
-        bySlug && bySlug.length > 0 ? bySlug[0].id : null;
-
-      if (!targetUuid) {
-        const allRows = await supabaseFetch('/hotels?select=id,slug', {
-          method: 'GET',
-        });
-        const normSlug = slug.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const matched = (allRows || []).find(
-          (r: any) =>
-            r.slug &&
-            r.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === normSlug
-        );
-        if (matched) targetUuid = matched.id;
-      }
-
-      if (targetUuid) {
-        const patched = await supabaseFetch(`/hotels?id=eq.${targetUuid}`, {
-          method: 'PATCH',
-          body: JSON.stringify(data),
-        });
-        if (patched && patched.length > 0) return patched[0] as Hotel;
-      } else if (fallbackHotel) {
-        const inserted = await supabaseFetch('/hotels', {
-          method: 'POST',
-          body: JSON.stringify({
-            name: data.name ?? fallbackHotel.name,
-            slug: fallbackHotel.slug,
-            custom_domain:
-              data.custom_domain !== undefined
-                ? data.custom_domain
-                : fallbackHotel.custom_domain || null,
-            status: fallbackHotel.status || 'active',
-            logo_url: fallbackHotel.logo_url || null,
-            favicon_url: fallbackHotel.favicon_url || null,
-            email: data.email ?? fallbackHotel.email ?? '',
-            phone: data.phone ?? fallbackHotel.phone ?? '',
-            address: data.address ?? fallbackHotel.address ?? '',
-            google_map_url:
-              data.google_map_url ?? fallbackHotel.google_map_url ?? '',
-            social_links: data.social_links ??
-              fallbackHotel.social_links ?? {
-                facebook: '',
-                instagram: '',
-                whatsapp: '',
-                twitter: '',
-              },
-            theme: fallbackHotel.theme,
-            homepage_layout: fallbackHotel.homepage_layout || [
-              'hero',
-              'about',
-              'rooms',
-              'facilities',
-              'contact',
-            ],
-          }),
-        });
-        if (inserted && inserted.length > 0) return inserted[0] as Hotel;
-      }
-    }
-
-    return null;
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, true);
+    if (!targetUuid) return null;
+    const patched = await supabaseFetch(`/hotels?id=eq.${encodeURIComponent(targetUuid)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    return patched && patched.length > 0 ? (patched[0] as Hotel) : null;
   } catch (e) {
     console.error('updateSupabaseHotelGeneralSettings error:', e);
     return null;
@@ -301,86 +409,28 @@ export async function updateSupabaseHotelTheme(
   fallbackHotel?: Hotel | null
 ): Promise<any | null> {
   try {
-    if (isUuid(hotelId)) {
-      const res = await supabaseFetch(`/hotels?id=eq.${hotelId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ theme }),
-      });
-      if (res && res.length > 0) return res[0].theme;
-    }
-
-    const slug = fallbackHotel?.slug?.trim();
-    if (slug) {
-      const bySlug = await supabaseFetch(
-        `/hotels?slug=eq.${encodeURIComponent(slug)}&select=id`,
-        { method: 'GET' }
-      );
-      let targetUuid: string | null =
-        bySlug && bySlug.length > 0 ? bySlug[0].id : null;
-
-      if (!targetUuid) {
-        const allRows = await supabaseFetch('/hotels?select=id,slug', {
-          method: 'GET',
-        });
-        const normSlug = slug.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const matched = (allRows || []).find(
-          (r: any) =>
-            r.slug &&
-            r.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === normSlug
-        );
-        if (matched) targetUuid = matched.id;
-      }
-
-      if (targetUuid) {
-        const patched = await supabaseFetch(`/hotels?id=eq.${targetUuid}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ theme }),
-        });
-        if (patched && patched.length > 0) return patched[0].theme;
-      } else if (fallbackHotel) {
-        const inserted = await supabaseFetch('/hotels', {
-          method: 'POST',
-          body: JSON.stringify({
-            name: fallbackHotel.name,
-            slug: fallbackHotel.slug,
-            custom_domain: fallbackHotel.custom_domain || null,
-            status: fallbackHotel.status || 'active',
-            logo_url: fallbackHotel.logo_url || null,
-            favicon_url: fallbackHotel.favicon_url || null,
-            email: fallbackHotel.email || '',
-            phone: fallbackHotel.phone || '',
-            address: fallbackHotel.address || '',
-            google_map_url: fallbackHotel.google_map_url || '',
-            social_links: fallbackHotel.social_links || {
-              facebook: '',
-              instagram: '',
-              whatsapp: '',
-              twitter: '',
-            },
-            theme,
-            homepage_layout: fallbackHotel.homepage_layout || [
-              'hero',
-              'about',
-              'rooms',
-              'facilities',
-              'contact',
-            ],
-          }),
-        });
-        if (inserted && inserted.length > 0) return inserted[0].theme;
-      }
-    }
-
-    return null;
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, true);
+    if (!targetUuid) return null;
+    const patched = await supabaseFetch(`/hotels?id=eq.${encodeURIComponent(targetUuid)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ theme }),
+    });
+    return patched && patched.length > 0 ? patched[0].theme : null;
   } catch (e) {
     console.error('updateSupabaseHotelTheme error:', e);
     return null;
   }
 }
 
-export async function updateSupabaseHomepageLayout(hotelId: string, layout: string[]): Promise<string[] | null> {
+export async function updateSupabaseHomepageLayout(
+  hotelId: string,
+  layout: string[],
+  fallbackHotel?: Hotel | null
+): Promise<string[] | null> {
   try {
-    const res = await supabaseFetch(`/hotels?id=eq.${hotelId}`, {
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, true);
+    if (!targetUuid) return null;
+    const res = await supabaseFetch(`/hotels?id=eq.${encodeURIComponent(targetUuid)}`, {
       method: 'PATCH',
       body: JSON.stringify({ homepage_layout: layout })
     });
@@ -395,16 +445,19 @@ export async function trackSupabaseAnalyticsEvent(
   hotelId: string, 
   event_type: 'page_view' | 'booking_click' | 'widget_use', 
   page_path: string, 
-  room_id?: string
+  room_id?: string,
+  fallbackHotel?: Hotel | null
 ): Promise<void> {
   try {
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+    if (!targetUuid) return;
     await supabaseFetch('/analytics_events', {
       method: 'POST',
       body: JSON.stringify({
-        hotel_id: hotelId,
+        hotel_id: targetUuid,
         event_type,
         page_path,
-        room_id: room_id || null,
+        room_id: room_id && isUuid(room_id) ? room_id : null,
         created_at: new Date().toISOString()
       })
     });
@@ -413,11 +466,26 @@ export async function trackSupabaseAnalyticsEvent(
   }
 }
 
-export async function getSupabaseAnalyticsOverview(hotelId: string) {
+export async function getSupabaseAnalyticsOverview(
+  hotelId: string,
+  fallbackHotel?: Hotel | null
+) {
   try {
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+    if (!targetUuid) {
+      return {
+        totalViews: 0,
+        totalClicks: 0,
+        totalWidgetUse: 0,
+        conversionRate: 0,
+        topPages: [],
+        viewsChart: [],
+        clicksChart: [],
+      };
+    }
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const events = await supabaseFetch(
-      `/analytics_events?hotel_id=eq.${encodeURIComponent(hotelId)}&created_at=gte.${encodeURIComponent(sevenDaysAgo)}&select=event_type,page_path,created_at&limit=5000`
+      `/analytics_events?hotel_id=eq.${encodeURIComponent(targetUuid)}&created_at=gte.${encodeURIComponent(sevenDaysAgo)}&select=event_type,page_path,created_at&limit=5000`
     ) as AnalyticsEvent[];
     if (!events) throw new Error('No analytics data');
     
@@ -594,9 +662,16 @@ export async function registerSupabaseNewHotel(hotelName: string, slug: string, 
   return hotelId;
 }
 
-export async function getSupabaseAllPromotions(hotelId: string): Promise<Promotion[]> {
+export async function getSupabaseAllPromotions(
+  hotelId: string,
+  fallbackHotel?: Hotel | null
+): Promise<Promotion[]> {
   try {
-    const promotions = await supabaseFetch(`/promotions?hotel_id=eq.${hotelId}&select=*`);
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+    if (!targetUuid) return [];
+    const promotions = await supabaseFetch(
+      `/promotions?hotel_id=eq.${encodeURIComponent(targetUuid)}&select=*`
+    );
     return (promotions || []) as Promotion[];
   } catch (e) {
     console.error('getSupabaseAllPromotions error:', e);
@@ -604,93 +679,163 @@ export async function getSupabaseAllPromotions(hotelId: string): Promise<Promoti
   }
 }
 
-export async function saveSupabaseHeroSlides(hotelId: string, slides: HeroSlide[]): Promise<void> {
-  // 1. Delete all existing slides for this hotel
-  await supabaseFetch(`/hero_slides?hotel_id=eq.${hotelId}`, { method: 'DELETE' });
-  
+export async function saveSupabaseHeroSlides(
+  hotelId: string,
+  slides: HeroSlide[],
+  fallbackHotel?: Hotel | null
+): Promise<void> {
+  const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, true);
+  if (!targetUuid) {
+    throw new Error('Could not resolve or create hotel record in Supabase.');
+  }
+
+  // 1. Delete all existing slides for this hotel UUID
+  await supabaseFetch(
+    `/hero_slides?hotel_id=eq.${encodeURIComponent(targetUuid)}`,
+    { method: 'DELETE' }
+  );
+
   if (slides.length === 0) return;
 
-  // 2. Clean slides payload to match DB schema (handling UUID keys)
-  const cleanedSlides = slides.map(s => {
-    const { id, hotel_id, ...rest } = s;
-    const isUuid = id && id.length === 36 && id.includes('-');
-    if (isUuid) {
-      return { id, hotel_id: hotelId, ...rest };
+  // 2. Whitelist exact public.hero_slides schema columns and preserve sequential sort_order
+  const cleanedSlides = slides.map((s, idx) => {
+    const row: Record<string, any> = {
+      hotel_id: targetUuid,
+      image_url: s.image_url,
+      video_url: s.video_url || null,
+      headline: s.headline ?? '',
+      subheadline: s.subheadline ?? '',
+      button_text: s.button_text ?? 'Book Now',
+      button_link: s.button_link ?? '#booking',
+      overlay_color: s.overlay_color || '#000000',
+      overlay_opacity:
+        typeof s.overlay_opacity === 'number' && !Number.isNaN(s.overlay_opacity)
+          ? Math.min(1, Math.max(0, s.overlay_opacity))
+          : 0.4,
+      sort_order: idx,
+    };
+    if (s.id && isUuid(s.id)) {
+      row.id = s.id;
     }
-    return { hotel_id: hotelId, ...rest };
+    return row;
   });
 
   // 3. Bulk insert slides
   await supabaseFetch('/hero_slides', {
     method: 'POST',
-    body: JSON.stringify(cleanedSlides)
+    body: JSON.stringify(cleanedSlides),
   });
 }
 
-export async function saveSupabaseRoom(hotelId: string, roomData: any): Promise<any> {
-  const { id, ...rest } = roomData;
-  const isUuid = id && id.length === 36 && id.includes('-');
-  
+export async function saveSupabaseRoom(
+  hotelId: string,
+  roomData: any,
+  fallbackHotel?: Hotel | null
+): Promise<any> {
+  const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, true);
+  if (!targetUuid) {
+    throw new Error('Could not resolve or create hotel record in Supabase.');
+  }
+
+  const { id } = roomData;
   const payload = {
-    ...rest,
-    hotel_id: hotelId,
-    sort_order: rest.sort_order || 0
+    hotel_id: targetUuid,
+    name: roomData.name || 'Room',
+    description: roomData.description ?? '',
+    gallery: Array.isArray(roomData.gallery) ? roomData.gallery : [],
+    amenities: Array.isArray(roomData.amenities) ? roomData.amenities : [],
+    max_guests: Math.max(1, Number(roomData.max_guests) || 2),
+    room_size: Math.max(1, Number(roomData.room_size) || 25),
+    bed_type: roomData.bed_type || 'King Bed',
+    price:
+      typeof roomData.price === 'number' && roomData.price >= 0
+        ? roomData.price
+        : 0,
+    book_now_url: roomData.book_now_url || null,
+    sort_order: Number(roomData.sort_order) || 0,
   };
 
-  if (isUuid) {
-    const res = await supabaseFetch(`/rooms?id=eq.${id}`, {
+  if (isUuid(id)) {
+    const res = await supabaseFetch(`/rooms?id=eq.${encodeURIComponent(id)}`, {
       method: 'PATCH',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
     return res && res.length > 0 ? res[0] : null;
   } else {
     const res = await supabaseFetch('/rooms', {
       method: 'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
     return res && res.length > 0 ? res[0] : null;
   }
 }
 
 export async function deleteSupabaseRoom(roomId: string): Promise<void> {
-  await supabaseFetch(`/rooms?id=eq.${roomId}`, {
-    method: 'DELETE'
+  if (!isUuid(roomId)) return;
+  await supabaseFetch(`/rooms?id=eq.${encodeURIComponent(roomId)}`, {
+    method: 'DELETE',
   });
 }
 
-export async function saveSupabasePromotion(hotelId: string, promoData: any): Promise<any> {
-  const { id, ...rest } = promoData;
-  const isUuid = id && id.length === 36 && id.includes('-');
-  
+export async function saveSupabasePromotion(
+  hotelId: string,
+  promoData: any,
+  fallbackHotel?: Hotel | null
+): Promise<any> {
+  const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, true);
+  if (!targetUuid) {
+    throw new Error('Could not resolve or create hotel record in Supabase.');
+  }
+
+  const { id } = promoData;
   const payload = {
-    ...rest,
-    hotel_id: hotelId
+    hotel_id: targetUuid,
+    title: promoData.title || 'Special Offer',
+    description: promoData.description ?? '',
+    image_url: promoData.image_url || null,
+    start_date: promoData.start_date,
+    end_date: promoData.end_date,
+    promo_code: promoData.promo_code || null,
+    cta_text: promoData.cta_text || 'Book Now',
+    cta_link: promoData.cta_link || '#booking',
+    is_active: promoData.is_active !== false,
   };
 
-  if (isUuid) {
-    const res = await supabaseFetch(`/promotions?id=eq.${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(payload)
-    });
+  if (isUuid(id)) {
+    const res = await supabaseFetch(
+      `/promotions?id=eq.${encodeURIComponent(id)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      }
+    );
     return res && res.length > 0 ? res[0] : null;
   } else {
     const res = await supabaseFetch('/promotions', {
       method: 'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
     return res && res.length > 0 ? res[0] : null;
   }
 }
 
 export async function deleteSupabasePromotion(promoId: string): Promise<void> {
-  await supabaseFetch(`/promotions?id=eq.${promoId}`, {
-    method: 'DELETE'
+  if (!isUuid(promoId)) return;
+  await supabaseFetch(`/promotions?id=eq.${encodeURIComponent(promoId)}`, {
+    method: 'DELETE',
   });
 }
 
-export async function getSupabaseContactMessages(hotelId: string): Promise<ContactMessage[]> {
+export async function getSupabaseContactMessages(
+  hotelId: string,
+  fallbackHotel?: Hotel | null
+): Promise<ContactMessage[]> {
   try {
-    const messages = await supabaseFetch(`/contact_messages?hotel_id=eq.${hotelId}&order=created_at.desc&select=*`);
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+    if (!targetUuid) return [];
+    const messages = await supabaseFetch(
+      `/contact_messages?hotel_id=eq.${encodeURIComponent(targetUuid)}&order=created_at.desc&select=*`
+    );
     return (messages || []) as ContactMessage[];
   } catch (e) {
     console.error('getSupabaseContactMessages error:', e);
@@ -698,18 +843,26 @@ export async function getSupabaseContactMessages(hotelId: string): Promise<Conta
   }
 }
 
-export async function saveSupabaseContactMessage(hotelId: string, data: any): Promise<ContactMessage> {
+export async function saveSupabaseContactMessage(
+  hotelId: string,
+  data: any,
+  fallbackHotel?: Hotel | null
+): Promise<ContactMessage> {
+  const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, true);
+  if (!targetUuid) {
+    throw new Error('Could not resolve hotel record in Supabase.');
+  }
   const payload = {
-    hotel_id: hotelId,
+    hotel_id: targetUuid,
     name: data.name,
     email: data.email,
     phone: data.phone || null,
     message: data.message,
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
   };
   const res = await supabaseFetch('/contact_messages', {
     method: 'POST',
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
   if (!res || res.length === 0) {
     throw new Error('Failed to save contact message to Supabase.');
@@ -718,8 +871,9 @@ export async function saveSupabaseContactMessage(hotelId: string, data: any): Pr
 }
 
 export async function deleteSupabaseHotel(hotelId: string): Promise<void> {
-  await supabaseFetch(`/hotels?id=eq.${hotelId}`, {
-    method: 'DELETE'
+  if (!isUuid(hotelId)) return;
+  await supabaseFetch(`/hotels?id=eq.${encodeURIComponent(hotelId)}`, {
+    method: 'DELETE',
   });
 }
 
@@ -754,8 +908,18 @@ export async function uploadSupabaseFile(
   return `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
 }
 
-export async function getSupabaseMediaItems(hotelId: string): Promise<any[]> {
-  const items = await supabaseFetch(`/media_library?hotel_id=eq.${hotelId}&order=sort_order.asc,created_at.desc&select=*`);
+export async function getSupabaseMediaItems(
+  hotelId: string,
+  fallbackHotel?: Hotel | null
+): Promise<any[]> {
+  const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+  const filter =
+    targetUuid && targetUuid !== hotelId
+      ? `or=(hotel_id.eq.${encodeURIComponent(hotelId)},hotel_id.eq.${encodeURIComponent(targetUuid)})`
+      : `hotel_id=eq.${encodeURIComponent(hotelId)}`;
+  const items = await supabaseFetch(
+    `/media_library?${filter}&order=sort_order.asc,created_at.desc&select=*`
+  );
   return (items || []).map((item: any) => ({
     id: item.id,
     name: item.file_name,
@@ -769,9 +933,14 @@ export async function getSupabaseMediaItems(hotelId: string): Promise<any[]> {
   }));
 }
 
-export async function saveSupabaseMediaItem(hotelId: string, data: any): Promise<any> {
+export async function saveSupabaseMediaItem(
+  hotelId: string,
+  data: any,
+  fallbackHotel?: Hotel | null
+): Promise<any> {
+  const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, true);
   const payload = {
-    hotel_id: hotelId,
+    hotel_id: targetUuid || hotelId,
     file_name: data.name,
     file_path: data.url,
     file_size: data.sizeInBytes || 102400,
@@ -791,15 +960,18 @@ export async function saveSupabaseMediaItem(hotelId: string, data: any): Promise
 }
 
 export async function updateSupabaseMediaItemCategory(mediaId: string, category: string): Promise<void> {
-  await supabaseFetch(`/media_library?id=eq.${mediaId}`, {
+  if (!isUuid(mediaId)) return;
+  await supabaseFetch(`/media_library?id=eq.${encodeURIComponent(mediaId)}`, {
     method: 'PATCH',
     body: JSON.stringify({ folder: category })
   });
 }
 
 export async function saveSupabaseMediaOrder(ids: string[]): Promise<void> {
+  const validIds = ids.filter((id) => isUuid(id));
+  if (validIds.length === 0) return;
   await Promise.all(
-    ids.map((mediaId, sortOrder) =>
+    validIds.map((mediaId, sortOrder) =>
       supabaseFetch(`/media_library?id=eq.${encodeURIComponent(mediaId)}`, {
         method: 'PATCH',
         body: JSON.stringify({ sort_order: sortOrder })
@@ -809,7 +981,8 @@ export async function saveSupabaseMediaOrder(ids: string[]): Promise<void> {
 }
 
 export async function deleteSupabaseMediaItem(mediaId: string): Promise<void> {
-  await supabaseFetch(`/media_library?id=eq.${mediaId}`, {
+  if (!isUuid(mediaId)) return;
+  await supabaseFetch(`/media_library?id=eq.${encodeURIComponent(mediaId)}`, {
     method: 'DELETE'
   });
 }
