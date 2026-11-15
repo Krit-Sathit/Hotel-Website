@@ -17,11 +17,31 @@ const supabaseServerKey = supabaseServiceRoleKey || supabaseAnonKey;
 
 export const isSupabaseConfigured = !!supabaseUrl && !!supabaseServerKey;
 
-function isUuid(value?: string | null): boolean {
+export function isUuid(value?: string | null): boolean {
   if (!value) return false;
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value.trim()
   );
+}
+
+/**
+ * Generates a deterministic RFC-4122 v4-compatible UUID for a FlowStay entity
+ * (e.g. room or promotion) so editing a FlowStay item updates it in-place in
+ * Supabase instead of inserting duplicate rows.
+ */
+export function deterministicEntityUuid(seed: string): string {
+  const h = [0x811c9dc5, 0x9e3779b9, 0x85ebca6b, 0xc2b2ae35];
+  for (let i = 0; i < seed.length; i++) {
+    const c = seed.charCodeAt(i);
+    for (let k = 0; k < 4; k++) {
+      let v = h[k] ^ (c + k * 31);
+      v = Math.imul(v, 0x01000193 + k * 2);
+      v ^= v >>> 16;
+      h[k] = v >>> 0;
+    }
+  }
+  const hex = h.map((n) => n.toString(16).padStart(8, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
 async function supabaseFetch(path: string, options: RequestInit = {}) {
@@ -737,7 +757,13 @@ export async function saveSupabaseRoom(
     throw new Error('Could not resolve or create hotel record in Supabase.');
   }
 
-  const { id } = roomData;
+  const rawId = roomData.id ? String(roomData.id).trim() : '';
+  const normName = String(roomData.name || '').trim().toLowerCase();
+  const detUuid =
+    rawId && !isUuid(rawId)
+      ? deterministicEntityUuid(`${targetUuid}:room:${rawId}`)
+      : null;
+
   const payload = {
     hotel_id: targetUuid,
     name: roomData.name || 'Room',
@@ -755,26 +781,91 @@ export async function saveSupabaseRoom(
     sort_order: Number(roomData.sort_order) || 0,
   };
 
-  if (isUuid(id)) {
-    const res = await supabaseFetch(`/rooms?id=eq.${encodeURIComponent(id)}`, {
-      method: 'PATCH',
-      body: JSON.stringify(payload),
-    });
-    return res && res.length > 0 ? res[0] : null;
-  } else {
-    const res = await supabaseFetch('/rooms', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return res && res.length > 0 ? res[0] : null;
+  if (rawId) {
+    const existingRows =
+      ((await supabaseFetch(
+        `/rooms?hotel_id=eq.${encodeURIComponent(targetUuid)}&select=id,name`,
+        { method: 'GET', cache: 'no-store' }
+      )) as Array<{ id: string; name?: string }>) || [];
+
+    const matches = existingRows.filter(
+      (r) =>
+        (isUuid(rawId) && r.id === rawId) ||
+        (detUuid && r.id === detUuid) ||
+        (!isUuid(rawId) && normName && (r.name || '').trim().toLowerCase() === normName)
+    );
+
+    if (matches.length > 0) {
+      const primary = matches[0];
+      // Clean up any accidental duplicate rows with same title
+      for (const dup of matches.slice(1)) {
+        await supabaseFetch(`/rooms?id=eq.${encodeURIComponent(dup.id)}`, {
+          method: 'DELETE',
+        });
+      }
+      const res = await supabaseFetch(
+        `/rooms?id=eq.${encodeURIComponent(primary.id)}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        }
+      );
+      return res && res.length > 0 ? res[0] : null;
+    }
+
+    if (detUuid) {
+      const res = await supabaseFetch('/rooms', {
+        method: 'POST',
+        body: JSON.stringify({ id: detUuid, ...payload }),
+      });
+      return res && res.length > 0 ? res[0] : null;
+    }
   }
+
+  const res = await supabaseFetch('/rooms', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return res && res.length > 0 ? res[0] : null;
 }
 
-export async function deleteSupabaseRoom(roomId: string): Promise<void> {
-  if (!isUuid(roomId)) return;
-  await supabaseFetch(`/rooms?id=eq.${encodeURIComponent(roomId)}`, {
-    method: 'DELETE',
-  });
+export async function deleteSupabaseRoom(
+  roomId: string,
+  hotelId?: string,
+  roomName?: string,
+  fallbackHotel?: Hotel | null
+): Promise<void> {
+  if (isUuid(roomId)) {
+    await supabaseFetch(`/rooms?id=eq.${encodeURIComponent(roomId)}`, {
+      method: 'DELETE',
+    });
+  }
+  if (hotelId) {
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+    if (targetUuid) {
+      if (!isUuid(roomId)) {
+        const detUuid = deterministicEntityUuid(`${targetUuid}:room:${roomId}`);
+        await supabaseFetch(`/rooms?id=eq.${encodeURIComponent(detUuid)}`, {
+          method: 'DELETE',
+        });
+      }
+      if (roomName?.trim()) {
+        const rows =
+          ((await supabaseFetch(
+            `/rooms?hotel_id=eq.${encodeURIComponent(targetUuid)}&select=id,name`,
+            { method: 'GET', cache: 'no-store' }
+          )) as Array<{ id: string; name?: string }>) || [];
+        const normTarget = roomName.trim().toLowerCase();
+        for (const r of rows) {
+          if ((r.name || '').trim().toLowerCase() === normTarget) {
+            await supabaseFetch(`/rooms?id=eq.${encodeURIComponent(r.id)}`, {
+              method: 'DELETE',
+            });
+          }
+        }
+      }
+    }
+  }
 }
 
 export async function saveSupabasePromotion(
@@ -787,7 +878,13 @@ export async function saveSupabasePromotion(
     throw new Error('Could not resolve or create hotel record in Supabase.');
   }
 
-  const { id } = promoData;
+  const rawId = promoData.id ? String(promoData.id).trim() : '';
+  const normTitle = String(promoData.title || '').trim().toLowerCase();
+  const detUuid =
+    rawId && !isUuid(rawId)
+      ? deterministicEntityUuid(`${targetUuid}:promo:${rawId}`)
+      : null;
+
   const payload = {
     hotel_id: targetUuid,
     title: promoData.title || 'Special Offer',
@@ -801,29 +898,91 @@ export async function saveSupabasePromotion(
     is_active: promoData.is_active !== false,
   };
 
-  if (isUuid(id)) {
-    const res = await supabaseFetch(
-      `/promotions?id=eq.${encodeURIComponent(id)}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify(payload),
-      }
+  if (rawId) {
+    const existingRows =
+      ((await supabaseFetch(
+        `/promotions?hotel_id=eq.${encodeURIComponent(targetUuid)}&select=id,title`,
+        { method: 'GET', cache: 'no-store' }
+      )) as Array<{ id: string; title?: string }>) || [];
+
+    const matches = existingRows.filter(
+      (p) =>
+        (isUuid(rawId) && p.id === rawId) ||
+        (detUuid && p.id === detUuid) ||
+        (!isUuid(rawId) && normTitle && (p.title || '').trim().toLowerCase() === normTitle)
     );
-    return res && res.length > 0 ? res[0] : null;
-  } else {
-    const res = await supabaseFetch('/promotions', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return res && res.length > 0 ? res[0] : null;
+
+    if (matches.length > 0) {
+      const primary = matches[0];
+      // Clean up any previously created duplicate rows for the same campaign
+      for (const dup of matches.slice(1)) {
+        await supabaseFetch(`/promotions?id=eq.${encodeURIComponent(dup.id)}`, {
+          method: 'DELETE',
+        });
+      }
+      const res = await supabaseFetch(
+        `/promotions?id=eq.${encodeURIComponent(primary.id)}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        }
+      );
+      return res && res.length > 0 ? res[0] : null;
+    }
+
+    if (detUuid) {
+      const res = await supabaseFetch('/promotions', {
+        method: 'POST',
+        body: JSON.stringify({ id: detUuid, ...payload }),
+      });
+      return res && res.length > 0 ? res[0] : null;
+    }
   }
+
+  const res = await supabaseFetch('/promotions', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return res && res.length > 0 ? res[0] : null;
 }
 
-export async function deleteSupabasePromotion(promoId: string): Promise<void> {
-  if (!isUuid(promoId)) return;
-  await supabaseFetch(`/promotions?id=eq.${encodeURIComponent(promoId)}`, {
-    method: 'DELETE',
-  });
+export async function deleteSupabasePromotion(
+  promoId: string,
+  hotelId?: string,
+  promoTitle?: string,
+  fallbackHotel?: Hotel | null
+): Promise<void> {
+  if (isUuid(promoId)) {
+    await supabaseFetch(`/promotions?id=eq.${encodeURIComponent(promoId)}`, {
+      method: 'DELETE',
+    });
+  }
+  if (hotelId) {
+    const targetUuid = await resolveSupabaseHotelUuid(hotelId, fallbackHotel, false);
+    if (targetUuid) {
+      if (!isUuid(promoId)) {
+        const detUuid = deterministicEntityUuid(`${targetUuid}:promo:${promoId}`);
+        await supabaseFetch(`/promotions?id=eq.${encodeURIComponent(detUuid)}`, {
+          method: 'DELETE',
+        });
+      }
+      if (promoTitle?.trim()) {
+        const rows =
+          ((await supabaseFetch(
+            `/promotions?hotel_id=eq.${encodeURIComponent(targetUuid)}&select=id,title`,
+            { method: 'GET', cache: 'no-store' }
+          )) as Array<{ id: string; title?: string }>) || [];
+        const normTarget = promoTitle.trim().toLowerCase();
+        for (const p of rows) {
+          if ((p.title || '').trim().toLowerCase() === normTarget) {
+            await supabaseFetch(`/promotions?id=eq.${encodeURIComponent(p.id)}`, {
+              method: 'DELETE',
+            });
+          }
+        }
+      }
+    }
+  }
 }
 
 export async function getSupabaseContactMessages(

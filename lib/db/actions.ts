@@ -11,6 +11,8 @@ import {
   deleteRoom,
   savePromotion,
   deletePromotion,
+  restoreHiddenPromotions,
+  restoreHiddenRooms,
   registerNewHotel,
   deleteHotel,
   getAllHotels,
@@ -160,13 +162,28 @@ export async function saveRoomAction(hotelId: string, roomData: Omit<Room, 'hote
   }
 }
 
-export async function deleteRoomAction(roomId: string) {
+export async function deleteRoomAction(
+  roomId: string,
+  hotelId?: string,
+  roomName?: string
+) {
   try {
-    await deleteRoom(roomId);
-    refreshHotelContent();
+    await deleteRoom(roomId, hotelId, roomName);
+    refreshHotelContent(hotelId);
     return { success: true };
   } catch (error: any) {
     console.error('deleteRoomAction error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function restoreHiddenRoomsAction(hotelId: string) {
+  try {
+    await restoreHiddenRooms(hotelId);
+    refreshHotelContent(hotelId);
+    return { success: true };
+  } catch (error: any) {
+    console.error('restoreHiddenRoomsAction error:', error);
     return { success: false, error: error.message };
   }
 }
@@ -177,7 +194,7 @@ export async function deleteRoomAction(roomId: string) {
 export async function savePromotionAction(hotelId: string, promoData: Omit<Promotion, 'hotel_id'>) {
   try {
     const promotion = await savePromotion(hotelId, promoData);
-    refreshHotelContent();
+    refreshHotelContent(hotelId);
     return { success: true, promotion };
   } catch (error: any) {
     console.error('savePromotionAction error:', error);
@@ -185,13 +202,28 @@ export async function savePromotionAction(hotelId: string, promoData: Omit<Promo
   }
 }
 
-export async function deletePromotionAction(promoId: string) {
+export async function deletePromotionAction(
+  promoId: string,
+  hotelId?: string,
+  promoTitle?: string
+) {
   try {
-    await deletePromotion(promoId);
-    refreshHotelContent();
+    await deletePromotion(promoId, hotelId, promoTitle);
+    refreshHotelContent(hotelId);
     return { success: true };
   } catch (error: any) {
     console.error('deletePromotionAction error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function restoreHiddenPromotionsAction(hotelId: string) {
+  try {
+    await restoreHiddenPromotions(hotelId);
+    refreshHotelContent(hotelId);
+    return { success: true };
+  } catch (error: any) {
+    console.error('restoreHiddenPromotionsAction error:', error);
     return { success: false, error: error.message };
   }
 }

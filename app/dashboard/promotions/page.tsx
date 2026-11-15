@@ -1,29 +1,116 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Tag, Calendar, Save, X, CheckCircle, AlertCircle } from 'lucide-react';
-import { savePromotionAction, deletePromotionAction } from '@/lib/db/actions';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Tag,
+  Calendar,
+  Save,
+  X,
+  CheckCircle,
+  AlertCircle,
+  Upload,
+  RotateCcw,
+} from 'lucide-react';
+import {
+  savePromotionAction,
+  deletePromotionAction,
+  restoreHiddenPromotionsAction,
+} from '@/lib/db/actions';
 import { peekAdminBundle, loadAdminBundle, invalidateAdminCache } from '@/lib/admin-client-cache';
 import type { Promotion } from '@/lib/db/mock-data';
+
+async function compressImageToWebP(file: File, maxWidth = 1400, quality = 0.82): Promise<File> {
+  if (!file.type.startsWith('image/')) return file;
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return resolve(file);
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const base = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                resolve(new File([blob], `${base}.webp`, { type: 'image/webp' }));
+              } else {
+                resolve(file);
+              }
+            },
+            'image/webp',
+            quality
+          );
+        } catch {
+          resolve(file);
+        }
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+}
 
 export default function PromotionsManagerPage() {
   const initialCached = peekAdminBundle();
   const [hotelId, setHotelId] = useState(initialCached?.hotel?.id || '');
   const [promotions, setPromotions] = useState<Promotion[]>(initialCached?.promotions || []);
+  const [mediaItems, setMediaItems] = useState<any[]>(initialCached?.media || []);
+  const [roomsList, setRoomsList] = useState<any[]>(initialCached?.rooms || []);
   const [isLoading, setIsLoading] = useState(!initialCached?.complete);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Modal form states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPromo, setEditingPromo] = useState<Partial<Promotion> | null>(null);
 
+  const libraryPhotos = useMemo(() => {
+    const urls: string[] = [];
+    const seen = new Set<string>();
+    const pushUrl = (u?: string | null) => {
+      const clean = (u || '').trim();
+      if (clean && !seen.has(clean)) {
+        seen.add(clean);
+        urls.push(clean);
+      }
+    };
+    for (const m of mediaItems) pushUrl(m?.url || m?.image_url || m?.file_path);
+    for (const r of roomsList) {
+      if (Array.isArray(r?.gallery)) {
+        for (const g of r.gallery) pushUrl(g);
+      }
+    }
+    return urls.slice(0, 24);
+  }, [mediaItems, roomsList]);
+
   const fetchPromotionsList = async () => {
     try {
       invalidateAdminCache(hotelId);
       const data = await loadAdminBundle({ force: true });
       if (data) {
+        if (data.hotel?.id) setHotelId(data.hotel.id);
         setPromotions(data.promotions || []);
+        if (data.media) setMediaItems(data.media);
+        if (data.rooms) setRoomsList(data.rooms);
       }
     } catch (err) {
       console.error('Failed to reload promotions via API:', err);
@@ -37,14 +124,18 @@ export default function PromotionsManagerPage() {
         if (cached?.complete) {
           setHotelId(cached.hotel.id);
           setPromotions(cached.promotions || []);
+          setMediaItems(cached.media || []);
+          setRoomsList(cached.rooms || []);
           setIsLoading(false);
           return;
         }
         setIsLoading(true);
-        const data = await loadAdminBundle();
+        const data = await loadAdminBundle({ force: true });
         if (data?.hotel) {
           setHotelId(data.hotel.id);
           setPromotions(data.promotions || []);
+          setMediaItems(data.media || []);
+          setRoomsList(data.rooms || []);
         }
       } catch (err) {
         console.error('Failed to load active promotions via API:', err);
@@ -121,16 +212,19 @@ export default function PromotionsManagerPage() {
   };
 
   const handleDeletePromo = async (promoId: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete the offer "${title}"?`)) return;
+    setIsDeletingId(promoId);
+    setNotification(null);
 
-    const result = await deletePromotionAction(promoId);
+    const result = await deletePromotionAction(promoId, hotelId, title);
 
     if (result.success) {
+      setConfirmDeleteId(null);
+      setPromotions((prev) => prev.filter((p) => p.id !== promoId));
       setNotification({
         type: 'success',
-        message: `Campaign "${title}" deleted successfully.`,
+        message: `ลบโปรโมชั่น "${title}" เรียบร้อยแล้ว`,
       });
-      fetchPromotionsList();
+      await fetchPromotionsList();
       setTimeout(() => setNotification(null), 4000);
     } else {
       setNotification({
@@ -138,6 +232,22 @@ export default function PromotionsManagerPage() {
         message: result.error || 'Failed to delete offer.',
       });
     }
+    setIsDeletingId(null);
+  };
+
+  const handleRestoreFlowStayPromos = async () => {
+    if (!hotelId) return;
+    setIsSaving(true);
+    const result = await restoreHiddenPromotionsAction(hotelId);
+    if (result.success) {
+      await fetchPromotionsList();
+      setNotification({
+        type: 'success',
+        message: 'ดึงโปรโมชั่นที่ซิงค์จาก FlowStay กลับมาแสดงครบเรียบร้อยแล้ว',
+      });
+      setTimeout(() => setNotification(null), 4000);
+    }
+    setIsSaving(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -166,13 +276,26 @@ export default function PromotionsManagerPage() {
           </p>
         </div>
         
-        <button
-          onClick={openAddModal}
-          className="bg-accent hover:opacity-90 text-primary font-bold text-xs tracking-wider uppercase py-3.5 px-6 rounded-lg shadow-md flex items-center gap-2 transition-all active:scale-[0.98] self-start sm:self-center"
-        >
-          <Plus className="w-4 h-4" />
-          Add Special Offer
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-center">
+          <button
+            type="button"
+            onClick={handleRestoreFlowStayPromos}
+            disabled={isSaving}
+            title="ดึงแคมเปญจาก FlowStay ที่เคยลบกลับมาแสดงใหม่"
+            className="bg-slate-800 hover:bg-slate-750 border border-slate-700/60 text-slate-200 font-bold text-xs tracking-wider uppercase py-3.5 px-4 rounded-lg flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-accent" />
+            Sync FlowStay
+          </button>
+
+          <button
+            onClick={openAddModal}
+            className="bg-accent hover:opacity-90 text-primary font-bold text-xs tracking-wider uppercase py-3.5 px-6 rounded-lg shadow-md flex items-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Add Special Offer
+          </button>
+        </div>
       </div>
 
       {/* NOTIFICATION TOAST */}
@@ -253,20 +376,42 @@ export default function PromotionsManagerPage() {
                 {/* Action Buttons */}
                 <div className="flex items-center justify-between gap-4 pt-2">
                   <button
+                    type="button"
                     onClick={() => openEditModal(promo)}
-                    className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-slate-400 hover:text-white transition-colors"
+                    className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-slate-400 hover:text-white transition-colors cursor-pointer"
                   >
                     <Edit className="w-3.5 h-3.5 text-accent" />
                     Edit Campaign
                   </button>
-                  
-                  <button
-                    onClick={() => handleDeletePromo(promo.id, promo.title)}
-                    className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-red-500 hover:text-red-400 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Delete
-                  </button>
+
+                  {confirmDeleteId === promo.id ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={isDeletingId === promo.id}
+                        onClick={() => handleDeletePromo(promo.id, promo.title)}
+                        className="px-2.5 py-1 rounded bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                      >
+                        {isDeletingId === promo.id ? 'กำลังลบ...' : 'ยืนยันลบ'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold uppercase tracking-wider cursor-pointer"
+                      >
+                        ยกเลิก
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteId(promo.id)}
+                      className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-red-500 hover:text-red-400 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -341,20 +486,104 @@ export default function PromotionsManagerPage() {
                   />
                 </div>
 
-                {/* Campaign Image URL */}
-                <div className="space-y-1">
-                  <label className="text-[9px] text-slate-450 uppercase font-bold tracking-wider">Campaign Banner Image URL</label>
-                  <input
-                    type="text"
-                    value={editingPromo.image_url || ''}
-                    onChange={(e) => handleFieldChange('image_url', e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-slate-200 outline-none focus:border-accent"
-                    required
-                  />
+                {/* Campaign Image URL + 1-Click Upload & Media Library Picker */}
+                <div className="md:col-span-2 space-y-3 bg-slate-950/60 border border-slate-800 rounded-lg p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                      Campaign Banner Image (เปลี่ยนรูปโปรโมชั่น)
+                    </label>
+                    <label className="text-[11px] font-bold text-accent hover:opacity-80 cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded bg-slate-900 border border-slate-700">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{isUploading ? 'กำลังอัปโหลด...' : 'อัปโหลดรูปใหม่'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={isUploading}
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setIsUploading(true);
+                          try {
+                            const processed = await compressImageToWebP(file);
+                            const formData = new FormData();
+                            formData.append('file', processed);
+                            const res = await fetch('/api/admin/media/upload', {
+                              method: 'POST',
+                              body: formData,
+                            });
+                            if (!res.ok) throw new Error('Upload failed');
+                            const data = await res.json();
+                            if (data?.url) {
+                              handleFieldChange('image_url', data.url);
+                            }
+                          } catch {
+                            setNotification({
+                              type: 'error',
+                              message: 'อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองอีกครั้ง',
+                            });
+                          } finally {
+                            setIsUploading(false);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                    <div className="sm:col-span-4 aspect-[16/9] rounded-lg overflow-hidden border border-slate-800 bg-slate-950">
+                      {editingPromo.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={editingPromo.image_url}
+                          alt="Banner preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : null}
+                    </div>
+                    <div className="sm:col-span-8 space-y-2">
+                      <input
+                        type="text"
+                        value={editingPromo.image_url || ''}
+                        onChange={(e) => handleFieldChange('image_url', e.target.value)}
+                        placeholder="https://..."
+                        className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-slate-200 outline-none focus:border-accent"
+                        required
+                      />
+                      {libraryPhotos.length > 0 && (
+                        <div className="space-y-1">
+                          <span className="text-[10px] text-slate-400 font-semibold block">
+                            หรือคลิกเลือกจากคลังรูปภาพของโรงแรม:
+                          </span>
+                          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                            {libraryPhotos.map((url, idx) => (
+                              <button
+                                key={`${url}-${idx}`}
+                                type="button"
+                                onClick={() => handleFieldChange('image_url', url)}
+                                className={`w-16 h-11 rounded overflow-hidden shrink-0 border-2 cursor-pointer transition-all ${
+                                  editingPromo.image_url === url
+                                    ? 'border-accent scale-105'
+                                    : 'border-transparent opacity-70 hover:opacity-100'
+                                }`}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={url}
+                                  alt=""
+                                  className="w-full h-full object-cover pointer-events-none"
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Active Toggle */}
-                <div className="space-y-1">
+                <div className="md:col-span-2 space-y-1">
                   <label className="text-[9px] text-slate-450 uppercase font-bold tracking-wider block mb-1">Campaign Status</label>
                   <select
                     value={editingPromo.is_active ? 'true' : 'false'}

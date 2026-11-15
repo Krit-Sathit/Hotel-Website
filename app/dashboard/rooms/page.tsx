@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Hotel as HotelIcon, Save, X, BedDouble, Users, Maximize2, CheckCircle, AlertCircle, Upload } from 'lucide-react';
-import { saveRoomAction, deleteRoomAction } from '@/lib/db/actions';
+import { Plus, Edit, Trash2, Hotel as HotelIcon, Save, X, BedDouble, Users, Maximize2, CheckCircle, AlertCircle, Upload, RotateCcw } from 'lucide-react';
+import { saveRoomAction, deleteRoomAction, restoreHiddenRoomsAction } from '@/lib/db/actions';
 import { peekAdminBundle, loadAdminBundle, invalidateAdminCache } from '@/lib/admin-client-cache';
 import type { Room } from '@/lib/db/mock-data';
 
@@ -69,6 +69,9 @@ export default function RoomsManagerPage() {
   const [rooms, setRooms] = useState<Room[]>(initialCached?.rooms || []);
   const [isLoading, setIsLoading] = useState(!initialCached?.complete);
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Modal form states
@@ -196,21 +199,45 @@ export default function RoomsManagerPage() {
   };
 
   const handleDeleteRoom = async (roomId: string, roomName: string) => {
-    if (!confirm(`Are you sure you want to delete the suite "${roomName}"?`)) return;
-
-    const result = await deleteRoomAction(roomId);
+    setIsDeletingId(roomId);
+    const result = await deleteRoomAction(roomId, hotelId, roomName);
+    setIsDeletingId(null);
+    setConfirmDeleteId(null);
 
     if (result.success) {
+      setRooms((prev) =>
+        prev.filter((r) => r.id !== roomId && r.name.trim().toLowerCase() !== roomName.trim().toLowerCase())
+      );
       setNotification({
         type: 'success',
-        message: `Suite "${roomName}" deleted successfully.`,
+        message: `ลบห้องพัก "${roomName}" เรียบร้อยแล้ว (กดปุ่ม Sync FlowStay ได้ตลอดเวลาหากต้องการดึงกลับมา)`,
       });
       fetchRoomsList();
-      setTimeout(() => setNotification(null), 4000);
+      setTimeout(() => setNotification(null), 5000);
     } else {
       setNotification({
         type: 'error',
         message: result.error || 'Failed to delete suite.',
+      });
+    }
+  };
+
+  const handleRestoreFlowstayRooms = async () => {
+    if (!hotelId) return;
+    setIsSyncing(true);
+    const result = await restoreHiddenRoomsAction(hotelId);
+    setIsSyncing(false);
+    if (result.success) {
+      await fetchRoomsList();
+      setNotification({
+        type: 'success',
+        message: 'ซิงก์รายการห้องพักจาก FlowStay กลับมาครบทั้งหมดเรียบร้อยแล้ว',
+      });
+      setTimeout(() => setNotification(null), 4000);
+    } else {
+      setNotification({
+        type: 'error',
+        message: result.error || 'Failed to sync FlowStay rooms.',
       });
     }
   };
@@ -237,13 +264,26 @@ export default function RoomsManagerPage() {
           </p>
         </div>
         
-        <button
-          onClick={openAddModal}
-          className="bg-accent hover:opacity-90 text-primary font-bold text-xs tracking-wider uppercase py-3.5 px-6 rounded-lg shadow-md flex items-center gap-2 transition-all active:scale-[0.98] self-start sm:self-center"
-        >
-          <Plus className="w-4 h-4" />
-          Add New Suite
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-center">
+          <button
+            type="button"
+            onClick={handleRestoreFlowstayRooms}
+            disabled={isSyncing}
+            title="Restore any deleted/hidden FlowStay suites"
+            className="bg-slate-800/80 hover:bg-slate-800 text-slate-300 font-bold text-[11px] tracking-wider uppercase py-3.5 px-4 rounded-lg border border-slate-700/70 flex items-center gap-2 transition-all disabled:opacity-50"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 text-accent ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Sync FlowStay'}
+          </button>
+
+          <button
+            onClick={openAddModal}
+            className="bg-accent hover:opacity-90 text-primary font-bold text-xs tracking-wider uppercase py-3.5 px-6 rounded-lg shadow-md flex items-center gap-2 transition-all active:scale-[0.98]"
+          >
+            <Plus className="w-4 h-4" />
+            Add New Suite
+          </button>
+        </div>
       </div>
 
       {/* NOTIFICATION TOAST */}
@@ -320,13 +360,34 @@ export default function RoomsManagerPage() {
                     Edit Details
                   </button>
                   
-                  <button
-                    onClick={() => handleDeleteRoom(room.id, room.name)}
-                    className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-red-500 hover:text-red-400 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Delete
-                  </button>
+                  {confirmDeleteId === room.id ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={isDeletingId === room.id}
+                        onClick={() => handleDeleteRoom(room.id, room.name)}
+                        className="px-2.5 py-1 rounded bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold tracking-wider uppercase transition-colors disabled:opacity-50"
+                      >
+                        {isDeletingId === room.id ? 'กำลังลบ...' : 'ยืนยันลบ'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold tracking-wider uppercase transition-colors"
+                      >
+                        ยกเลิก
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteId(room.id)}
+                      className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-red-500 hover:text-red-400 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
 

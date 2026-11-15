@@ -3,6 +3,8 @@ import path from 'path';
 import { unstable_cache } from 'next/cache';
 import {
   isSupabaseConfigured,
+  deterministicEntityUuid,
+  resolveSupabaseHotelUuid,
   getSupabaseHotelBySlug,
   getSupabaseHotelByDomain,
   getSupabaseAllHotels,
@@ -1347,6 +1349,104 @@ export async function getHeroSlides(hotelId: string): Promise<HeroSlide[]> {
     .sort((a, b) => a.sort_order - b.sort_order);
 }
 
+interface CmsHiddenItems {
+  promotions: string[];
+  rooms: string[];
+}
+
+async function getCmsHiddenItems(
+  hotelId: string,
+  fallbackHotel?: Hotel | null
+): Promise<CmsHiddenItems> {
+  if (isSupabaseConfigured && hotelId !== 'hotel-1784206393534') {
+    try {
+      const sbSections = await getSupabaseHomepageSections(hotelId, fallbackHotel);
+      const hiddenSec = (sbSections || []).find(
+        (s) => s.section_type === 'cms_hidden_items'
+      );
+      if (hiddenSec?.content) {
+        return {
+          promotions: Array.isArray(hiddenSec.content.promotions)
+            ? hiddenSec.content.promotions
+            : [],
+          rooms: Array.isArray(hiddenSec.content.rooms)
+            ? hiddenSec.content.rooms
+            : [],
+        };
+      }
+    } catch {
+      // ignore
+    }
+  }
+  const db = getDb();
+  const localSec = db.homepage_sections.find(
+    (s) => s.hotel_id === hotelId && s.section_type === 'cms_hidden_items'
+  );
+  return {
+    promotions: Array.isArray(localSec?.content?.promotions)
+      ? localSec!.content.promotions
+      : [],
+    rooms: Array.isArray(localSec?.content?.rooms)
+      ? localSec!.content.rooms
+      : [],
+  };
+}
+
+async function updateCmsHiddenItems(
+  hotelId: string,
+  kind: 'promotions' | 'rooms',
+  mode: 'hide' | 'unhide' | 'clear',
+  keys: string[],
+  fallbackHotel?: Hotel | null
+): Promise<void> {
+  const current = await getCmsHiddenItems(hotelId, fallbackHotel);
+  const normKeys = keys.map((k) => k.trim().toLowerCase()).filter(Boolean);
+  let nextList = current[kind].map((k) => k.trim().toLowerCase());
+
+  if (mode === 'clear') {
+    nextList = [];
+  } else if (mode === 'hide') {
+    const set = new Set([...nextList, ...normKeys]);
+    nextList = Array.from(set);
+  } else if (mode === 'unhide') {
+    const removeSet = new Set(normKeys);
+    nextList = nextList.filter((k) => !removeSet.has(k));
+  }
+
+  const nextContent: CmsHiddenItems = {
+    ...current,
+    [kind]: nextList,
+  };
+
+  if (isSupabaseConfigured) {
+    await saveSupabaseHomepageSection(
+      hotelId,
+      'cms_hidden_items',
+      nextContent,
+      fallbackHotel
+    );
+    return;
+  }
+
+  const db = getDb();
+  const existing = db.homepage_sections.find(
+    (s) => s.hotel_id === hotelId && s.section_type === 'cms_hidden_items'
+  );
+  if (existing) {
+    existing.content = nextContent;
+  } else {
+    db.homepage_sections.push({
+      id: `section-${Date.now()}`,
+      hotel_id: hotelId,
+      section_type: 'cms_hidden_items',
+      content: nextContent,
+      is_enabled: false,
+      sort_order: 999,
+    });
+  }
+  saveDb(db);
+}
+
 export async function getHomepageSections(hotelId: string): Promise<HomepageSection[]> {
   const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
   const flowstaySections = Array.isArray(flowstayBundle?.sections)
@@ -1355,11 +1455,14 @@ export async function getHomepageSections(hotelId: string): Promise<HomepageSect
 
   if (isSupabaseConfigured && hotelId !== 'hotel-1784206393534') {
     try {
-      const sbSections = await getSupabaseHomepageSections(
+      const rawSbSections = await getSupabaseHomepageSections(
         hotelId,
         flowstayBundle?.hotel
       );
-      if (sbSections && sbSections.length > 0) {
+      const sbSections = (rawSbSections || []).filter(
+        (s) => s.section_type !== 'cms_hidden_items'
+      );
+      if (sbSections.length > 0) {
         if (flowstaySections.length === 0) return sbSections;
         const byType = new Map<string, HomepageSection>();
         for (const sec of flowstaySections) {
@@ -1383,7 +1486,7 @@ export async function getHomepageSections(hotelId: string): Promise<HomepageSect
 
   const db = getDb();
   return db.homepage_sections
-    .filter(s => s.hotel_id === hotelId)
+    .filter(s => s.hotel_id === hotelId && s.section_type !== 'cms_hidden_items')
     .sort((a, b) => a.sort_order - b.sort_order);
 }
 
@@ -1421,17 +1524,114 @@ export async function saveHomepageSection(
 
 export async function getRooms(hotelId: string): Promise<Room[]> {
   const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
-  if (flowstayBundle && Array.isArray(flowstayBundle.rooms) && flowstayBundle.rooms.length > 0) {
-    return flowstayBundle.rooms;
-  }
+  const flowstayRooms = Array.isArray(flowstayBundle?.rooms)
+    ? flowstayBundle!.rooms
+    : [];
+  const hidden = await getCmsHiddenItems(hotelId, flowstayBundle?.hotel);
+  const hiddenSet = new Set(hidden.rooms.map((k) => k.toLowerCase()));
 
   if (isSupabaseConfigured && hotelId !== 'hotel-1784206393534') {
     try {
-      const rooms = await getSupabaseRooms(hotelId);
-      if (rooms && rooms.length > 0) return rooms;
+      const targetUuid = await resolveSupabaseHotelUuid(
+        hotelId,
+        flowstayBundle?.hotel,
+        false
+      );
+      const sbRooms = await getSupabaseRooms(hotelId, flowstayBundle?.hotel);
+
+      if (flowstayRooms.length > 0) {
+        const consumedSbIds = new Set<string>();
+        const mergedRooms: Room[] = [];
+
+        for (const fr of flowstayRooms) {
+          const normName = (fr.name || '').trim().toLowerCase();
+          const detId = targetUuid
+            ? deterministicEntityUuid(`${targetUuid}:room:${fr.id}`)
+            : '';
+
+          if (
+            hiddenSet.has(`id:${String(fr.id).toLowerCase()}`) ||
+            (detId && hiddenSet.has(`id:${detId.toLowerCase()}`)) ||
+            (normName && hiddenSet.has(`title:${normName}`))
+          ) {
+            continue;
+          }
+
+          const matchingSb = (sbRooms || []).filter(
+            (sr) =>
+              sr.id === fr.id ||
+              (detId && sr.id === detId) ||
+              (normName && (sr.name || '').trim().toLowerCase() === normName)
+          );
+
+          if (matchingSb.length > 0) {
+            for (const m of matchingSb) consumedSbIds.add(m.id);
+            const override = matchingSb[0];
+            mergedRooms.push({
+              ...fr,
+              name: override.name || fr.name,
+              description: override.description ?? fr.description,
+              gallery:
+                Array.isArray(override.gallery) && override.gallery.length > 0
+                  ? override.gallery
+                  : fr.gallery,
+              amenities:
+                Array.isArray(override.amenities) && override.amenities.length > 0
+                  ? override.amenities
+                  : fr.amenities,
+              max_guests: override.max_guests || fr.max_guests,
+              room_size: override.room_size || fr.room_size,
+              bed_type: override.bed_type || fr.bed_type,
+              // STRICT RULE: Always preserve live Channel Manager rate & FlowStay discount!
+              price: fr.price,
+              original_price: fr.original_price,
+              discount_pct: fr.discount_pct,
+              promo_name: fr.promo_name,
+            });
+          } else {
+            mergedRooms.push(fr);
+          }
+        }
+
+        // Append custom CMS-added rooms not present in FlowStay
+        for (const sr of sbRooms || []) {
+          if (consumedSbIds.has(sr.id)) continue;
+          const normName = (sr.name || '').trim().toLowerCase();
+          if (
+            hiddenSet.has(`id:${sr.id.toLowerCase()}`) ||
+            (normName && hiddenSet.has(`title:${normName}`))
+          ) {
+            continue;
+          }
+          consumedSbIds.add(sr.id);
+          mergedRooms.push(sr);
+        }
+
+        return mergedRooms;
+      }
+
+      if (sbRooms && sbRooms.length > 0) {
+        return sbRooms.filter((sr) => {
+          const normName = (sr.name || '').trim().toLowerCase();
+          return (
+            !hiddenSet.has(`id:${sr.id.toLowerCase()}`) &&
+            !(normName && hiddenSet.has(`title:${normName}`))
+          );
+        });
+      }
     } catch (e) {
       console.error('getRooms Supabase error:', e);
     }
+  }
+
+  if (flowstayRooms.length > 0) {
+    return flowstayRooms.filter((fr) => {
+      const normName = (fr.name || '').trim().toLowerCase();
+      return (
+        !hiddenSet.has(`id:${String(fr.id).toLowerCase()}`) &&
+        !(normName && hiddenSet.has(`title:${normName}`))
+      );
+    });
   }
 
   const db = getDb();
@@ -1485,22 +1685,8 @@ export async function getRoomById(id: string): Promise<Room | null> {
 }
 
 export async function getPromotions(hotelId: string): Promise<Promotion[]> {
-  const flowstayBundle = await fetchFlowStayWebsiteBundle(hotelId);
-  if (flowstayBundle && Array.isArray(flowstayBundle.promotions) && flowstayBundle.promotions.length > 0) {
-    return flowstayBundle.promotions;
-  }
-
-  if (isSupabaseConfigured && hotelId !== 'hotel-1784206393534') {
-    try {
-      const promos = await getSupabasePromotions(hotelId);
-      if (promos && promos.length > 0) return promos;
-    } catch (e) {
-      console.error('getPromotions Supabase error:', e);
-    }
-  }
-
-  const db = getDb();
-  return db.promotions.filter(p => p.hotel_id === hotelId && p.is_active);
+  const all = await getAllPromotions(hotelId);
+  return all.filter((p) => p.is_active !== false);
 }
 
 export async function getGalleryPhotos(hotelId: string): Promise<GalleryPhoto[]> {
@@ -1896,20 +2082,99 @@ export async function getAllPromotions(hotelId: string): Promise<Promotion[]> {
   const flowstayPromos = Array.isArray(flowstayBundle?.promotions)
     ? flowstayBundle!.promotions
     : [];
+  const hidden = await getCmsHiddenItems(hotelId, flowstayBundle?.hotel);
+  const hiddenSet = new Set(hidden.promotions.map((k) => k.toLowerCase()));
 
   if (isSupabaseConfigured && hotelId !== 'hotel-1784206393534') {
     try {
-      const promos = await getSupabaseAllPromotions(
+      const targetUuid = await resolveSupabaseHotelUuid(
+        hotelId,
+        flowstayBundle?.hotel,
+        false
+      );
+      const sbPromos = await getSupabaseAllPromotions(
         hotelId,
         flowstayBundle?.hotel
       );
-      if (promos && promos.length > 0) {
-        if (flowstayPromos.length === 0) return promos;
-        const seenIds = new Set(promos.map((p) => p.id));
-        return [
-          ...promos,
-          ...flowstayPromos.filter((p) => !seenIds.has(p.id)),
-        ];
+
+      if (flowstayPromos.length > 0) {
+        const consumedSbIds = new Set<string>();
+        const mergedPromos: Promotion[] = [];
+
+        for (const fp of flowstayPromos) {
+          const normTitle = (fp.title || '').trim().toLowerCase();
+          const detId = targetUuid
+            ? deterministicEntityUuid(`${targetUuid}:promo:${fp.id}`)
+            : '';
+
+          if (
+            hiddenSet.has(`id:${String(fp.id).toLowerCase()}`) ||
+            (detId && hiddenSet.has(`id:${detId.toLowerCase()}`)) ||
+            (normTitle && hiddenSet.has(`title:${normTitle}`))
+          ) {
+            // Also mark any matching Supabase rows consumed so they don't reappear below
+            for (const sp of sbPromos || []) {
+              if (
+                sp.id === fp.id ||
+                (detId && sp.id === detId) ||
+                (normTitle && (sp.title || '').trim().toLowerCase() === normTitle)
+              ) {
+                consumedSbIds.add(sp.id);
+              }
+            }
+            continue;
+          }
+
+          const matchingSb = (sbPromos || []).filter(
+            (sp) =>
+              sp.id === fp.id ||
+              (detId && sp.id === detId) ||
+              (normTitle && (sp.title || '').trim().toLowerCase() === normTitle)
+          );
+
+          if (matchingSb.length > 0) {
+            for (const m of matchingSb) consumedSbIds.add(m.id);
+            // Replace FlowStay promo in-place with user's customized Supabase version (no duplicates!)
+            mergedPromos.push(matchingSb[0]);
+          } else {
+            mergedPromos.push(fp);
+          }
+        }
+
+        // Deduplicate & append any custom CMS-created promotions not in FlowStay
+        const seenCustomTitles = new Set<string>();
+        for (const sp of sbPromos || []) {
+          if (consumedSbIds.has(sp.id)) continue;
+          const normTitle = (sp.title || '').trim().toLowerCase();
+          if (
+            hiddenSet.has(`id:${sp.id.toLowerCase()}`) ||
+            (normTitle && hiddenSet.has(`title:${normTitle}`)) ||
+            (normTitle && seenCustomTitles.has(normTitle))
+          ) {
+            continue;
+          }
+          if (normTitle) seenCustomTitles.add(normTitle);
+          consumedSbIds.add(sp.id);
+          mergedPromos.push(sp);
+        }
+
+        return mergedPromos;
+      }
+
+      if (sbPromos && sbPromos.length > 0) {
+        const seenTitles = new Set<string>();
+        return sbPromos.filter((sp) => {
+          const normTitle = (sp.title || '').trim().toLowerCase();
+          if (
+            hiddenSet.has(`id:${sp.id.toLowerCase()}`) ||
+            (normTitle && hiddenSet.has(`title:${normTitle}`)) ||
+            (normTitle && seenTitles.has(normTitle))
+          ) {
+            return false;
+          }
+          if (normTitle) seenTitles.add(normTitle);
+          return true;
+        });
       }
     } catch (e) {
       console.error('getAllPromotions Supabase error:', e);
@@ -1917,7 +2182,13 @@ export async function getAllPromotions(hotelId: string): Promise<Promotion[]> {
   }
 
   if (flowstayPromos.length > 0) {
-    return flowstayPromos;
+    return flowstayPromos.filter((fp) => {
+      const normTitle = (fp.title || '').trim().toLowerCase();
+      return (
+        !hiddenSet.has(`id:${String(fp.id).toLowerCase()}`) &&
+        !(normTitle && hiddenSet.has(`title:${normTitle}`))
+      );
+    });
   }
 
   const db = getDb();
@@ -1942,6 +2213,15 @@ export async function saveHeroSlides(hotelId: string, slides: HeroSlide[]): Prom
 
 export async function saveRoom(hotelId: string, roomData: any): Promise<Room> {
   const currentHotel = await getHotelBySlug(hotelId);
+  const normName = String(roomData.name || '').trim().toLowerCase();
+  const unhideKeys = [
+    ...(roomData.id ? [`id:${String(roomData.id).toLowerCase()}`] : []),
+    ...(normName ? [`title:${normName}`] : []),
+  ];
+  if (unhideKeys.length > 0) {
+    await updateCmsHiddenItems(hotelId, 'rooms', 'unhide', unhideKeys, currentHotel);
+  }
+
   if (isSupabaseConfigured) {
     const saved = await saveSupabaseRoom(hotelId, roomData, currentHotel);
     clearFlowStayCache(hotelId);
@@ -1966,9 +2246,23 @@ export async function saveRoom(hotelId: string, roomData: any): Promise<Room> {
   return room;
 }
 
-export async function deleteRoom(roomId: string): Promise<void> {
+export async function deleteRoom(
+  roomId: string,
+  hotelId?: string,
+  roomName?: string
+): Promise<void> {
+  const currentHotel = hotelId ? await getHotelBySlug(hotelId) : null;
+  if (hotelId) {
+    const hideKeys = [
+      `id:${String(roomId).toLowerCase()}`,
+      ...(roomName?.trim() ? [`title:${roomName.trim().toLowerCase()}`] : []),
+    ];
+    await updateCmsHiddenItems(hotelId, 'rooms', 'hide', hideKeys, currentHotel);
+  }
   if (isSupabaseConfigured) {
-    return deleteSupabaseRoom(roomId);
+    await deleteSupabaseRoom(roomId, hotelId, roomName, currentHotel);
+    if (hotelId) clearFlowStayCache(hotelId);
+    return;
   }
   const db = getDb();
   db.rooms = db.rooms.filter(r => r.id !== roomId);
@@ -1977,6 +2271,21 @@ export async function deleteRoom(roomId: string): Promise<void> {
 
 export async function savePromotion(hotelId: string, promoData: any): Promise<Promotion> {
   const currentHotel = await getHotelBySlug(hotelId);
+  const normTitle = String(promoData.title || '').trim().toLowerCase();
+  const unhideKeys = [
+    ...(promoData.id ? [`id:${String(promoData.id).toLowerCase()}`] : []),
+    ...(normTitle ? [`title:${normTitle}`] : []),
+  ];
+  if (unhideKeys.length > 0) {
+    await updateCmsHiddenItems(
+      hotelId,
+      'promotions',
+      'unhide',
+      unhideKeys,
+      currentHotel
+    );
+  }
+
   if (isSupabaseConfigured) {
     const saved = await saveSupabasePromotion(hotelId, promoData, currentHotel);
     clearFlowStayCache(hotelId);
@@ -2000,13 +2309,45 @@ export async function savePromotion(hotelId: string, promoData: any): Promise<Pr
   return promo;
 }
 
-export async function deletePromotion(promoId: string): Promise<void> {
+export async function deletePromotion(
+  promoId: string,
+  hotelId?: string,
+  promoTitle?: string
+): Promise<void> {
+  const currentHotel = hotelId ? await getHotelBySlug(hotelId) : null;
+  if (hotelId) {
+    const hideKeys = [
+      `id:${String(promoId).toLowerCase()}`,
+      ...(promoTitle?.trim() ? [`title:${promoTitle.trim().toLowerCase()}`] : []),
+    ];
+    await updateCmsHiddenItems(
+      hotelId,
+      'promotions',
+      'hide',
+      hideKeys,
+      currentHotel
+    );
+  }
   if (isSupabaseConfigured) {
-    return deleteSupabasePromotion(promoId);
+    await deleteSupabasePromotion(promoId, hotelId, promoTitle, currentHotel);
+    if (hotelId) clearFlowStayCache(hotelId);
+    return;
   }
   const db = getDb();
   db.promotions = db.promotions.filter(p => p.id !== promoId);
   saveDb(db);
+}
+
+export async function restoreHiddenPromotions(hotelId: string): Promise<void> {
+  const currentHotel = await getHotelBySlug(hotelId);
+  await updateCmsHiddenItems(hotelId, 'promotions', 'clear', [], currentHotel);
+  clearFlowStayCache(hotelId);
+}
+
+export async function restoreHiddenRooms(hotelId: string): Promise<void> {
+  const currentHotel = await getHotelBySlug(hotelId);
+  await updateCmsHiddenItems(hotelId, 'rooms', 'clear', [], currentHotel);
+  clearFlowStayCache(hotelId);
 }
 
 export async function updateHomepageLayout(hotelId: string, layout: string[]): Promise<void> {
