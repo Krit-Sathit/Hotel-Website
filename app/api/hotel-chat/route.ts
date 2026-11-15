@@ -86,47 +86,55 @@ async function lookupFlowStayHotel(slug: string): Promise<CachedFlowStayHotel> {
     return cached;
   }
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 5000);
-  try {
-    const encoded = encodeURIComponent(JSON.stringify({ json: { slug: normalized } }));
-    const res = await fetch(`${FLOWSTAY_API_BASE}/api/trpc/hotel.bySlug?input=${encoded}`, {
-      headers: { Accept: 'application/json' },
-      signal: controller.signal,
-      cache: 'no-store',
-    });
-    if (res.ok) {
-      const payload = await res.json();
-      const raw = payload?.result?.data?.json ?? payload?.result?.data;
-      const h = raw?.hotel && typeof raw.hotel === 'object' ? raw.hotel : raw;
-      if (h && typeof h === 'object') {
-        const entry: CachedFlowStayHotel = {
-          expiresAt: now + 60_000,
-          flowstayId: typeof h.id === 'number' ? h.id : Number(h.id) || null,
-          name: String(h.name || '').trim(),
-          nameEn: String(h.nameEn || '').trim(),
-          address: String(h.address || '').trim(),
-          addressEn: String(h.addressEn || '').trim(),
-          city: String(h.city || '').trim(),
-          checkInTime: String(h.checkInTime || '14:00').trim(),
-          checkOutTime: String(h.checkOutTime || '12:00').trim(),
-          description: String(h.description || '').trim(),
-          descriptionEn: String(h.descriptionEn || '').trim(),
-          phone: String(h.contactPhone || '').trim(),
-          email: String(h.contactEmail || h.bookingEmail || '').trim(),
-          lineId: String(h.lineId || '').trim(),
-          whatsapp: String(h.whatsapp || '').trim(),
-          googleMapsUrl: String(h.googleMapsUrl || h.mapUrl || '').trim(),
-          starRating: typeof h.starRating === 'number' ? h.starRating : Number(h.starRating) || null,
-        };
-        hotelCache.set(normalized, entry);
-        return entry;
+  const candidateSlugs = Array.from(
+    new Set(
+      [normalized, slug.trim().toLowerCase(), normalized.replace(/-/g, '')].filter(Boolean)
+    )
+  );
+
+  for (const candidateSlug of candidateSlugs) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    try {
+      const encoded = encodeURIComponent(JSON.stringify({ json: { slug: candidateSlug } }));
+      const res = await fetch(`${FLOWSTAY_API_BASE}/api/trpc/hotelBySlug.get?input=${encoded}`, {
+        headers: { Accept: 'application/json' },
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const payload = await res.json();
+        const raw = payload?.result?.data?.json ?? payload?.result?.data;
+        const h = raw?.hotel && typeof raw.hotel === 'object' ? raw.hotel : raw;
+        if (h && typeof h === 'object' && h.id) {
+          const entry: CachedFlowStayHotel = {
+            expiresAt: now + 60_000,
+            flowstayId: typeof h.id === 'number' ? h.id : Number(h.id) || null,
+            name: String(h.name || '').trim(),
+            nameEn: String(h.nameEn || '').trim(),
+            address: String(h.address || '').trim(),
+            addressEn: String(h.addressEn || '').trim(),
+            city: String(h.city || '').trim(),
+            checkInTime: String(h.checkInTime || '14:00').trim(),
+            checkOutTime: String(h.checkOutTime || '12:00').trim(),
+            description: String(h.description || '').trim(),
+            descriptionEn: String(h.descriptionEn || '').trim(),
+            phone: String(h.contactPhone || '').trim(),
+            email: String(h.contactEmail || h.bookingEmail || '').trim(),
+            lineId: String(h.lineId || '').trim(),
+            whatsapp: String(h.whatsapp || '').trim(),
+            googleMapsUrl: String(h.googleMapsUrl || h.mapUrl || '').trim(),
+            starRating: typeof h.starRating === 'number' ? h.starRating : Number(h.starRating) || null,
+          };
+          hotelCache.set(normalized, entry);
+          return entry;
+        }
       }
+    } catch {
+      // Try next candidate slug
+    } finally {
+      clearTimeout(timer);
     }
-  } catch {
-    // Fallback below
-  } finally {
-    clearTimeout(timer);
   }
 
   return {
