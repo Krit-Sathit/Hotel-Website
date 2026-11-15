@@ -9,6 +9,7 @@ import HotelThemeProvider from '@/components/hotel-theme-provider';
 import BookingWidget from '@/components/booking-widget';
 import MobileNavigation from '@/components/mobile-navigation';
 import TenantChromeGuard from '@/components/templates/tenant-chrome-guard';
+import FloatingContactChat from '@/components/floating-contact-chat';
 import { getBookingEngineUrl, resolveTenantPrefix } from '@/lib/booking-engine';
 import {
   buildGoogleDirectionsUrl,
@@ -400,10 +401,21 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
                   <div className="flex gap-4 pt-2">
                     {Object.entries(hotel.social_links).map(([platform, url]) => {
                       if (!url) return null;
+                      const trimmed = url.trim();
+                      const socialHref =
+                        trimmed.startsWith('http://') || trimmed.startsWith('https://')
+                          ? trimmed
+                          : platform === 'line'
+                          ? trimmed.startsWith('@')
+                            ? `https://line.me/R/ti/p/${encodeURIComponent(trimmed)}`
+                            : `https://line.me/ti/p/~${encodeURIComponent(trimmed)}`
+                          : platform === 'whatsapp'
+                          ? `https://wa.me/${trimmed.replace(/[^0-9]/g, '')}`
+                          : trimmed;
                       return (
                         <a
                           key={platform}
-                          href={url}
+                          href={socialHref}
                           target="_blank"
                           rel="noreferrer"
                           className="text-white/40 hover:text-accent transition-colors capitalize text-xs tracking-wider"
@@ -473,6 +485,16 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
       >
         {children}
       </TenantChromeGuard>
+      <FloatingContactChat
+        hotelId={hotel.id}
+        flowstayId={hotel.flowstay_id}
+        slug={hotel.slug || tenant}
+        hotelName={hotel.name}
+        phone={hotel.phone}
+        email={hotel.email}
+        lineId={hotel.social_links?.line || hotel.line_id}
+        whatsapp={hotel.social_links?.whatsapp}
+      />
     </HotelThemeProvider>
   );
 }

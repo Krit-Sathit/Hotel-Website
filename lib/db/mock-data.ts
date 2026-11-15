@@ -59,6 +59,8 @@ export interface HotelTheme {
 
 export interface Hotel {
   id: string;
+  flowstay_id?: number;
+  line_id?: string;
   name: string;
   slug: string;
   custom_domain: string | null;
@@ -73,6 +75,7 @@ export interface Hotel {
     facebook: string;
     instagram: string;
     whatsapp: string;
+    line?: string;
     twitter: string;
     seo_title?: string;
     seo_description?: string;
@@ -950,6 +953,7 @@ async function applyHotelThemeOverride(hotel: Hotel): Promise<Hotel> {
       'facebook',
       'instagram',
       'whatsapp',
+      'line',
       'twitter',
       'seo_title',
       'seo_description',
