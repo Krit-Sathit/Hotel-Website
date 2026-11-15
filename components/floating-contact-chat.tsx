@@ -29,6 +29,31 @@ export interface FloatingContactChatProps {
   whatsapp?: string | null;
 }
 
+function renderMessageWithLinks(content: string, isUser: boolean): React.ReactNode {
+  const urlRegex = /(https?:\/\/[^\s<>)]+)/g;
+  const parts = content.split(urlRegex);
+  if (parts.length === 1) return content;
+
+  return parts.map((part, i) => {
+    if (/^https?:\/\//i.test(part)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`underline font-medium break-all ${
+            isUser ? 'text-blue-200 hover:text-white' : 'text-blue-600 hover:text-blue-800'
+          }`}
+        >
+          {part}
+        </a>
+      );
+    }
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
+}
+
 function normalizeWhatsAppHref(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return '';
@@ -423,7 +448,7 @@ export default function FloatingContactChat({
                             : 'bg-gray-100 text-gray-900'
                         }`}
                       >
-                        {msg.content}
+                        {renderMessageWithLinks(msg.content, msg.role === 'user')}
                       </div>
                       {msg.role === 'user' && (
                         <div className="w-8 h-8 shrink-0 mt-0.5 rounded-full bg-gray-200 flex items-center justify-center">

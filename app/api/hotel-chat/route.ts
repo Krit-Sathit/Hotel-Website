@@ -392,7 +392,7 @@ async function buildLocalConciergeReply(
 
   // 1. Location / Address / Directions
   if (
-    /ที่ไหน|อยู่ไหน|ที่ตั้ง|ที่อยู่|แผนที่|เดินทาง|พิกัด|ซอย|ถนน|แถวไหน|ใกล้|สนามบิน|where|location|address|map|direction|located|how to get/.test(
+    /แชร์โล|ขอโล|โลเคช|ปักหมุด|แมพ|ลิ้งค์แผนที่|ลิงก์แผนที่|ที่ไหน|อยู่ไหน|ที่ตั้ง|ที่อยู่|แผนที่|เดินทาง|ไปยังไง|พิกัด|ซอย|ถนน|แถวไหน|ใกล้|สนามบิน|where|location|address|map|direction|located|how to get|pin|google map/.test(
       q
     )
   ) {
