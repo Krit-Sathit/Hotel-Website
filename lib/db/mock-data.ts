@@ -1540,7 +1540,7 @@ export async function getRooms(hotelId: string): Promise<Room[]> {
       const sbRooms = await getSupabaseRooms(hotelId, flowstayBundle?.hotel);
 
       if (flowstayRooms.length > 0) {
-        const consumedSbIds = new Set<string>();
+        const matchedSbIds = new Set<string>();
         const mergedRooms: Room[] = [];
 
         for (const fr of flowstayRooms) {
@@ -1548,6 +1548,14 @@ export async function getRooms(hotelId: string): Promise<Room[]> {
           const detId = targetUuid
             ? deterministicEntityUuid(`${targetUuid}:room:${fr.id}`)
             : '';
+
+          const matchingSb = (sbRooms || []).filter(
+            (sr) =>
+              sr.id === fr.id ||
+              (detId && sr.id === detId) ||
+              (normName && (sr.name || '').trim().toLowerCase() === normName)
+          );
+          for (const m of matchingSb) matchedSbIds.add(m.id);
 
           if (
             hiddenSet.has(`id:${String(fr.id).toLowerCase()}`) ||
@@ -1557,15 +1565,7 @@ export async function getRooms(hotelId: string): Promise<Room[]> {
             continue;
           }
 
-          const matchingSb = (sbRooms || []).filter(
-            (sr) =>
-              sr.id === fr.id ||
-              (detId && sr.id === detId) ||
-              (normName && (sr.name || '').trim().toLowerCase() === normName)
-          );
-
           if (matchingSb.length > 0) {
-            for (const m of matchingSb) consumedSbIds.add(m.id);
             const override = matchingSb[0];
             mergedRooms.push({
               ...fr,
@@ -1593,18 +1593,18 @@ export async function getRooms(hotelId: string): Promise<Room[]> {
           }
         }
 
-        // Append custom CMS-added rooms not present in FlowStay
+        // FlowStay PMS is the strict single source of truth for Room Types.
+        // Never append orphan/stale Supabase rooms (e.g. old test rows like "Private Garden Villa"
+        // or rooms deleted in FlowStay), and automatically purge them from Supabase in the background.
         for (const sr of sbRooms || []) {
-          if (consumedSbIds.has(sr.id)) continue;
-          const normName = (sr.name || '').trim().toLowerCase();
-          if (
-            hiddenSet.has(`id:${sr.id.toLowerCase()}`) ||
-            (normName && hiddenSet.has(`title:${normName}`))
-          ) {
-            continue;
+          if (!matchedSbIds.has(sr.id)) {
+            void deleteSupabaseRoom(
+              sr.id,
+              hotelId,
+              sr.name,
+              flowstayBundle?.hotel
+            ).catch(() => {});
           }
-          consumedSbIds.add(sr.id);
-          mergedRooms.push(sr);
         }
 
         return mergedRooms;

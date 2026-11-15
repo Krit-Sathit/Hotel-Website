@@ -4,7 +4,7 @@ import { headers } from 'next/headers';
 
 import Link from 'next/link';
 import { ChevronLeft, Maximize2, Users, BedDouble, Check, ArrowRight } from 'lucide-react';
-import { getHotelBySlug, getRoomById } from '@/lib/db/mock-data';
+import { getHotelBySlug, getRooms, getRoomById } from '@/lib/db/mock-data';
 import BookingWidget from '@/components/booking-widget';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
 import RoomDetailGallery from '@/components/sections/room-detail-gallery';
@@ -22,8 +22,11 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
     notFound();
   }
 
-  const room = await getRoomById(id);
-  if (!room || room.hotel_id !== hotel.id) {
+  const hotelRooms = await getRooms(hotel.id);
+  const room =
+    hotelRooms.find((r) => String(r.id) === String(id)) ||
+    (hotelRooms.length === 0 ? await getRoomById(id) : null);
+  if (!room) {
     notFound();
   }
 
