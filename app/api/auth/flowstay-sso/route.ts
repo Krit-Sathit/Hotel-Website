@@ -13,7 +13,7 @@ function getSiteOrigin(request: NextRequest): string {
   const host =
     request.headers.get('x-forwarded-host')?.split(',')[0]?.trim() ||
     request.headers.get('host') ||
-    'hotel-website-gamma-five.vercel.app';
+    'flowweb.flowhubhotel.com';
   return `${proto}://${host}`.replace(/\/$/, '');
 }
 

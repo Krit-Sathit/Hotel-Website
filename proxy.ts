@@ -16,11 +16,29 @@ const LEGACY_PATHS: Record<string, string> = {
   '/rooms/4': '/',
 };
 
+const PLATFORM_HOSTS = new Set([
+  'flowweb.flowhubhotel.com',
+  'www.flowweb.flowhubhotel.com',
+  'hotel-website-gamma-five.vercel.app',
+  'localhost',
+  '127.0.0.1',
+]);
+
 export default function proxy(request: NextRequest) {
   const rawHost = request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.hostname || '';
   const host = rawHost.split(',')[0].trim().toLowerCase().split(':')[0];
   const normalizedHost = host.replace(/^www\./, '');
   const pathname = request.nextUrl.pathname;
+
+  if (
+    PLATFORM_HOSTS.has(host) ||
+    PLATFORM_HOSTS.has(normalizedHost) ||
+    host.endsWith('.flowhubhotel.com') ||
+    host.endsWith('.flowstay.live') ||
+    host.endsWith('.vercel.app')
+  ) {
+    return NextResponse.next();
+  }
 
   const slug = DOMAIN_TO_SLUG[host] || DOMAIN_TO_SLUG[normalizedHost] || (
     host.includes('phuketairport') || host.includes('phuketairvilla') || host.includes('airportvilla')

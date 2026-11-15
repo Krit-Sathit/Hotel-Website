@@ -28,12 +28,15 @@ export default async function PlatformLandingPage() {
     redirect(`/sites/${matchedSlug}`);
   }
 
-  // Any custom hotel domain (not localhost and not the shared vercel platform host) routes directly to that hotel
+  // Any custom hotel domain (not localhost and not the shared platform host) routes directly to that hotel
   const isPlatformHost =
     !host ||
     host.includes('localhost') ||
     host.includes('127.0.0.1') ||
-    host.includes('hotel-website-gamma-five.vercel.app');
+    host === 'flowweb.flowhubhotel.com' ||
+    host.endsWith('.flowhubhotel.com') ||
+    host.endsWith('.flowstay.live') ||
+    host.endsWith('.vercel.app');
 
   if (!isPlatformHost) {
     if (host.includes('phuketairport') || host.includes('airportvilla') || host.includes('phuketairvilla')) {

@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
+import dns from 'node:dns/promises';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { 
   LogOut,
@@ -13,11 +14,37 @@ import TenantSelector, {
 } from '@/components/dashboard/tenant-selector';
 import SidebarNav from '@/components/dashboard/sidebar-nav';
 
+const PRIMARY_CMS_DOMAIN = 'flowweb.flowhubhotel.com';
+let flowwebDnsCache: { ready: boolean; checkedAt: number } = { ready: false, checkedAt: 0 };
+
+async function isFlowwebDomainReady(): Promise<boolean> {
+  const now = Date.now();
+  const ttl = flowwebDnsCache.ready ? 300_000 : 15_000;
+  if (now - flowwebDnsCache.checkedAt < ttl) {
+    return flowwebDnsCache.ready;
+  }
+  try {
+    await dns.lookup(PRIMARY_CMS_DOMAIN);
+    flowwebDnsCache = { ready: true, checkedAt: now };
+    return true;
+  } catch {
+    flowwebDnsCache = { ready: false, checkedAt: now };
+    return false;
+  }
+}
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 export default async function DashboardLayout({ children }: DashboardLayoutProps) {
+  // Automatically redirect legacy *.vercel.app URL to flowweb.flowhubhotel.com as soon as DNS is active
+  const headerList = await headers();
+  const rawHost = (headerList.get('x-forwarded-host') || headerList.get('host') || '').split(',')[0].trim().toLowerCase();
+  if (rawHost.endsWith('.vercel.app') && (await isFlowwebDomainReady())) {
+    redirect(`https://${PRIMARY_CMS_DOMAIN}/dashboard`);
+  }
+
   // Read active hotel & session from cookies
   const cookieStore = await cookies();
   const authSession = cookieStore.get('auth_session')?.value;
