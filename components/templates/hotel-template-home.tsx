@@ -60,6 +60,7 @@ import LocationSection from '@/components/sections/location-section';
 import ContactSection from '@/components/sections/contact-section';
 import { useHotelLocale } from '@/components/hotel-locale-provider';
 import LanguageSwitcher from '@/components/language-switcher';
+import { cleanMultilineText, splitFormattedParagraphs } from '@/lib/i18n/hotel-locale';
 
 export interface HotelTemplateHomeProps {
   hotel: Hotel;
@@ -191,24 +192,18 @@ export default function HotelTemplateHome({
       typeof content.description === 'string' &&
       content.description.trim() &&
       !(isParPhuket && isGenericFlowstayPlaceholder)
-        ? content.description.trim()
+        ? cleanMultilineText(content.description)
         : isParPhuket
         ? `Surrounded by the lush fairways of Phuket Country Club Golf Course in Kathu, The Par Phuket is a distinctive golf and lifestyle hotel blending serene greenery views with modern boutique comfort.\n\nGuests enjoy an on-site Muay Thai training camp, dedicated meeting & conference facilities, spacious on-site parking, and convenient proximity to Bang Wad Reservoir and Central Festival Phuket.`
         : `Welcome to ${hotel.name}. Experience warm hospitality, thoughtfully designed accommodations, and effortless comfort. Book directly on our official website for exclusive direct rates and privileges.`;
-    const parsedParagraphs = rawDesc
-      .split(/\n+/)
-      .map((p: string) => p.trim())
-      .filter(Boolean);
+    const parsedParagraphs = splitFormattedParagraphs(rawDesc);
 
     const rawStory2Desc =
       typeof content.story2_description === 'string' && content.story2_description.trim()
-        ? content.story2_description.trim()
+        ? cleanMultilineText(content.story2_description)
         : '';
     const story2Paragraphs = rawStory2Desc
-      ? rawStory2Desc
-          .split(/\n+/)
-          .map((p: string) => p.trim())
-          .filter(Boolean)
+      ? splitFormattedParagraphs(rawStory2Desc)
       : [];
 
     const fallbackImg1 =
@@ -404,6 +399,24 @@ export default function HotelTemplateHome({
     hotel.name,
     hotel.address
   );
+
+  const renderFormattedStory = (
+    paragraphs: string[],
+    fallbackText: string,
+    containerClass: string,
+    textStyle?: React.CSSProperties
+  ) => {
+    const list = paragraphs.length > 0 ? paragraphs : splitFormattedParagraphs(fallbackText);
+    return (
+      <div className={containerClass} style={textStyle}>
+        {list.map((para, idx) => (
+          <p key={idx} className="whitespace-pre-wrap break-words">
+            {para}
+          </p>
+        ))}
+      </div>
+    );
+  };
 
   /**
    * Shared Slide-Down Mobile Menu Drawer (used across all 16 templates on < @3xl / < 768px)
@@ -1302,9 +1315,12 @@ export default function HotelTemplateHome({
                 >
                   {hotel.name}
                 </h1>
-                <p className="text-xs @3xl:text-sm leading-relaxed max-w-lg" style={{ color: mutedText }}>
-                  {aboutData.description}
-                </p>
+                {renderFormattedStory(
+                  aboutData.paragraphs,
+                  aboutData.description,
+                  'space-y-3.5 text-xs @3xl:text-sm leading-[1.85] max-w-lg',
+                  { color: mutedText }
+                )}
                 <div className="pt-1 @5xl:max-w-md">
                   <TemplateBookingForm
                     hotelId={hotel.id}
@@ -1852,9 +1868,12 @@ export default function HotelTemplateHome({
               >
                 {hotel.name}
               </h1>
-              <p className="text-xs @3xl:text-sm leading-relaxed" style={{ color: mutedText }}>
-                {aboutData.description}
-              </p>
+              {renderFormattedStory(
+                aboutData.paragraphs,
+                aboutData.description,
+                'space-y-3.5 text-xs @3xl:text-sm leading-[1.85]',
+                { color: mutedText }
+              )}
             </div>
 
             <TemplateBookingForm
@@ -2172,11 +2191,17 @@ export default function HotelTemplateHome({
                 </h1>
 
                 <div className="max-w-3xl mx-auto space-y-3 text-xs @3xl:text-[15px] leading-relaxed text-white/95 font-normal drop-shadow-xs">
-                  <p>{aboutData.paragraphs[0] || aboutData.description}</p>
-                  <p className="hidden @xl:block">
+                  <p className="whitespace-pre-wrap break-words">
+                    {aboutData.paragraphs[0] || aboutData.description}
+                  </p>
+                  <p className="hidden @xl:block whitespace-pre-wrap break-words">
                     {aboutData.paragraphs[1] ? (
                       <>
                         {aboutData.paragraphs[1]}{' '}
+                      </>
+                    ) : locale === 'th' ? (
+                      <>
+                        สถาปัตยกรรมที่พิถีพิถัน บรรยากาศอันเงียบสงบ และการดูแลเอาใจใส่อย่างอบอุ่นในทุกช่วงเวลาของการเข้าพักที่ {hotel.name}{' '}
                       </>
                     ) : (
                       <>
@@ -2189,17 +2214,19 @@ export default function HotelTemplateHome({
                       className="pointer-events-auto underline underline-offset-4 font-semibold hover:opacity-85"
                       style={{ color: inlineLinkColor }}
                     >
-                      Discover our hotel story.
+                      {locale === 'th' ? 'อ่านเรื่องราวของที่พัก' : 'Discover our hotel story.'}
                     </a>
                   </p>
                   <p className="text-[11px] @3xl:text-sm">
-                    Book directly on our official website for guaranteed lowest rates &amp; exclusive privileges.{' '}
+                    {locale === 'th'
+                      ? 'สำรองห้องพักโดยตรงผ่านเว็บไซต์ทางการเพื่อรับราคาดีที่สุดและสิทธิพิเศษเหนือใคร '
+                      : 'Book directly on our official website for guaranteed lowest rates & exclusive privileges. '}
                     <a
                       href={getReserveHref()}
                       className="pointer-events-auto underline underline-offset-4 font-semibold hover:opacity-85"
                       style={{ color: inlineLinkColor }}
                     >
-                      Explore rooms &amp; live availability.
+                      {locale === 'th' ? 'ดูห้องพักและเช็คห้องว่าง' : 'Explore rooms & live availability.'}
                     </a>
                   </p>
                 </div>
@@ -3585,41 +3612,66 @@ export default function HotelTemplateHome({
                     </span>
                   )}
                   <h2
-                    className="text-3xl @3xl:text-[42px] font-normal leading-[1.16] tracking-tight whitespace-pre-line"
+                    className="text-3xl @3xl:text-[42px] font-normal leading-[1.16] tracking-tight whitespace-pre-wrap"
                     style={{ color: isDark ? textColor : primaryColor, fontFamily: fontStack }}
                   >
                     {aboutData.title === hotel.name
-                      ? `Welcome to ${hotel.name}`
+                      ? locale === 'th'
+                        ? `ยินดีต้อนรับสู่ ${hotel.name}`
+                        : `Welcome to ${hotel.name}`
                       : aboutData.title}
                   </h2>
 
-                  <div className="space-y-4 text-xs @3xl:text-[14px] leading-[1.8]" style={{ color: mutedText }}>
+                  <div className="space-y-4 text-xs @3xl:text-[14px] leading-[1.85]" style={{ color: mutedText }}>
                     {aboutData.paragraphs.map((para: string, idx: number) => (
-                      <p key={idx}>{para}</p>
+                      <p key={idx} className="whitespace-pre-wrap break-words">
+                        {para}
+                      </p>
                     ))}
-                    {aboutData.paragraphs.length === 1 && (
+                    {aboutData.paragraphs.length === 1 && !aboutData.description.includes('\n') && (
                       <p>
-                        {hotel.address ? (
+                        {locale === 'th' ? (
                           <>
-                            Conveniently located at{' '}
-                            <strong style={{ color: textColor }}>{hotel.address}</strong>,{' '}
-                            {hotel.name} offers spacious, well-appointed accommodations with
-                            complimentary Wi-Fi and{' '}
+                            {hotel.address && (
+                              <>
+                                ตั้งอยู่ที่ <strong style={{ color: textColor }}>{hotel.address}</strong>{' '}
+                              </>
+                            )}
+                            {hotel.name} พร้อมมอบห้องพักที่กว้างขวาง สะดวกสบาย ฟรีอินเทอร์เน็ต Wi-Fi และ{' '}
+                            <a
+                              href="#rooms"
+                              className="underline underline-offset-4 font-semibold hover:opacity-80"
+                              style={{ color: storyLinkColor }}
+                            >
+                              การันตีราคาดีที่สุดเมื่อสำรองห้องพักโดยตรง
+                            </a>{' '}
+                            ผ่านเว็บไซต์ทางการของเรา
                           </>
                         ) : (
                           <>
-                            {hotel.name} offers spacious, well-appointed accommodations with
-                            complimentary Wi-Fi and{' '}
+                            {hotel.address ? (
+                              <>
+                                Conveniently located at{' '}
+                                <strong style={{ color: textColor }}>{hotel.address}</strong>,{' '}
+                                {hotel.name} offers spacious, well-appointed accommodations with
+                                complimentary Wi-Fi and{' '}
+                              </>
+                            ) : (
+                              <>
+                                {hotel.name} offers spacious, well-appointed accommodations with
+                                complimentary Wi-Fi and{' '}
+                              </>
+                            )}
+                            <a
+                              href="#rooms"
+                              className="underline underline-offset-4 font-semibold hover:opacity-80"
+                              style={{ color: storyLinkColor }}
+                            >
+                              guaranteed lowest direct rates
+                            </a>{' '}
+                            when booking on our official website.
                           </>
                         )}
-                        <a
-                          href="#rooms"
-                          className="underline underline-offset-4 font-semibold hover:opacity-80"
-                          style={{ color: storyLinkColor }}
-                        >
-                          guaranteed lowest direct rates
-                        </a>{' '}
-                        when booking on our official website.
                       </p>
                     )}
                   </div>
@@ -3719,16 +3771,25 @@ export default function HotelTemplateHome({
                     aboutData.story2Paragraphs.map((para: string, idx: number) => (
                       <p
                         key={idx}
-                        className="text-xs @3xl:text-[14px] leading-[1.8]"
+                        className="text-xs @3xl:text-[14px] leading-[1.85] whitespace-pre-wrap break-words"
                         style={{ color: mutedText }}
                       >
                         {para}
                       </p>
                     ))
                   ) : (
-                    <p className="text-xs @3xl:text-[14px] leading-[1.8]" style={{ color: mutedText }}>
-                      Experience personalized comfort and seamless hospitality at{' '}
-                      <strong style={{ color: textColor }}>{hotel.name}</strong>.
+                    <p className="text-xs @3xl:text-[14px] leading-[1.85]" style={{ color: mutedText }}>
+                      {locale === 'th' ? (
+                        <>
+                          สัมผัสความสะดวกสบายและการบริการที่ใส่ใจในทุกรายละเอียดที่{' '}
+                          <strong style={{ color: textColor }}>{hotel.name}</strong>
+                        </>
+                      ) : (
+                        <>
+                          Experience personalized comfort and seamless hospitality at{' '}
+                          <strong style={{ color: textColor }}>{hotel.name}</strong>.
+                        </>
+                      )}
                     </p>
                   )}
                   <p className="text-xs @3xl:text-[14px] leading-[1.8]" style={{ color: mutedText }}>
@@ -3862,9 +3923,12 @@ export default function HotelTemplateHome({
               {aboutData.title}
             </h2>
             <div className="w-16 h-[1.5px] mx-auto" style={{ backgroundColor: accentColor }} />
-            <p className="text-xs @3xl:text-sm leading-relaxed" style={{ color: mutedText }}>
-              {aboutData.description}
-            </p>
+            {renderFormattedStory(
+              aboutData.paragraphs,
+              aboutData.description,
+              'space-y-4 text-xs @3xl:text-sm leading-[1.85]',
+              { color: mutedText }
+            )}
           </div>
           {aboutData.highlights.length > 0 && (
             <div className="max-w-5xl mx-auto">{renderHighlightsStrip()}</div>
@@ -3890,9 +3954,12 @@ export default function HotelTemplateHome({
             {aboutData.title}
           </h2>
           <div className="w-14 h-[1.5px]" style={{ backgroundColor: accentColor }} />
-          <p className="text-xs @3xl:text-sm leading-relaxed" style={{ color: mutedText }}>
-            {aboutData.description}
-          </p>
+          {renderFormattedStory(
+            aboutData.paragraphs,
+            aboutData.description,
+            'space-y-4 text-xs @3xl:text-sm leading-[1.85]',
+            { color: mutedText }
+          )}
           <div className="grid grid-cols-1 @xl:grid-cols-2 gap-3.5 pt-2">
             {aboutData.features.map((f: any, idx: number) => (
               <div

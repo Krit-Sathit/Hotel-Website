@@ -1,5 +1,6 @@
 import React from 'react';
 import { Compass, Feather, Waves } from 'lucide-react';
+import { splitFormattedParagraphs } from '@/lib/i18n/hotel-locale';
 
 interface AboutSectionProps {
   content: {
@@ -50,9 +51,13 @@ export default function AboutSection({ content }: AboutSectionProps) {
           {/* Decorative Divider */}
           <div className="w-16 h-[1px] bg-accent/50" />
           
-          <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-350 max-w-xl">
-            {content.description}
-          </p>
+          <div className="space-y-4 text-sm leading-[1.85] text-slate-600 dark:text-slate-350 max-w-xl">
+            {splitFormattedParagraphs(content.description).map((para, idx) => (
+              <p key={idx} className="whitespace-pre-wrap break-words">
+                {para}
+              </p>
+            ))}
+          </div>
 
           {/* List of features */}
           {content.features && content.features.length > 0 && (

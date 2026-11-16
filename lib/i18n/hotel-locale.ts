@@ -88,13 +88,27 @@ export function translateBedType(bedType: string, locale: HotelLocale): string {
   return BED_TYPE_EN_TO_TH[key] || bedType;
 }
 
+export function cleanMultilineText(val?: string | null): string {
+  if (typeof val !== 'string' || !val.trim()) return '';
+  return val.replace(/\r\n/g, '\n').replace(/^\n+|\s+$/g, '');
+}
+
+export function splitFormattedParagraphs(text?: string | null): string[] {
+  const cleaned = cleanMultilineText(text);
+  if (!cleaned) return [];
+  return cleaned
+    .split(/\n[ \t]*\n+/)
+    .map((block) => block.replace(/^\n+|\n+$/g, ''))
+    .filter((block) => block.trim().length > 0);
+}
+
 export function localizeHotel(hotel: Hotel, locale: HotelLocale): Hotel {
   if (locale !== 'th') return hotel;
   return {
     ...hotel,
     name: hotel.name_th?.trim() || hotel.name,
     address: hotel.address_th?.trim() || hotel.address,
-    description: hotel.description_th?.trim() || hotel.description,
+    description: cleanMultilineText(hotel.description_th) || hotel.description,
   };
 }
 
@@ -131,7 +145,7 @@ export function localizeRooms(rooms: Room[], locale: HotelLocale): Room[] {
     return {
       ...r,
       name: r.name_th?.trim() || r.name,
-      description: r.description_th?.trim() || r.description,
+      description: cleanMultilineText(r.description_th) || r.description,
       amenities: amenitiesTh,
       bed_type: translateBedType(r.bed_type, 'th'),
       promo_name: r.promo_name_th?.trim() || r.promo_name,
@@ -144,7 +158,7 @@ export function localizePromotions(promotions: Promotion[], locale: HotelLocale)
   return promotions.map((p) => ({
     ...p,
     title: p.title_th?.trim() || p.title,
-    description: p.description_th?.trim() || p.description,
+    description: cleanMultilineText(p.description_th) || p.description,
     cta_text:
       p.cta_text_th?.trim() ||
       (p.cta_text?.toLowerCase() === 'book offer' ? 'จองโปรโมชั่นนี้' : p.cta_text),
@@ -182,8 +196,8 @@ export function localizeSections(
     if (sec.section_type === 'about') {
       const c = sec.content || {};
       const descTh =
-        c.description_th?.trim() ||
-        hotel.description_th?.trim() ||
+        cleanMultilineText(c.description_th) ||
+        cleanMultilineText(hotel.description_th) ||
         (isParPhuket
           ? 'เดอะ พาร์ ภูเก็ต (The Par Phuket) โรงแรมสไตล์ Golf & Lifestyle ท่ามกลางบรรยากาศร่มรื่นเขียวขจีของสนามกอล์ฟ ภูเก็ต คันทรี คลับ ย่านกะทู้ ผสานความเงียบสงบของธรรมชาติเข้ากับความสะดวกสบายทันสมัยอย่างลงตัว\n\nภายในโรงแรมเพียบพร้อมด้วยสระว่ายน้ำกลางแจ้ง ค่ายมวยไทยมาตรฐาน ห้องประชุมสัมมนา ที่จอดรถกว้างขวาง และเดินทางสะดวกใกล้เขื่อนบางวาดและเซ็นทรัล ภูเก็ต'
           : c.description);

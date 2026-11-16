@@ -78,7 +78,7 @@ export default function PromotionsSection({ promotions, bookingUrl }: Promotions
                     {promo.title}
                   </h3>
                   
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-4 whitespace-pre-wrap break-words">
                     {promo.description}
                   </p>
                 </div>

@@ -15,6 +15,7 @@ import {
   localizeHotel,
   localizeRooms,
   getHotelUiText,
+  splitFormattedParagraphs,
 } from '@/lib/i18n/hotel-locale';
 
 interface RoomDetailPageProps {
@@ -88,9 +89,13 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
               <h3 className="text-lg font-bold tracking-widest uppercase text-primary/80 font-sans">
                 {ui.sections.theExperience}
               </h3>
-              <p className="text-sm leading-relaxed text-slate-650 dark:text-slate-400">
-                {room.description}
-              </p>
+              <div className="space-y-3.5 text-sm leading-[1.85] text-slate-650 dark:text-slate-400">
+                {splitFormattedParagraphs(room.description).map((para, idx) => (
+                  <p key={idx} className="whitespace-pre-wrap break-words">
+                    {para}
+                  </p>
+                ))}
+              </div>
             </div>
 
             {/* Technical Specs Summary */}
