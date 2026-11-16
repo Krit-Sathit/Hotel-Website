@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Tag, Calendar, Copy, Check, ArrowRight } from 'lucide-react';
 import { Promotion } from '@/lib/db/mock-data';
+import { useHotelLocale } from '@/components/hotel-locale-provider';
 
 interface PromotionsSectionProps {
   promotions: Promotion[];
@@ -10,6 +11,7 @@ interface PromotionsSectionProps {
 }
 
 export default function PromotionsSection({ promotions, bookingUrl }: PromotionsSectionProps) {
+  const { locale, ui } = useHotelLocale();
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const copyPromoCode = (code: string, id: string) => {
@@ -20,8 +22,9 @@ export default function PromotionsSection({ promotions, bookingUrl }: Promotions
 
   const formatDateRange = (start: string, end: string) => {
     const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-    const startDate = new Date(start).toLocaleDateString('en-US', options);
-    const endDate = new Date(end).toLocaleDateString('en-US', options);
+    const dateLocale = locale === 'th' ? 'th-TH' : 'en-US';
+    const startDate = new Date(start).toLocaleDateString(dateLocale, options);
+    const endDate = new Date(end).toLocaleDateString(dateLocale, options);
     return `${startDate} – ${endDate}`;
   };
 
@@ -32,14 +35,14 @@ export default function PromotionsSection({ promotions, bookingUrl }: Promotions
         {/* SECTION HEADER */}
         <div className="text-center max-w-xl mx-auto space-y-3">
           <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-accent">
-            Curated Campaigns
+            {ui.sections.promotionsEyebrow}
           </p>
           <h2 className="text-3xl md:text-5xl font-light tracking-wide font-hotel capitalize">
-            Exclusive Offers
+            {ui.sections.promotionsTitle}
           </h2>
           <div className="w-12 h-[1px] bg-accent/60 mx-auto" />
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Enjoy premium privileges and tailored experiences designed to elevate your stay.
+            {ui.sections.promotionsSubtitle}
           </p>
         </div>
 

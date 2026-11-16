@@ -2,15 +2,23 @@ import React from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import { Phone, Mail, MapPin } from 'lucide-react';
 import { getHotelBySlug } from '@/lib/db/mock-data';
 import HotelThemeProvider from '@/components/hotel-theme-provider';
+import { HotelLocaleProvider } from '@/components/hotel-locale-provider';
+import LanguageSwitcher from '@/components/language-switcher';
 import BookingWidget from '@/components/booking-widget';
 import MobileNavigation from '@/components/mobile-navigation';
 import TenantChromeGuard from '@/components/templates/tenant-chrome-guard';
 import FloatingContactChat from '@/components/floating-contact-chat';
 import { getBookingEngineUrl, resolveTenantPrefix } from '@/lib/booking-engine';
+import {
+  HOTEL_LOCALE_COOKIE,
+  parseHotelLocale,
+  localizeHotel,
+  getHotelUiText,
+} from '@/lib/i18n/hotel-locale';
 import {
   buildGoogleDirectionsUrl,
   extractLatLng,
@@ -58,17 +66,24 @@ export async function generateMetadata({ params }: Pick<TenantLayoutProps, 'para
 
 export default async function TenantLayout({ children, params }: TenantLayoutProps) {
   const { tenant } = await params;
-  const hotel = await getHotelBySlug(tenant);
+  const [rawHotel, cookieStore, headerList] = await Promise.all([
+    getHotelBySlug(tenant),
+    cookies(),
+    headers(),
+  ]);
 
   // If the hotel is not registered or suspended, return a 404
-  if (!hotel || hotel.status !== 'active') {
+  if (!rawHotel || rawHotel.status !== 'active') {
     notFound();
   }
+
+  const locale = parseHotelLocale(cookieStore.get(HOTEL_LOCALE_COOKIE)?.value);
+  const hotel = localizeHotel(rawHotel, locale);
+  const ui = getHotelUiText(locale);
 
   const { theme } = hotel;
 
   // Determine tenant prefix for links based on domain host
-  const headerList = await headers();
   const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
   const host = rawHost.split(',')[0].trim().toLowerCase();
   const tenantPrefix = resolveTenantPrefix(rawHost, tenant);
@@ -172,11 +187,11 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
 
   // Curated list of navigation links with tenant-aware hrefs
   const navLinks = [
-    { label: 'Home', href: tenantPrefix || '/' },
-    { label: 'Rooms', href: `${tenantPrefix}/rooms` },
-    { label: 'Promotions', href: `${tenantPrefix}/promotions` },
-    { label: 'Gallery', href: `${tenantPrefix}/gallery` },
-    { label: 'Contact', href: `${tenantPrefix}/contact` },
+    { label: ui.nav.home, href: tenantPrefix || '/' },
+    { label: ui.nav.rooms, href: `${tenantPrefix}/rooms` },
+    { label: ui.nav.promotions, href: `${tenantPrefix}/promotions` },
+    { label: ui.nav.gallery, href: `${tenantPrefix}/gallery` },
+    { label: ui.nav.contact, href: `${tenantPrefix}/contact` },
   ];
 
   const subpageHeader = (
@@ -248,10 +263,11 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
                     {hotel.name}
                   </span>
                   <span className="text-[9px] tracking-[0.28em] font-semibold uppercase text-accent mt-0.5">
-                    Official Hotel Website
+                    {ui.badges.officialWebsite}
                   </span>
                 </Link>
-                <div className="md:hidden">
+                <div className="md:hidden flex items-center gap-1.5">
+                  <LanguageSwitcher compact />
                   <MobileNavigation links={navLinks} />
                 </div>
               </div>
@@ -272,6 +288,7 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
                     {link.label}
                   </Link>
                 ))}
+                <LanguageSwitcher />
               </nav>
             </div>
           ) : (
@@ -305,14 +322,14 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
                         : 'text-slate-400'
                     }`}
                   >
-                    Official Hotel Website
+                    {ui.badges.officialWebsite}
                   </span>
                 </div>
               </Link>
 
               {/* NAVIGATION LINKS */}
               <nav
-                className={`hidden md:flex items-center gap-8 text-xs font-semibold tracking-widest uppercase ${
+                className={`hidden md:flex items-center gap-7 text-xs font-semibold tracking-widest uppercase ${
                   theme.header_layout === 'luxury'
                     ? 'text-white/85'
                     : theme.dark_mode
@@ -329,9 +346,13 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
                     {link.label}
                   </Link>
                 ))}
+                <LanguageSwitcher />
               </nav>
 
-              <MobileNavigation links={navLinks} />
+              <div className="flex items-center gap-1.5 md:hidden">
+                <LanguageSwitcher compact />
+                <MobileNavigation links={navLinks} />
+              </div>
             </div>
           )}
 
@@ -465,36 +486,38 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
   );
 
   return (
-    <HotelThemeProvider theme={theme}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(hotelJsonLd) }}
-      />
-      <TenantChromeGuard
-        tenant={tenant}
-        header={subpageHeader}
-        footer={subpageFooter}
-        mobileBottomBar={
-          <BookingWidget
-            hotelId={hotel.id}
-            hotelName={hotel.name}
-            bookingUrl={bookingUrl}
-            variant="sticky-bottom"
-          />
-        }
-      >
-        {children}
-      </TenantChromeGuard>
-      <FloatingContactChat
-        hotelId={hotel.id}
-        flowstayId={hotel.flowstay_id}
-        slug={hotel.slug || tenant}
-        hotelName={hotel.name}
-        phone={hotel.phone}
-        email={hotel.email}
-        lineId={hotel.social_links?.line || hotel.line_id}
-        whatsapp={hotel.social_links?.whatsapp}
-      />
-    </HotelThemeProvider>
+    <HotelLocaleProvider key={locale} initialLocale={locale}>
+      <HotelThemeProvider theme={theme}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(hotelJsonLd) }}
+        />
+        <TenantChromeGuard
+          tenant={tenant}
+          header={subpageHeader}
+          footer={subpageFooter}
+          mobileBottomBar={
+            <BookingWidget
+              hotelId={hotel.id}
+              hotelName={hotel.name}
+              bookingUrl={bookingUrl}
+              variant="sticky-bottom"
+            />
+          }
+        >
+          {children}
+        </TenantChromeGuard>
+        <FloatingContactChat
+          hotelId={hotel.id}
+          flowstayId={hotel.flowstay_id}
+          slug={hotel.slug || tenant}
+          hotelName={hotel.name}
+          phone={hotel.phone}
+          email={hotel.email}
+          lineId={hotel.social_links?.line || hotel.line_id}
+          whatsapp={hotel.social_links?.whatsapp}
+        />
+      </HotelThemeProvider>
+    </HotelLocaleProvider>
   );
 }

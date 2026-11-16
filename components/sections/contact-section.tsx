@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, MessageSquare, Send, Check } from 'lucide-react';
+import { useHotelLocale } from '@/components/hotel-locale-provider';
 
 interface ContactSectionProps {
   hotelId: string;
@@ -17,6 +18,7 @@ interface ContactSectionProps {
 }
 
 export default function ContactSection({ hotelId, email, phone, address, socials }: ContactSectionProps) {
+  const { locale, ui } = useHotelLocale();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -70,14 +72,14 @@ export default function ContactSection({ hotelId, email, phone, address, socials
         <div className="lg:col-span-5 space-y-8 text-left">
           <div className="space-y-3">
             <span className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-accent">
-              Connect With Us
+              {ui.sections.contactEyebrow}
             </span>
             <h2 className="text-3xl md:text-5xl font-light tracking-wide font-hotel capitalize">
-              Inquiries & Contact
+              {ui.sections.contactTitle}
             </h2>
             <div className="w-12 h-[1px] bg-accent/60" />
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Reach out to our concierge team to organize reservations or ask any questions regarding your arrival.
+              {ui.sections.contactSubtitle}
             </p>
           </div>
 
@@ -89,7 +91,7 @@ export default function ContactSection({ hotelId, email, phone, address, socials
                   <Phone className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Concierge Line</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{ui.sections.conciergeLine}</p>
                   <a href={`tel:${phone}`} className="text-xs font-semibold hover:text-accent transition-colors">
                     {phone}
                   </a>
@@ -104,7 +106,7 @@ export default function ContactSection({ hotelId, email, phone, address, socials
                   <Mail className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email Relations</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{ui.sections.emailRelations}</p>
                   <a href={`mailto:${email}`} className="text-xs font-semibold hover:text-accent transition-colors">
                     {email}
                   </a>
@@ -119,7 +121,7 @@ export default function ContactSection({ hotelId, email, phone, address, socials
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Location Address</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{ui.sections.addressLabel}</p>
                   <span className="text-xs font-semibold leading-relaxed text-slate-700 dark:text-slate-300">
                     {address}
                   </span>
@@ -189,18 +191,18 @@ export default function ContactSection({ hotelId, email, phone, address, socials
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5 text-left">
               <h4 className="text-sm font-bold tracking-widest uppercase text-primary/70 font-sans border-b border-slate-50 dark:border-slate-900 pb-3">
-                Send Digital Inquiry
+                {ui.sections.sendMessageTitle}
               </h4>
 
               {/* Name */}
               <div className="space-y-1.5">
-                <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Full Name</label>
+                <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{ui.sections.yourName}</label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Enter your name"
+                  placeholder={ui.sections.yourName}
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded px-4 py-3 text-xs md:text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none focus:border-accent transition-colors"
                   required
                 />
@@ -209,26 +211,26 @@ export default function ContactSection({ hotelId, email, phone, address, socials
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Email */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Email Address</label>
+                  <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{ui.sections.yourEmail}</label>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="Enter your email"
+                    placeholder={ui.sections.yourEmail}
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded px-4 py-3 text-xs md:text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none focus:border-accent transition-colors"
                     required
                   />
                 </div>
                 {/* Phone */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Phone Number</label>
+                  <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{ui.sections.yourPhone}</label>
                   <input
                     type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="Optional"
+                    placeholder={ui.bookingForm.optional}
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded px-4 py-3 text-xs md:text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none focus:border-accent transition-colors"
                   />
                 </div>
@@ -236,13 +238,13 @@ export default function ContactSection({ hotelId, email, phone, address, socials
 
               {/* Message */}
               <div className="space-y-1.5">
-                <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Message Details</label>
+                <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{ui.sections.yourMessage}</label>
                 <textarea
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
                   rows={4}
-                  placeholder="How may we assist you?"
+                  placeholder={ui.sections.yourMessage}
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded px-4 py-3 text-xs md:text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none focus:border-accent transition-colors resize-none"
                   required
                 />
@@ -258,7 +260,7 @@ export default function ContactSection({ hotelId, email, phone, address, socials
                 disabled={isSubmitting}
                 className="w-full bg-primary hover:opacity-95 text-white font-bold text-xs tracking-widest uppercase py-4 rounded-hotel shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
               >
-                {isSubmitting ? 'Sending...' : 'Send Message'}
+                {isSubmitting ? ui.sections.sendingBtn : ui.sections.sendBtn}
                 <Send className="w-3.5 h-3.5" />
               </button>
             </form>

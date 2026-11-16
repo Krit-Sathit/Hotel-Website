@@ -12,6 +12,7 @@ import {
   Sparkles,
   User,
 } from 'lucide-react';
+import { useHotelLocale } from '@/components/hotel-locale-provider';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -108,6 +109,7 @@ export default function FloatingContactChat({
   lineId: initialLineId,
   whatsapp: initialWhatsapp,
 }: FloatingContactChatProps) {
+  const { locale } = useHotelLocale();
   const [open, setOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -312,12 +314,20 @@ export default function FloatingContactChat({
       : []),
   ];
 
-  const suggestedPrompts = [
-    'What room types do you have?',
-    "What's the starting price?",
-    'Any promotions available?',
-    'Check-in/check-out times?',
-  ];
+  const suggestedPrompts =
+    locale === 'th'
+      ? [
+          'มีห้องพักแบบไหนบ้างครับ?',
+          'ราคาเริ่มต้นเท่าไหร่ครับ?',
+          'มีโปรโมชั่นอะไรบ้าง?',
+          'เช็คอินและเช็คเอาท์กี่โมง?',
+        ]
+      : [
+          'What room types do you have?',
+          "What's the starting price?",
+          'Any promotions available?',
+          'Check-in/check-out times?',
+        ];
 
   return (
     <>
@@ -420,7 +430,9 @@ export default function FloatingContactChat({
                   <div className="flex flex-col items-center gap-3 text-gray-500">
                     <Sparkles className="h-11 w-11 text-blue-600/25" />
                     <p className="text-sm leading-relaxed max-w-xs">
-                      Welcome! I&apos;m the AI concierge for {hotelName}. How can I help you?
+                      {locale === 'th'
+                        ? `สวัสดีครับ! ผมคือ AI Concierge ของ ${hotelName} สอบถามข้อมูลห้องพักหรือบริการได้เลยครับ`
+                        : `Welcome! I'm the AI concierge for ${hotelName}. How can I help you?`}
                     </p>
                   </div>
 

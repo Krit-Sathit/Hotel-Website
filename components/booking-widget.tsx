@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Calendar, Users, Home, Tag, ArrowRight } from 'lucide-react';
 import { isHostelProperty } from '@/lib/booking-engine';
+import { useHotelLocale } from '@/components/hotel-locale-provider';
 
 interface BookingWidgetProps {
   hotelId: string;
@@ -15,6 +16,7 @@ interface BookingWidgetProps {
 export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant = 'inline' }: BookingWidgetProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { locale, ui } = useHotelLocale();
 
   // Initialize dates: tomorrow and day after tomorrow
   const getFormattedDate = (daysAhead = 0) => {
@@ -134,7 +136,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
             {/* Logo/Name indicator */}
             <div className="flex-shrink-0 mr-2">
               <span className="font-semibold text-slate-800 tracking-wider uppercase text-[10px]">
-                Book {hotelName}
+                {locale === 'th' ? `จอง ${hotelName}` : `Book ${hotelName}`}
               </span>
             </div>
 
@@ -142,7 +144,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
             <div className="relative flex items-center gap-2 bg-slate-50 border border-slate-200/80 rounded px-2.5 py-1.5 flex-1 hover:border-accent/60 transition-colors cursor-pointer group">
               <Calendar className="w-3.5 h-3.5 text-accent flex-shrink-0" />
               <div className="flex flex-col text-left flex-1 min-w-0">
-                <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider">Check In</span>
+                <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider">{ui.bookingForm.checkIn}</span>
                 <span className="font-semibold text-slate-700 text-xs truncate">
                   {formatDateDisplay(checkIn)}
                 </span>
@@ -162,7 +164,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
             <div className="relative flex items-center gap-2 bg-slate-50 border border-slate-200/80 rounded px-2.5 py-1.5 flex-1 hover:border-accent/60 transition-colors cursor-pointer group">
               <Calendar className="w-3.5 h-3.5 text-accent flex-shrink-0" />
               <div className="flex flex-col text-left flex-1 min-w-0">
-                <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider">Check Out</span>
+                <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider">{ui.bookingForm.checkOut}</span>
                 <span className="font-semibold text-slate-700 text-xs truncate">
                   {formatDateDisplay(checkOut)}
                 </span>
@@ -182,14 +184,14 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
             <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded px-2 py-1.5">
               <Users className="w-3.5 h-3.5 text-accent" />
               <div className="flex flex-col text-left">
-                <span className="text-[9px] text-slate-400 font-medium uppercase">Guests</span>
+                <span className="text-[9px] text-slate-400 font-medium uppercase">{ui.bookingForm.guests}</span>
                 <div className="flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
                   <select value={adults} onChange={(e) => setAdults(e.target.value)} className="bg-transparent border-none outline-none cursor-pointer">
-                    {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n} className="dark:bg-slate-900">{n} Ad</option>)}
+                    {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n} className="dark:bg-slate-900">{locale === 'th' ? `${n} ผู้ใหญ่` : `${n} Ad`}</option>)}
                   </select>
                   <span className="text-slate-300">/</span>
                   <select value={children} onChange={(e) => setChildren(e.target.value)} className="bg-transparent border-none outline-none cursor-pointer">
-                    {[0, 1, 2, 3, 4].map(n => <option key={n} value={n} className="dark:bg-slate-900">{n} Ch</option>)}
+                    {[0, 1, 2, 3, 4].map(n => <option key={n} value={n} className="dark:bg-slate-900">{locale === 'th' ? `${n} เด็ก` : `${n} Ch`}</option>)}
                   </select>
                 </div>
               </div>
@@ -199,10 +201,10 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
             <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded px-2 py-1.5 w-24">
               <Tag className="w-3.5 h-3.5 text-accent" />
               <div className="flex flex-col text-left">
-                <span className="text-[9px] text-slate-400 font-medium uppercase">Promo</span>
+                <span className="text-[9px] text-slate-400 font-medium uppercase">{ui.bookingForm.promoCode}</span>
                 <input
                   type="text"
-                  placeholder="CODE"
+                  placeholder={ui.bookingForm.codePlaceholder}
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
                   className="bg-transparent border-none outline-none font-medium text-slate-700 dark:text-slate-300 placeholder-slate-400 w-full uppercase"
@@ -215,7 +217,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
               type="submit"
               className="bg-primary text-white hover:opacity-90 transition-opacity font-medium px-5 py-2.5 rounded-hotel tracking-wider uppercase text-[10px] flex items-center gap-1.5 shadow-sm"
             >
-              Book Now
+              {ui.cta.bookNow}
               <ArrowRight className="w-3 h-3" />
             </button>
           </form>
@@ -234,13 +236,13 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-950/95 border-t border-slate-200/80 dark:border-slate-800/80 px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] flex items-center justify-between gap-4">
           <div className="text-left">
             <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{hotelName}</p>
-            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">Guaranteed Best Rates</p>
+            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{ui.badges.guaranteedBestRates}</p>
           </div>
           <button
             onClick={() => setIsMobileModalOpen(true)}
             className="bg-primary text-white font-semibold text-xs px-6 py-3 rounded-hotel uppercase tracking-wider shadow-sm flex items-center gap-2"
           >
-            Book Now
+            {ui.cta.bookNow}
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -251,14 +253,14 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
             <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-2xl p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-5">
                 <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">Book Your Stay</h3>
+                  <h3 className="font-semibold text-slate-900 dark:text-white">{ui.bookingForm.checkAvailability}</h3>
                   <p className="text-xs text-slate-500">{hotelName}</p>
                 </div>
                 <button
                   onClick={() => setIsMobileModalOpen(false)}
                   className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-medium px-2 py-1"
                 >
-                  Close
+                  {locale === 'th' ? 'ปิด' : 'Close'}
                 </button>
               </div>
 
@@ -266,7 +268,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
                 {/* Check In & Out */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="relative flex flex-col text-left bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded p-3 hover:border-accent/60 transition-colors cursor-pointer">
-                    <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">Check In</label>
+                    <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">{ui.bookingForm.checkIn}</label>
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
                         {formatDateDisplay(checkIn)}
@@ -284,7 +286,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
                     />
                   </div>
                   <div className="relative flex flex-col text-left bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded p-3 hover:border-accent/60 transition-colors cursor-pointer">
-                    <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">Check Out</label>
+                    <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">{ui.bookingForm.checkOut}</label>
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
                         {formatDateDisplay(checkOut)}
@@ -306,33 +308,33 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
                 {/* Guests */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col text-left bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded p-3">
-                    <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">Adults</label>
+                    <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">{locale === 'th' ? 'ผู้ใหญ่' : 'Adults'}</label>
                     <select
                       value={adults}
                       onChange={(e) => setAdults(e.target.value)}
                       className="bg-transparent border-none outline-none font-semibold text-slate-850 dark:text-slate-150 text-sm cursor-pointer"
                     >
-                      {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n} className="dark:bg-slate-900">{n} Adult{n > 1 ? 's' : ''}</option>)}
+                      {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n} className="dark:bg-slate-900">{locale === 'th' ? `ผู้ใหญ่ ${n} ท่าน` : `${n} Adult${n > 1 ? 's' : ''}`}</option>)}
                     </select>
                   </div>
                   <div className="flex flex-col text-left bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded p-3">
-                    <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">Children</label>
+                    <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">{locale === 'th' ? 'เด็ก' : 'Children'}</label>
                     <select
                       value={children}
                       onChange={(e) => setChildren(e.target.value)}
                       className="bg-transparent border-none outline-none font-semibold text-slate-850 dark:text-slate-150 text-sm cursor-pointer"
                     >
-                      {[0, 1, 2, 3, 4].map(n => <option key={n} value={n} className="dark:bg-slate-900">{n} Children</option>)}
+                      {[0, 1, 2, 3, 4].map(n => <option key={n} value={n} className="dark:bg-slate-900">{locale === 'th' ? `เด็ก ${n} ท่าน` : `${n} Children`}</option>)}
                     </select>
                   </div>
                 </div>
 
                 {/* Promo */}
                 <div className="flex flex-col text-left bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded p-3">
-                  <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">Promo Code</label>
+                  <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">{ui.bookingForm.promoCode}</label>
                   <input
                     type="text"
-                    placeholder="Optional"
+                    placeholder={ui.bookingForm.optional}
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
                     className="bg-transparent border-none outline-none font-semibold text-slate-800 dark:text-slate-200 text-sm w-full uppercase"
@@ -344,7 +346,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
                   type="submit"
                   className="w-full bg-primary text-white font-bold py-4 rounded-hotel uppercase tracking-widest text-xs mt-4 shadow-md flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
                 >
-                  Book Stay Now
+                  {ui.bookingForm.searchAvailableRooms}
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
@@ -363,9 +365,9 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
       <form onSubmit={handleBookNow} className="space-y-6">
         <div className="text-center lg:text-left border-b border-slate-100 dark:border-slate-900 pb-4">
           <h3 className="text-lg font-semibold tracking-wide text-slate-800 dark:text-slate-100 font-hotel">
-            Book Your Experience
+            {ui.bookingForm.checkAvailability}
           </h3>
-          <p className="text-xs text-slate-400">Best Rate Guaranteed • Official Direct Reservation</p>
+          <p className="text-xs text-slate-400">{ui.badges.bestRateGuaranteed}</p>
         </div>
 
         {/* Date Selection Row */}
@@ -374,7 +376,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
           <div className="relative flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/80 rounded px-4 py-3 focus-within:border-accent hover:border-accent/60 transition-colors cursor-pointer">
             <Calendar className="w-5 h-5 text-accent flex-shrink-0" />
             <div className="flex flex-col text-left flex-1">
-              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Check-In Date</span>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{ui.bookingForm.checkIn}</span>
               <span className="font-semibold text-slate-750 dark:text-slate-200 text-sm">
                 {formatDateDisplay(checkIn)}
               </span>
@@ -394,7 +396,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
           <div className="relative flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/80 rounded px-4 py-3 focus-within:border-accent hover:border-accent/60 transition-colors cursor-pointer">
             <Calendar className="w-5 h-5 text-accent flex-shrink-0" />
             <div className="flex flex-col text-left flex-1">
-              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Check-Out Date</span>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{ui.bookingForm.checkOut}</span>
               <span className="font-semibold text-slate-750 dark:text-slate-200 text-sm">
                 {formatDateDisplay(checkOut)}
               </span>
@@ -417,13 +419,13 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
           <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/80 rounded px-4 py-3">
             <Users className="w-5 h-5 text-accent flex-shrink-0" />
             <div className="flex flex-col text-left flex-1">
-              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Adults</span>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{locale === 'th' ? 'ผู้ใหญ่' : 'Adults'}</span>
               <select
                 value={adults}
                 onChange={(e) => setAdults(e.target.value)}
                 className="bg-transparent border-none outline-none font-semibold text-slate-750 dark:text-slate-200 w-full text-sm cursor-pointer"
               >
-                {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n} className="dark:bg-slate-900">{n} Adult{n > 1 ? 's' : ''}</option>)}
+                {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n} className="dark:bg-slate-900">{locale === 'th' ? `ผู้ใหญ่ ${n} ท่าน` : `${n} Adult${n > 1 ? 's' : ''}`}</option>)}
               </select>
             </div>
           </div>
@@ -432,13 +434,13 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
           <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/80 rounded px-4 py-3">
             <Users className="w-5 h-5 text-accent flex-shrink-0" />
             <div className="flex flex-col text-left flex-1">
-              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Children</span>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{locale === 'th' ? 'เด็ก' : 'Children'}</span>
               <select
                 value={children}
                 onChange={(e) => setChildren(e.target.value)}
                 className="bg-transparent border-none outline-none font-semibold text-slate-750 dark:text-slate-200 w-full text-sm cursor-pointer"
               >
-                {[0, 1, 2, 3, 4].map(n => <option key={n} value={n} className="dark:bg-slate-900">{n} Child{n !== 1 ? 'ren' : ''}</option>)}
+                {[0, 1, 2, 3, 4].map(n => <option key={n} value={n} className="dark:bg-slate-900">{locale === 'th' ? `เด็ก ${n} ท่าน` : `${n} Child${n !== 1 ? 'ren' : ''}`}</option>)}
               </select>
             </div>
           </div>
@@ -450,10 +452,10 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
           <div className="md:col-span-1 flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/80 rounded px-4 py-3 focus-within:border-accent transition-colors">
             <Tag className="w-5 h-5 text-accent flex-shrink-0" />
             <div className="flex flex-col text-left flex-1">
-              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Promo Code</span>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{ui.bookingForm.promoCode}</span>
               <input
                 type="text"
-                placeholder="Optional"
+                placeholder={ui.bookingForm.optional}
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value)}
                 className="bg-transparent border-none outline-none font-semibold text-slate-750 dark:text-slate-200 w-full text-sm placeholder-slate-400 uppercase"
@@ -467,7 +469,7 @@ export default function BookingWidget({ hotelId, hotelName, bookingUrl, variant 
               type="submit"
               className="w-full bg-primary text-white hover:opacity-95 transition-opacity font-semibold py-4 px-6 rounded-hotel uppercase tracking-widest text-xs shadow-md flex items-center justify-center gap-2.5 active:scale-[0.99] transition-transform"
             >
-              Book My Stay
+              {ui.bookingForm.searchAvailableRooms}
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

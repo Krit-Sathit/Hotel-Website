@@ -6,6 +6,7 @@ import { Calendar, Users, Tag, ArrowRight, Sparkles } from 'lucide-react';
 import type { HotelTheme } from '@/lib/db/mock-data';
 import { deriveSurfacePalette, mixHex, withAlpha } from '@/lib/color-utils';
 import { isHostelProperty } from '@/lib/booking-engine';
+import { useHotelLocale } from '@/components/hotel-locale-provider';
 
 export type BookingFormVariant =
   | 'horizontal'
@@ -47,6 +48,7 @@ export default function TemplateBookingForm({
   isPreview = false,
 }: TemplateBookingFormProps) {
   const router = useRouter();
+  const { locale, ui } = useHotelLocale();
   const isHostel = isHostelProperty(hotelName, hotelId, bookingUrl);
   const defaultAdults = isHostel ? '1' : '2';
   const [checkIn, setCheckIn] = useState(getFormattedDate(1));
@@ -132,13 +134,13 @@ export default function TemplateBookingForm({
             style={{ color: palette.accent }}
           >
             <Sparkles className="w-3.5 h-3.5 shrink-0" />
-            <span>Official Direct Booking</span>
+            <span>{ui.bookingForm.officialDirectBooking}</span>
           </div>
           <h3 className="text-base @3xl:text-lg font-bold tracking-wide" style={{ color: palette.text }}>
-            Check Availability
+            {ui.bookingForm.checkAvailability}
           </h3>
           <p className="text-[11px] truncate" style={{ color: palette.mutedText }}>
-            Best Rate Guaranteed at {hotelName}
+            {ui.bookingForm.bestRateAt} {hotelName}
           </p>
         </div>
 
@@ -149,7 +151,7 @@ export default function TemplateBookingForm({
               style={{ color: palette.mutedText }}
             >
               <Calendar className="w-3 h-3 shrink-0" style={{ color: palette.accent }} />
-              Check-In
+              {ui.bookingForm.checkIn}
             </span>
             <input
               type="date"
@@ -170,7 +172,7 @@ export default function TemplateBookingForm({
               style={{ color: palette.mutedText }}
             >
               <Calendar className="w-3 h-3 shrink-0" style={{ color: palette.accent }} />
-              Check-Out
+              {ui.bookingForm.checkOut}
             </span>
             <input
               type="date"
@@ -195,7 +197,7 @@ export default function TemplateBookingForm({
               style={{ color: palette.mutedText }}
             >
               <Users className="w-3 h-3 shrink-0" style={{ color: palette.accent }} />
-              Guests
+              {ui.bookingForm.guests}
             </span>
             <select
               value={adults}
@@ -207,10 +209,10 @@ export default function TemplateBookingForm({
                 borderColor: palette.cardBorder,
               }}
             >
-              <option value="1">1 Adult</option>
-              <option value="2">2 Adults</option>
-              <option value="3">3 Adults</option>
-              <option value="4">4 Adults</option>
+              <option value="1">{ui.bookingForm.adult1}</option>
+              <option value="2">{ui.bookingForm.adults2}</option>
+              <option value="3">{ui.bookingForm.adults3}</option>
+              <option value="4">{ui.bookingForm.adults4}</option>
             </select>
           </label>
           <label className="block space-y-1 min-w-0">
@@ -219,13 +221,13 @@ export default function TemplateBookingForm({
               style={{ color: palette.mutedText }}
             >
               <Tag className="w-3 h-3 shrink-0" style={{ color: palette.accent }} />
-              Promo Code
+              {ui.bookingForm.promoCode}
             </span>
             <input
               type="text"
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value)}
-              placeholder="Optional"
+              placeholder={ui.bookingForm.optional}
               className="w-full min-w-0 px-2.5 py-2 text-xs font-semibold border rounded-lg outline-none"
               style={{
                 backgroundColor: inputSurfaceBg,
@@ -245,7 +247,7 @@ export default function TemplateBookingForm({
             borderRadius: radius,
           }}
         >
-          <span>Search Available Rooms</span>
+          <span>{ui.bookingForm.searchAvailableRooms}</span>
           <ArrowRight className="w-4 h-4 shrink-0" />
         </button>
       </form>
@@ -273,7 +275,7 @@ export default function TemplateBookingForm({
               className="text-[9px] font-bold uppercase tracking-[0.2em] block mb-1"
               style={{ color: palette.accent }}
             >
-              Arrival Date
+              {ui.bookingForm.checkIn}
             </span>
             <input
               type="date"
@@ -292,7 +294,7 @@ export default function TemplateBookingForm({
               className="text-[9px] font-bold uppercase tracking-[0.2em] block mb-1"
               style={{ color: palette.accent }}
             >
-              Departure Date
+              {ui.bookingForm.checkOut}
             </span>
             <input
               type="date"
@@ -312,7 +314,7 @@ export default function TemplateBookingForm({
               className="text-[9px] font-bold uppercase tracking-[0.2em] block mb-1"
               style={{ color: palette.accent }}
             >
-              Guests
+              {ui.bookingForm.guests}
             </span>
             <select
               value={adults}
@@ -324,10 +326,10 @@ export default function TemplateBookingForm({
                 borderColor: withAlpha(barText, 0.25),
               }}
             >
-              <option value="1">{isHostel ? '1 Adult' : '1 Guest • 1 Suite'}</option>
-              <option value="2">{isHostel ? '2 Adults' : '2 Guests • 1 Suite'}</option>
-              <option value="3">{isHostel ? '3 Adults' : '3 Guests • 1 Suite'}</option>
-              <option value="4">{isHostel ? '4 Adults' : '4 Guests • 2 Suites'}</option>
+              <option value="1">{locale === 'th' ? ui.bookingForm.adult1 : isHostel ? '1 Adult' : '1 Guest • 1 Suite'}</option>
+              <option value="2">{locale === 'th' ? ui.bookingForm.adults2 : isHostel ? '2 Adults' : '2 Guests • 1 Suite'}</option>
+              <option value="3">{locale === 'th' ? ui.bookingForm.adults3 : isHostel ? '3 Adults' : '3 Guests • 1 Suite'}</option>
+              <option value="4">{locale === 'th' ? ui.bookingForm.adults4 : isHostel ? '4 Adults' : '4 Guests • 2 Suites'}</option>
             </select>
           </label>
         </div>
@@ -341,7 +343,7 @@ export default function TemplateBookingForm({
             borderRadius: radius,
           }}
         >
-          <span>Reserve</span>
+          <span>{ui.cta.reserve}</span>
           <ArrowRight className="w-3.5 h-3.5 shrink-0" />
         </button>
       </form>
@@ -362,7 +364,7 @@ export default function TemplateBookingForm({
               className="text-[10px] uppercase tracking-[0.18em] font-semibold shrink-0"
               style={{ color: palette.mutedText }}
             >
-              Check-In:
+              {ui.bookingForm.checkIn}:
             </span>
             <input
               type="date"
@@ -381,7 +383,7 @@ export default function TemplateBookingForm({
               className="text-[10px] uppercase tracking-[0.18em] font-semibold shrink-0"
               style={{ color: palette.mutedText }}
             >
-              Check-Out:
+              {ui.bookingForm.checkOut}:
             </span>
             <input
               type="date"
@@ -401,7 +403,7 @@ export default function TemplateBookingForm({
               className="text-[10px] uppercase tracking-[0.18em] font-semibold shrink-0"
               style={{ color: palette.mutedText }}
             >
-              Guests:
+              {ui.bookingForm.guests}:
             </span>
             <select
               value={adults}
@@ -413,10 +415,10 @@ export default function TemplateBookingForm({
                 borderColor: palette.cardBorder,
               }}
             >
-              <option value="1">1 Adult</option>
-              <option value="2">2 Adults</option>
-              <option value="3">3 Adults</option>
-              <option value="4">4 Adults</option>
+              <option value="1">{ui.bookingForm.adult1}</option>
+              <option value="2">{ui.bookingForm.adults2}</option>
+              <option value="3">{ui.bookingForm.adults3}</option>
+              <option value="4">{ui.bookingForm.adults4}</option>
             </select>
           </label>
         </div>
@@ -430,7 +432,7 @@ export default function TemplateBookingForm({
             borderRadius: radius,
           }}
         >
-          <span>Check Dates</span>
+          <span>{ui.cta.checkAvailability}</span>
           <ArrowRight className="w-3.5 h-3.5 shrink-0" />
         </button>
       </form>
@@ -462,7 +464,7 @@ export default function TemplateBookingForm({
               className="text-[9px] font-bold uppercase tracking-widest block"
               style={{ color: palette.accent }}
             >
-              Check-In
+              {ui.bookingForm.checkIn}
             </span>
             <input
               type="date"
@@ -486,7 +488,7 @@ export default function TemplateBookingForm({
               className="text-[9px] font-bold uppercase tracking-widest block"
               style={{ color: palette.accent }}
             >
-              Check-Out
+              {ui.bookingForm.checkOut}
             </span>
             <input
               type="date"
@@ -511,7 +513,7 @@ export default function TemplateBookingForm({
               className="text-[9px] font-bold uppercase tracking-widest block"
               style={{ color: palette.accent }}
             >
-              Guests
+              {ui.bookingForm.guests}
             </span>
             <select
               value={adults}
@@ -522,10 +524,10 @@ export default function TemplateBookingForm({
                 backgroundColor: inputSurfaceBg,
               }}
             >
-              <option value="1">{isHostel ? '1 Adult' : '1 Adult • 1 Room'}</option>
-              <option value="2">{isHostel ? '2 Adults' : '2 Adults • 1 Room'}</option>
-              <option value="3">{isHostel ? '3 Adults' : '3 Adults • 1 Room'}</option>
-              <option value="4">{isHostel ? '4 Adults' : '4 Adults • 2 Rooms'}</option>
+              <option value="1">{locale === 'th' ? ui.bookingForm.adult1 : isHostel ? '1 Adult' : '1 Adult • 1 Room'}</option>
+              <option value="2">{locale === 'th' ? ui.bookingForm.adults2 : isHostel ? '2 Adults' : '2 Adults • 1 Room'}</option>
+              <option value="3">{locale === 'th' ? ui.bookingForm.adults3 : isHostel ? '3 Adults' : '3 Adults • 1 Room'}</option>
+              <option value="4">{locale === 'th' ? ui.bookingForm.adults4 : isHostel ? '4 Adults' : '4 Adults • 2 Rooms'}</option>
             </select>
           </label>
         </div>
@@ -539,7 +541,7 @@ export default function TemplateBookingForm({
             borderRadius: radius,
           }}
         >
-          <span>Book Now</span>
+          <span>{ui.cta.bookNow}</span>
           <ArrowRight className="w-3.5 h-3.5 shrink-0" />
         </button>
       </form>
@@ -564,7 +566,7 @@ export default function TemplateBookingForm({
           className="text-[10px] font-bold uppercase tracking-widest shrink-0 hidden @5xl:inline truncate max-w-[180px]"
           style={{ color: palette.accent }}
         >
-          Book {hotelName}
+          {locale === 'th' ? `จอง ${hotelName}` : `Book ${hotelName}`}
         </span>
 
         <div className="grid grid-cols-1 @sm:grid-cols-2 @3xl:grid-cols-4 gap-2 flex-1 min-w-0">
@@ -573,7 +575,7 @@ export default function TemplateBookingForm({
             style={{ backgroundColor: inputSurfaceBg, borderColor: palette.cardBorder }}
           >
             <span className="text-[9px] font-bold uppercase block" style={{ color: palette.mutedText }}>
-              Check-In
+              {ui.bookingForm.checkIn}
             </span>
             <input
               type="date"
@@ -588,7 +590,7 @@ export default function TemplateBookingForm({
             style={{ backgroundColor: inputSurfaceBg, borderColor: palette.cardBorder }}
           >
             <span className="text-[9px] font-bold uppercase block" style={{ color: palette.mutedText }}>
-              Check-Out
+              {ui.bookingForm.checkOut}
             </span>
             <input
               type="date"
@@ -604,7 +606,7 @@ export default function TemplateBookingForm({
             style={{ backgroundColor: inputSurfaceBg, borderColor: palette.cardBorder }}
           >
             <span className="text-[9px] font-bold uppercase block" style={{ color: palette.mutedText }}>
-              Guests
+              {ui.bookingForm.guests}
             </span>
             <select
               value={adults}
@@ -612,10 +614,10 @@ export default function TemplateBookingForm({
               className="w-full min-w-0 text-xs font-bold outline-none"
               style={{ color: palette.text, backgroundColor: inputSurfaceBg }}
             >
-              <option value="1">1 Adult</option>
-              <option value="2">2 Adults</option>
-              <option value="3">3 Adults</option>
-              <option value="4">4 Adults</option>
+              <option value="1">{ui.bookingForm.adult1}</option>
+              <option value="2">{ui.bookingForm.adults2}</option>
+              <option value="3">{ui.bookingForm.adults3}</option>
+              <option value="4">{ui.bookingForm.adults4}</option>
             </select>
           </label>
           <label
@@ -623,13 +625,13 @@ export default function TemplateBookingForm({
             style={{ backgroundColor: inputSurfaceBg, borderColor: palette.cardBorder }}
           >
             <span className="text-[9px] font-bold uppercase block" style={{ color: palette.mutedText }}>
-              Promo
+              {ui.bookingForm.promoCode}
             </span>
             <input
               type="text"
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value)}
-              placeholder="Code"
+              placeholder={ui.bookingForm.codePlaceholder}
               className="w-full min-w-0 bg-transparent text-xs font-bold outline-none"
               style={{ color: palette.text }}
             />
@@ -645,7 +647,7 @@ export default function TemplateBookingForm({
             borderRadius: radius,
           }}
         >
-          <span>Book Now</span>
+          <span>{ui.cta.bookNow}</span>
           <ArrowRight className="w-3.5 h-3.5 shrink-0" />
         </button>
       </form>

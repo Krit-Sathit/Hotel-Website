@@ -33,9 +33,13 @@ type FeatureItem = {
 
 type AboutContent = {
   title: string;
+  title_th?: string;
   subtitle?: string;
+  subtitle_th?: string;
   description: string;
+  description_th?: string;
   badge?: string;
+  badge_th?: string;
   story2_title?: string;
   story2_description?: string;
   primary_image_url?: string;
@@ -46,9 +50,13 @@ type AboutContent = {
 
 const emptyContent: AboutContent = {
   title: '',
+  title_th: '',
   subtitle: '',
+  subtitle_th: '',
   description: '',
+  description_th: '',
   badge: '',
+  badge_th: '',
   story2_title: '',
   story2_description: '',
   primary_image_url: '',
@@ -167,16 +175,26 @@ export default function AboutSectionEditorPage() {
             : isParPhuket
             ? 'Golf & Lifestyle Sanctuary At The Par Phuket'
             : `Welcome to ${hName}`,
+        title_th:
+          about?.content?.title_th ||
+          data?.hotel?.name_th ||
+          (isParPhuket ? 'พักผ่อนท่ามกลางสนามกอล์ฟและธรรมชาติ ที่ เดอะ พาร์ ภูเก็ต' : ''),
         subtitle: about?.content?.subtitle || hName,
+        subtitle_th: about?.content?.subtitle_th || '',
         badge:
           about?.content?.badge ||
           (isParPhuket ? 'Golf & Lifestyle Hotel in Phuket' : 'Official Hotel Website'),
+        badge_th: about?.content?.badge_th || '',
         description:
           about?.content?.description && !(isParPhuket && isGenericFlowstayPlaceholder)
             ? about.content.description
             : isParPhuket
             ? `Surrounded by the lush fairways of Phuket Country Club Golf Course in Kathu, The Par Phuket is a distinctive golf and lifestyle hotel blending serene greenery views with modern boutique comfort.\n\nGuests enjoy an on-site Muay Thai training camp, dedicated meeting & conference facilities, spacious on-site parking, and convenient proximity to Bang Wad Reservoir and Central Festival Phuket.`
             : `Welcome to ${hName}. Experience warm hospitality, thoughtfully designed accommodations, and effortless comfort. Book directly on our official website for exclusive direct rates and privileges.`,
+        description_th:
+          about?.content?.description_th ||
+          data?.hotel?.description_th ||
+          '',
         story2_title:
           about?.content?.story2_title || `Plan Your Stay at ${hName}`,
         story2_description:
@@ -445,26 +463,49 @@ export default function AboutSectionEditorPage() {
           </label>
         </div>
 
-        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
-          หัวข้อหลัก (Main Headline)
-          <input
-            value={content.title}
-            onChange={(e) => update('title', e.target.value)}
-            className="w-full mt-1.5 rounded-lg border border-slate-200 p-3 text-sm font-normal normal-case text-slate-800"
-            placeholder={`Welcome to ${hotelName}`}
-          />
-        </label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+            หัวข้อหลักภาษาไทย — Main Headline (TH)
+            <input
+              value={content.title_th || ''}
+              onChange={(e) => update('title_th', e.target.value)}
+              className="w-full mt-1.5 rounded-lg border border-slate-200 p-3 text-sm font-normal normal-case text-slate-800"
+              placeholder={`ยินดีต้อนรับสู่ ${hotelName}`}
+            />
+          </label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+            หัวข้อหลักภาษาอังกฤษ — Main Headline (EN)
+            <input
+              value={content.title}
+              onChange={(e) => update('title', e.target.value)}
+              className="w-full mt-1.5 rounded-lg border border-slate-200 p-3 text-sm font-normal normal-case text-slate-800"
+              placeholder={`Welcome to ${hotelName}`}
+            />
+          </label>
+        </div>
 
-        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
-          เนื้อหาแนะนำโรงแรม (กด Enter ขึ้นบรรทัดใหม่เพื่อแบ่งย่อหน้าได้)
-          <textarea
-            value={content.description}
-            onChange={(e) => update('description', e.target.value)}
-            rows={6}
-            className="w-full mt-1.5 rounded-lg border border-slate-200 p-3 text-sm font-normal normal-case text-slate-800 leading-relaxed"
-            placeholder="เขียนบรรยายจุดเด่น บรรยากาศ ทำเลที่ตั้งจริงของโรงแรม (เช่น ใกล้สนามกอล์ฟ ภูเขา ตัวเมือง หรือชายหาด)..."
-          />
-        </label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+            เนื้อหาแนะนำโรงแรมภาษาไทย — Description (TH)
+            <textarea
+              value={content.description_th || ''}
+              onChange={(e) => update('description_th', e.target.value)}
+              rows={7}
+              className="w-full mt-1.5 rounded-lg border border-slate-200 p-3 text-sm font-normal normal-case text-slate-800 leading-relaxed"
+              placeholder="ซิงก์จาก Description (TH) ใน FlowStay อัตโนมัติ หรือแก้ไขข้อความภาษาไทยเพิ่มเติมที่นี่..."
+            />
+          </label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+            เนื้อหาแนะนำโรงแรมภาษาอังกฤษ — Description (EN)
+            <textarea
+              value={content.description}
+              onChange={(e) => update('description', e.target.value)}
+              rows={7}
+              className="w-full mt-1.5 rounded-lg border border-slate-200 p-3 text-sm font-normal normal-case text-slate-800 leading-relaxed"
+              placeholder="Synced from Description (EN) in FlowStay automatically, or customize here..."
+            />
+          </label>
+        </div>
       </div>
 
       {/* SECTION 1B: HOTEL HIGHLIGHTS STRIP BELOW STORY ARTICLE */}

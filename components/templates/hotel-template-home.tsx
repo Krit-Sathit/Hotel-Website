@@ -58,6 +58,8 @@ import TemplateBookingForm from './template-booking-form';
 import PromotionsSection from '@/components/sections/promotions-section';
 import LocationSection from '@/components/sections/location-section';
 import ContactSection from '@/components/sections/contact-section';
+import { useHotelLocale } from '@/components/hotel-locale-provider';
+import LanguageSwitcher from '@/components/language-switcher';
 
 export interface HotelTemplateHomeProps {
   hotel: Hotel;
@@ -101,6 +103,7 @@ export default function HotelTemplateHome({
 }: HotelTemplateHomeProps) {
   const activeTheme = themeOverride || hotel.theme;
   const template = templateOverride || getTemplateByTheme(activeTheme);
+  const { locale, ui } = useHotelLocale();
 
   const [slideIdx, setSlideIdx] = useState(0);
   const [galleryIdx, setGalleryIdx] = useState(0);
@@ -223,24 +226,35 @@ export default function HotelTemplateHome({
     const highlights = resolveHotelHighlights(
       content.highlights,
       hotel.slug,
-      hotel.name
+      hotel.name,
+      locale
     );
 
     return {
       badge:
         content.badge ||
-        (isParPhuket ? 'Golf & Lifestyle Hotel in Phuket' : 'Official Hotel Website'),
-      subtitle: content.subtitle || `Welcome to ${hotel.name}`,
+        (isParPhuket
+          ? locale === 'th'
+            ? 'โรงแรมสไตล์กอล์ฟและไลฟ์สไตล์ในภูเก็ต'
+            : 'Golf & Lifestyle Hotel in Phuket'
+          : ui.badges.officialWebsite),
+      subtitle:
+        content.subtitle ||
+        (locale === 'th' ? `ยินดีต้อนรับสู่ ${hotel.name}` : `Welcome to ${hotel.name}`),
       title:
         content.title && !(isParPhuket && content.title === hotel.name)
           ? content.title
           : isParPhuket
-          ? 'Golf & Lifestyle Sanctuary At The Par Phuket'
+          ? locale === 'th'
+            ? 'พักผ่อนท่ามกลางสนามกอล์ฟและธรรมชาติ ที่ เดอะ พาร์ ภูเก็ต'
+            : 'Golf & Lifestyle Sanctuary At The Par Phuket'
           : hotel.name,
       description: rawDesc,
       paragraphs: parsedParagraphs,
       hasCustomStory2: Boolean(content.story2_title?.trim() || rawStory2Desc),
-      story2Title: content.story2_title?.trim() || `Plan Your Stay at ${hotel.name}`,
+      story2Title:
+        content.story2_title?.trim() ||
+        (locale === 'th' ? `วางแผนการเข้าพักที่ ${hotel.name}` : `Plan Your Stay at ${hotel.name}`),
       story2Paragraphs,
       primaryImage: cleanImg(content.primary_image_url) || fallbackImg1,
       secondaryImage: cleanImg(content.secondary_image_url) || fallbackImg2,
@@ -250,11 +264,24 @@ export default function HotelTemplateHome({
         customFeatures.length > 0
           ? customFeatures
           : [
-              { title: 'Best Rate Guaranteed', desc: 'Exclusive direct booking rates & perks.' },
-              { title: 'Convenient Location', desc: hotel.address || 'Thoughtfully situated for your stay.' },
+              {
+                title: locale === 'th' ? 'การันตีราคาดีที่สุด' : 'Best Rate Guaranteed',
+                desc:
+                  locale === 'th'
+                    ? 'ราคาและสิทธิพิเศษเฉพาะการสำรองห้องพักโดยตรง'
+                    : 'Exclusive direct booking rates & perks.',
+              },
+              {
+                title: locale === 'th' ? 'ทำเลสะดวกสบาย' : 'Convenient Location',
+                desc:
+                  hotel.address ||
+                  (locale === 'th'
+                    ? 'เดินทางสะดวกสบาย เหมาะสำหรับการพักผ่อน'
+                    : 'Thoughtfully situated for your stay.'),
+              },
             ],
     };
-  }, [sections, hotel.slug, hotel.name, hotel.address, heroPhotos, galleryPhotosPool]);
+  }, [sections, hotel.slug, hotel.name, hotel.address, heroPhotos, galleryPhotosPool, locale, ui.badges.officialWebsite]);
 
   const facilitiesData = useMemo(() => {
     const found = sections.find((s) => s.section_type === 'facilities' && s.is_enabled);
@@ -269,11 +296,11 @@ export default function HotelTemplateHome({
   }, [sections]);
 
   const navLinks = [
-    { label: 'Home', href: isPreview ? '#top' : tenantPrefix || '/' },
-    { label: 'Rooms', href: isPreview ? '#rooms' : `${tenantPrefix}/rooms` },
-    { label: 'Promotions', href: isPreview ? '#promotions' : `${tenantPrefix}/promotions` },
-    { label: 'Gallery', href: isPreview ? '#gallery' : `${tenantPrefix}/gallery` },
-    { label: 'Contact', href: isPreview ? '#contact' : `${tenantPrefix}/contact` },
+    { label: ui.nav.home, href: isPreview ? '#top' : tenantPrefix || '/' },
+    { label: ui.nav.rooms, href: isPreview ? '#rooms' : `${tenantPrefix}/rooms` },
+    { label: ui.nav.promotions, href: isPreview ? '#promotions' : `${tenantPrefix}/promotions` },
+    { label: ui.nav.gallery, href: isPreview ? '#gallery' : `${tenantPrefix}/gallery` },
+    { label: ui.nav.contact, href: isPreview ? '#contact' : `${tenantPrefix}/contact` },
   ];
 
   const openLightbox = (photos: string[], idx: number, title: string) => {
@@ -317,10 +344,10 @@ export default function HotelTemplateHome({
             className="text-[10px] font-bold uppercase tracking-wider"
             style={{ color: accentColor }}
           >
-            Official Direct Rate
+            {ui.badges.officialDirectRate}
           </span>
           <span className="text-xs font-semibold" style={{ color: mutedText }}>
-            Check Availability
+            {ui.cta.checkAvailability}
           </span>
         </div>
       );
@@ -353,7 +380,7 @@ export default function HotelTemplateHome({
               className="text-[10px] uppercase tracking-wider font-semibold"
               style={{ color: mutedText }}
             >
-              Lowest Direct Rate
+              {ui.badges.lowestDirectRate}
             </span>
           )}
         </div>
@@ -365,7 +392,7 @@ export default function HotelTemplateHome({
             ฿{price.toLocaleString()}
           </span>
           <span className="text-[11px] font-normal" style={{ color: mutedText }}>
-            / night
+            {ui.badges.perNight}
           </span>
         </div>
       </div>
@@ -431,6 +458,13 @@ export default function HotelTemplateHome({
           </div>
         )}
 
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: mutedText }}>
+            {locale === 'th' ? 'ภาษา / Language' : 'Language'}
+          </span>
+          <LanguageSwitcher color={textColor} borderColor={cardBorder} />
+        </div>
+
         <a
           href={getReserveHref()}
           onClick={() => setMobileMenuOpen(false)}
@@ -441,7 +475,7 @@ export default function HotelTemplateHome({
             borderRadius: btnRadius,
           }}
         >
-          Book Direct — Best Rate
+          {ui.cta.bookDirectBestRate}
         </a>
       </div>
     );
@@ -462,13 +496,13 @@ export default function HotelTemplateHome({
       const brandLine1 = nameWords[0] || hotel.name;
       const brandLine2 = nameWords.length > 1 ? nameWords.slice(1).join(' ') : 'OFFICIAL SANCTUARY';
       const rosewoodLinks = [
-        { label: 'Discover', href: '#sense-of-place' },
-        { label: 'Overview', href: isPreview ? '#top' : tenantPrefix || '/' },
-        { label: 'Offers', href: '#full-width-carousel' },
-        { label: 'Accommodation', href: isPreview ? '#rooms' : `${tenantPrefix}/rooms` },
-        { label: 'Experiences', href: '#sense-of-place' },
-        { label: 'Gallery', href: isPreview ? '#gallery' : `${tenantPrefix}/gallery` },
-        { label: 'Location', href: isPreview ? '#location' : `${tenantPrefix}/contact` },
+        { label: ui.nav.discover, href: '#sense-of-place' },
+        { label: ui.nav.overview, href: isPreview ? '#top' : tenantPrefix || '/' },
+        { label: ui.nav.offers, href: '#full-width-carousel' },
+        { label: ui.nav.accommodation, href: isPreview ? '#rooms' : `${tenantPrefix}/rooms` },
+        { label: ui.nav.experiences, href: '#sense-of-place' },
+        { label: ui.nav.gallery, href: isPreview ? '#gallery' : `${tenantPrefix}/gallery` },
+        { label: ui.nav.location, href: isPreview ? '#location' : `${tenantPrefix}/contact` },
       ];
 
       return (
@@ -505,13 +539,16 @@ export default function HotelTemplateHome({
                 </a>
               </div>
 
-              <div className="text-right">
-                <span
-                  className="text-[10px] font-semibold uppercase tracking-[0.18em] pb-1 border-b font-sans"
-                  style={{ color: textColor, borderColor: textColor }}
-                >
-                  {hotel.phone ? `TEL ${hotel.phone}` : 'ENGLISH'}
-                </span>
+              <div className="text-right flex items-center justify-end gap-4">
+                {hotel.phone && (
+                  <span
+                    className="text-[10px] font-semibold uppercase tracking-[0.18em] pb-1 border-b font-sans"
+                    style={{ color: textColor, borderColor: textColor }}
+                  >
+                    TEL {hotel.phone}
+                  </span>
+                )}
+                {!isPreview && <LanguageSwitcher color={textColor} compact />}
               </div>
             </div>
           </div>
@@ -526,7 +563,7 @@ export default function HotelTemplateHome({
             }}
           >
             {/* Mobile Sleek Header (< @3xl) */}
-            <div className="@3xl:hidden px-4 py-3 flex items-center justify-between gap-2.5">
+            <div className="@3xl:hidden px-4 py-3 flex items-center justify-between gap-2">
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen((p) => !p)}
@@ -545,17 +582,20 @@ export default function HotelTemplateHome({
                 {hotel.name}
               </a>
 
-              <a
-                href={getReserveHref()}
-                className="px-3.5 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] font-sans shrink-0"
-                style={{
-                  backgroundColor: primaryColor,
-                  color: primaryText,
-                  borderRadius: btnRadius,
-                }}
-              >
-                RESERVE
-              </a>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {!isPreview && <LanguageSwitcher color={textColor} compact />}
+                <a
+                  href={getReserveHref()}
+                  className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] font-sans shrink-0"
+                  style={{
+                    backgroundColor: primaryColor,
+                    color: primaryText,
+                    borderRadius: btnRadius,
+                  }}
+                >
+                  {ui.cta.reserve}
+                </a>
+              </div>
             </div>
 
             {/* Desktop Tier-2 Sub-Nav (@3xl+) */}
@@ -632,18 +672,18 @@ export default function HotelTemplateHome({
       const bookBtnBg = indigoHeaderIsDark ? '#ffffff' : textColor;
       const bookBtnText = indigoHeaderIsDark ? primaryColor : bgColor;
       const indigoNavRow1 = [
-        { label: 'HOME', href: isPreview ? '#top' : tenantPrefix || '/', active: true },
-        { label: 'OUR ROOMS', href: isPreview ? '#rooms' : `${tenantPrefix}/rooms` },
+        { label: ui.nav.home, href: isPreview ? '#top' : tenantPrefix || '/', active: true },
+        { label: ui.nav.ourRooms, href: isPreview ? '#rooms' : `${tenantPrefix}/rooms` },
         ...(promotions.length > 0
-          ? [{ label: 'OFFERS', href: isPreview ? '#promotions' : `${tenantPrefix}/promotions`, hasCaret: true }]
+          ? [{ label: ui.nav.offers, href: isPreview ? '#promotions' : `${tenantPrefix}/promotions`, hasCaret: true }]
           : []),
-        { label: 'AMENITIES & FACILITIES', href: '#experience-mosaic' },
-        { label: 'GALLERY', href: isPreview ? '#gallery' : `${tenantPrefix}/gallery` },
+        { label: ui.nav.amenitiesFacilities, href: '#experience-mosaic' },
+        { label: ui.nav.gallery, href: isPreview ? '#gallery' : `${tenantPrefix}/gallery` },
       ];
       const indigoNavRow2 = [
-        { label: 'NEIGHBORHOOD STORY', href: '#neighborhood-story', hasCaret: true },
-        { label: 'DIRECT PRIVILEGES', href: '#settle-in', hasCaret: true },
-        { label: 'LOCATION & CONTACT', href: isPreview ? '#location' : `${tenantPrefix}/contact` },
+        { label: ui.nav.neighborhoodStory, href: '#neighborhood-story', hasCaret: true },
+        { label: ui.nav.directPrivileges, href: '#settle-in', hasCaret: true },
+        { label: ui.nav.locationContact, href: isPreview ? '#location' : `${tenantPrefix}/contact` },
       ];
 
       return (
@@ -682,10 +722,11 @@ export default function HotelTemplateHome({
               </div>
             </a>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
+              {!isPreview && <LanguageSwitcher color={primaryText} compact />}
               <a
                 href={getReserveHref()}
-                className="px-3.5 py-2 text-[10px] font-bold uppercase tracking-[0.14em] shadow-xs whitespace-nowrap"
+                className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] shadow-xs whitespace-nowrap"
                 style={{
                   backgroundColor: bookBtnBg,
                   color: bookBtnText,
@@ -693,7 +734,7 @@ export default function HotelTemplateHome({
                   fontFamily: fontStack,
                 }}
               >
-                BOOK NOW
+                {ui.cta.bookNow}
               </a>
               <button
                 type="button"
@@ -789,19 +830,27 @@ export default function HotelTemplateHome({
               </div>
             </nav>
 
-            {/* Right Crisp Solid White BOOK NOW Rectangle */}
-            <a
-              href={getReserveHref()}
-              className="px-7 py-3 text-xs font-bold uppercase tracking-[0.16em] shadow-md hover:opacity-90 transition-all shrink-0"
-              style={{
-                backgroundColor: bookBtnBg,
-                color: bookBtnText,
-                borderRadius: btnRadius,
-                fontFamily: fontStack,
-              }}
-            >
-              BOOK NOW
-            </a>
+            {/* Right Language Switcher + Crisp Solid White BOOK NOW Rectangle */}
+            <div className="flex items-center gap-3 shrink-0">
+              {!isPreview && (
+                <LanguageSwitcher
+                  color={primaryText}
+                  borderColor={withAlpha(primaryText, 0.25)}
+                />
+              )}
+              <a
+                href={getReserveHref()}
+                className="px-6 py-3 text-xs font-bold uppercase tracking-[0.16em] shadow-md hover:opacity-90 transition-all shrink-0"
+                style={{
+                  backgroundColor: bookBtnBg,
+                  color: bookBtnText,
+                  borderRadius: btnRadius,
+                  fontFamily: fontStack,
+                }}
+              >
+                {ui.cta.bookNow}
+              </a>
+            </div>
           </div>
 
           {renderMobileNavDrawer()}
@@ -855,6 +904,7 @@ export default function HotelTemplateHome({
             </nav>
 
             <div className="flex items-center gap-2 shrink-0">
+              {!isPreview && <LanguageSwitcher color={textColor} compact />}
               <a
                 href={getReserveHref()}
                 className="px-3.5 @3xl:px-5 py-1.5 @3xl:py-2 text-[11px] @3xl:text-xs font-bold uppercase tracking-wider whitespace-nowrap"
@@ -864,7 +914,7 @@ export default function HotelTemplateHome({
                   borderRadius: '9999px',
                 }}
               >
-                Book
+                {ui.cta.book}
               </a>
               <button
                 type="button"
@@ -945,8 +995,9 @@ export default function HotelTemplateHome({
                   {l.label}
                 </a>
               ))}
+              {!isPreview && <LanguageSwitcher color={textColor} compact />}
               <a href={getReserveHref()} style={{ color: accentColor }}>
-                Reserve Direct →
+                {ui.cta.reserveDirect}
               </a>
             </nav>
           </div>
@@ -1068,17 +1119,18 @@ export default function HotelTemplateHome({
               </div>
             </a>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
+              {!isPreview && <LanguageSwitcher color={headerFg} compact />}
               <a
                 href={getReserveHref()}
-                className="px-3.5 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+                className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
                 style={{
                   backgroundColor: isLux ? accentColor : primaryColor,
                   color: isLux ? accentText : primaryText,
                   borderRadius: btnRadius,
                 }}
               >
-                Book
+                {ui.cta.book}
               </a>
               <button
                 type="button"
@@ -1110,7 +1162,7 @@ export default function HotelTemplateHome({
                   className="text-[9px] uppercase tracking-[0.3em] font-semibold"
                   style={{ color: accentColor }}
                 >
-                  Official Hotel Website
+                  {ui.badges.officialWebsite}
                 </span>
               </div>
               <nav
@@ -1125,6 +1177,7 @@ export default function HotelTemplateHome({
                     {l.label}
                   </a>
                 ))}
+                {!isPreview && <LanguageSwitcher color={headerFg} compact />}
               </nav>
             </div>
           ) : (
@@ -1152,7 +1205,7 @@ export default function HotelTemplateHome({
                     className="text-[9px] uppercase tracking-widest font-semibold block -mt-0.5"
                     style={{ color: withAlpha(headerFg, 0.58) }}
                   >
-                    Official Hotel Website
+                    {ui.badges.officialWebsite}
                   </span>
                 </div>
               </a>
@@ -1168,17 +1221,25 @@ export default function HotelTemplateHome({
                 ))}
               </nav>
 
-              <a
-                href={getReserveHref()}
-                className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider shrink-0 whitespace-nowrap"
-                style={{
-                  backgroundColor: isLux ? accentColor : primaryColor,
-                  color: isLux ? accentText : primaryText,
-                  borderRadius: btnRadius,
-                }}
-              >
-                Book Now
-              </a>
+              <div className="flex items-center gap-2.5 shrink-0">
+                {!isPreview && (
+                  <LanguageSwitcher
+                    color={headerFg}
+                    borderColor={withAlpha(headerFg, 0.18)}
+                  />
+                )}
+                <a
+                  href={getReserveHref()}
+                  className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider shrink-0 whitespace-nowrap"
+                  style={{
+                    backgroundColor: isLux ? accentColor : primaryColor,
+                    color: isLux ? accentText : primaryText,
+                    borderRadius: btnRadius,
+                  }}
+                >
+                  {ui.cta.bookNow}
+                </a>
+              </div>
             </div>
           )}
 
@@ -2221,13 +2282,13 @@ export default function HotelTemplateHome({
               className="text-[10px] @3xl:text-xs font-bold uppercase tracking-[0.25em] block"
               style={{ color: accentColor }}
             >
-              Accommodations & Suites
+              {ui.sections.accommodationsEyebrow}
             </span>
             <h2
               className="text-xl @3xl:text-4xl font-bold tracking-wide"
               style={{ color: textColor, fontFamily: fontStack }}
             >
-              Choose Your Stay at {hotel.name}
+              {locale === 'th' ? `เลือกห้องพักที่ ${hotel.name}` : `Choose Your Stay at ${hotel.name}`}
             </h2>
           </div>
 
@@ -3888,10 +3949,10 @@ export default function HotelTemplateHome({
               className="text-[10px] @3xl:text-xs font-bold uppercase tracking-[0.25em] block"
               style={{ color: accentColor }}
             >
-              Visual Journey
+              {ui.sections.galleryEyebrow}
             </span>
             <h2 className="text-xl @3xl:text-3xl font-bold mt-1" style={{ color: textColor, fontFamily: fontStack }}>
-              Property Gallery
+              {ui.sections.galleryTitle}
             </h2>
           </div>
           <a
@@ -4193,8 +4254,8 @@ export default function HotelTemplateHome({
           )}
 
           <div className="flex flex-col @xl:flex-row justify-between items-center gap-2 text-[11px] opacity-60 text-center @xl:text-left">
-            <span>© {new Date().getFullYear()} {hotel.name}. All Rights Reserved.</span>
-            <span>Official Direct Website • Best Rate Guaranteed</span>
+            <span>© {new Date().getFullYear()} {hotel.name}. {ui.badges.allRightsReserved}</span>
+            <span>{ui.badges.bestRateGuaranteed}</span>
           </div>
         </div>
       </footer>
@@ -4333,17 +4394,18 @@ export default function HotelTemplateHome({
                   {hotel.name}
                 </span>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0">
+                {!isPreview && <LanguageSwitcher color={textColor} compact />}
                 <a
                   href={getReserveHref()}
-                  className="px-3.5 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+                  className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
                   style={{
                     backgroundColor: primaryColor,
                     color: primaryText,
                     borderRadius: btnRadius,
                   }}
                 >
-                  Book
+                  {ui.cta.book}
                 </a>
                 <button
                   type="button"
@@ -4370,7 +4432,7 @@ export default function HotelTemplateHome({
                   className="text-[9px] font-bold uppercase tracking-[0.28em] block mb-1"
                   style={{ color: accentColor }}
                 >
-                  Official Residence
+                  {ui.badges.officialWebsite}
                 </span>
                 <h1
                   className="text-xl font-bold uppercase tracking-wider leading-snug"
@@ -4392,6 +4454,12 @@ export default function HotelTemplateHome({
                   </a>
                 ))}
               </nav>
+
+              {!isPreview && (
+                <div>
+                  <LanguageSwitcher color={textColor} borderColor={cardBorder} align="left" />
+                </div>
+              )}
             </div>
 
             <div className="space-y-4 pt-6 border-t" style={{ borderColor: cardBorder }}>

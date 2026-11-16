@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { MapPin, Navigation, Compass } from 'lucide-react';
 import {
@@ -5,6 +7,7 @@ import {
   extractLatLng,
   normalizeMapEmbedUrl,
 } from '@/lib/map-utils';
+import { useHotelLocale } from '@/components/hotel-locale-provider';
 
 interface LocationSectionProps {
   hotelName: string;
@@ -13,6 +16,7 @@ interface LocationSectionProps {
 }
 
 export default function LocationSection({ hotelName, address, mapUrl }: LocationSectionProps) {
+  const { locale, ui } = useHotelLocale();
   const lowerName = hotelName.toLowerCase();
   const isMalibu = lowerName.includes('horizon') || lowerName.includes('malibu');
   const isSoho = lowerName.includes('urban nest') || lowerName.includes('soho');
@@ -64,7 +68,7 @@ export default function LocationSection({ hotelName, address, mapUrl }: Location
         <div className="lg:col-span-5 flex flex-col justify-center space-y-8 text-left">
           <div className="space-y-3">
             <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-accent">
-              Location & Directions
+              {ui.sections.locationEyebrow}
             </p>
             <h2 className="text-3xl md:text-4xl font-light tracking-wide font-hotel capitalize">
               {hotelName}
@@ -122,11 +126,13 @@ export default function LocationSection({ hotelName, address, mapUrl }: Location
               className="inline-flex items-center gap-2.5 px-6 py-3.5 bg-primary text-white text-xs font-bold uppercase tracking-widest rounded-hotel hover:bg-accent transition-all duration-300 shadow-md w-fit"
             >
               <Navigation className="w-4 h-4" />
-              {coords ? 'Navigate via Exact GPS Pin' : 'Open in Google Maps'}
+              {ui.cta.openMaps}
             </a>
             {coords && (
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                Direct GPS navigation verified by {hotelName} ({coords.lat.toFixed(5)}, {coords.lng.toFixed(5)})
+                {locale === 'th'
+                  ? `พิกัด GPS ตรงจาก ${hotelName} (${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)})`
+                  : `Direct GPS navigation verified by ${hotelName} (${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)})`}
               </p>
             )}
           </div>

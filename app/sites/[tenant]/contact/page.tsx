@@ -1,9 +1,15 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { getHotelBySlug } from '@/lib/db/mock-data';
 import ContactSection from '@/components/sections/contact-section';
 import LocationSection from '@/components/sections/location-section';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
+import {
+  HOTEL_LOCALE_COOKIE,
+  parseHotelLocale,
+  localizeHotel,
+} from '@/lib/i18n/hotel-locale';
 
 interface ContactPageProps {
   params: Promise<{ tenant: string }>;
@@ -11,11 +17,14 @@ interface ContactPageProps {
 
 export default async function ContactPage({ params }: ContactPageProps) {
   const { tenant } = await params;
-  const hotel = await getHotelBySlug(tenant);
+  const [rawHotel, cookieStore] = await Promise.all([getHotelBySlug(tenant), cookies()]);
 
-  if (!hotel || hotel.status !== 'active') {
+  if (!rawHotel || rawHotel.status !== 'active') {
     notFound();
   }
+
+  const locale = parseHotelLocale(cookieStore.get(HOTEL_LOCALE_COOKIE)?.value);
+  const hotel = localizeHotel(rawHotel, locale);
 
   return (
     <div className="flex flex-col w-full">

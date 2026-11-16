@@ -39,13 +39,13 @@ export const HIGHLIGHT_ICON_OPTIONS: Array<{
 export function isTheParPhuketHotel(slug?: string | null, name?: string | null): boolean {
   const s = (slug || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
   const n = (name || '').trim().toLowerCase();
-  return s === 'theparphuket' || n.includes('the par phuket');
+  return s === 'theparphuket' || n.includes('the par phuket') || n.includes('เดอะ พาร์ ภูเก็ต') || n.includes('เดอะพาร์');
 }
 
 export function isPhuketAirportVillaHotel(slug?: string | null, name?: string | null): boolean {
   const s = (slug || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
   const n = (name || '').trim().toLowerCase();
-  return s === 'phuketairportvilla' || n.includes('phuket airport villa');
+  return s === 'phuketairportvilla' || n.includes('phuket airport villa') || n.includes('ภูเก็ต แอร์พอร์ต วิลล่า');
 }
 
 export const THE_PAR_PHUKET_DEFAULT_HIGHLIGHTS: HighlightStripItem[] = [
@@ -81,6 +81,39 @@ export const THE_PAR_PHUKET_DEFAULT_HIGHLIGHTS: HighlightStripItem[] = [
   },
 ];
 
+export const THE_PAR_PHUKET_DEFAULT_HIGHLIGHTS_TH: HighlightStripItem[] = [
+  {
+    icon: 'flag',
+    title: 'โอบล้อมด้วยสนามกอล์ฟ',
+    subtitle: 'ติดสนามกอล์ฟ ภูเก็ต คันทรี คลับ',
+  },
+  {
+    icon: 'trees',
+    title: 'ธรรมชาติและสุขภาพ',
+    subtitle: 'ใกล้เขื่อนบางวาด แหล่งพักผ่อนยอดนิยม',
+  },
+  {
+    icon: 'dumbbell',
+    title: 'ค่ายมวยไทยมาตรฐาน',
+    subtitle: 'ฝึกซ้อมมวยไทยภายในบริเวณโรงแรม',
+  },
+  {
+    icon: 'presentation',
+    title: 'ห้องประชุมและสัมมนา',
+    subtitle: 'รองรับการจัดประชุมและงานเลี้ยงครบวงจร',
+  },
+  {
+    icon: 'shopping',
+    title: 'ทำเลเดินทางสะดวก',
+    subtitle: 'ใกล้เซ็นทรัล ภูเก็ต และแหล่งช้อปปิ้ง',
+  },
+  {
+    icon: 'car',
+    title: 'ที่จอดรถกว้างขวาง',
+    subtitle: 'บริการที่จอดรถสะดวกสบายภายในโรงแรม',
+  },
+];
+
 export const THE_PAR_PHUKET_DEFAULT_SEO = {
   seo_title:
     'The Par Phuket | Golf & Lifestyle Hotel in Phuket (โรงแรมในสนามกอล์ฟภูเก็ต กะทู้)',
@@ -91,7 +124,8 @@ export const THE_PAR_PHUKET_DEFAULT_SEO = {
 export function resolveHotelHighlights(
   savedHighlights: unknown,
   slug?: string | null,
-  name?: string | null
+  name?: string | null,
+  locale: 'en' | 'th' = 'en'
 ): HighlightStripItem[] {
   if (Array.isArray(savedHighlights)) {
     return savedHighlights
@@ -103,12 +137,12 @@ export function resolveHotelHighlights(
       )
       .map((item: any) => ({
         icon: (item.icon as HighlightIconKey) || 'sparkles',
-        title: String(item.title || '').trim(),
-        subtitle: String(item.subtitle || '').trim(),
+        title: String((locale === 'th' ? item.title_th || item.title : item.title) || '').trim(),
+        subtitle: String((locale === 'th' ? item.subtitle_th || item.subtitle : item.subtitle) || '').trim(),
       }));
   }
   if (isTheParPhuketHotel(slug, name)) {
-    return THE_PAR_PHUKET_DEFAULT_HIGHLIGHTS;
+    return locale === 'th' ? THE_PAR_PHUKET_DEFAULT_HIGHLIGHTS_TH : THE_PAR_PHUKET_DEFAULT_HIGHLIGHTS;
   }
   return [];
 }

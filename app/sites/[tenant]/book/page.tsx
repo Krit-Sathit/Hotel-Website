@@ -1,9 +1,15 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { getHotelBySlug } from '@/lib/db/mock-data';
 import { isHostelProperty } from '@/lib/booking-engine';
 import HotelBookingEngine from '@/components/booking/hotel-booking-engine';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
+import {
+  HOTEL_LOCALE_COOKIE,
+  parseHotelLocale,
+  localizeHotel,
+} from '@/lib/i18n/hotel-locale';
 
 interface BookPageProps {
   params: Promise<{ tenant: string }>;
@@ -48,11 +54,14 @@ function addDaysIso(isoDate: string, days: number): string | undefined {
 export default async function TenantBookPage({ params, searchParams }: BookPageProps) {
   const { tenant } = await params;
   const query = await searchParams;
-  const hotel = await getHotelBySlug(tenant);
+  const [rawHotel, cookieStore] = await Promise.all([getHotelBySlug(tenant), cookies()]);
 
-  if (!hotel || hotel.status !== 'active') {
+  if (!rawHotel || rawHotel.status !== 'active') {
     notFound();
   }
+
+  const locale = parseHotelLocale(cookieStore.get(HOTEL_LOCALE_COOKIE)?.value);
+  const hotel = localizeHotel(rawHotel, locale);
 
   // Support both internal camelCase params and Google Hotel Center / Channex Free Booking Link params
   const resolvedCheckIn = pickIsoDate(query.checkIn, query.checkin, query.check_in);
@@ -62,7 +71,7 @@ export default async function TenantBookPage({ params, searchParams }: BookPageP
     pickIsoDate(query.checkOut, query.checkout, query.check_out) ||
     (resolvedCheckIn ? addDaysIso(resolvedCheckIn, stayNights > 0 ? stayNights : 1) : undefined);
 
-  const isHostel = isHostelProperty(hotel.name, hotel.slug, tenant, hotel.custom_domain);
+  const isHostel = isHostelProperty(rawHotel.name, hotel.name, hotel.slug, tenant, hotel.custom_domain);
   const defaultAdults = isHostel ? 1 : 2;
   const rawAdults = query.adults || query.guests || String(defaultAdults);
   const initialAdults = Math.max(1, parseInt(rawAdults, 10) || defaultAdults);

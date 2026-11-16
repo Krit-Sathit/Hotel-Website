@@ -1,6 +1,6 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 
 import Link from 'next/link';
 import { ChevronLeft, Maximize2, Users, BedDouble, Check, ArrowRight } from 'lucide-react';
@@ -9,6 +9,13 @@ import BookingWidget from '@/components/booking-widget';
 import PageViewTracker from '@/components/analytics/page-view-tracker';
 import RoomDetailGallery from '@/components/sections/room-detail-gallery';
 import { getBookingEngineUrl, resolveTenantPrefix } from '@/lib/booking-engine';
+import {
+  HOTEL_LOCALE_COOKIE,
+  parseHotelLocale,
+  localizeHotel,
+  localizeRooms,
+  getHotelUiText,
+} from '@/lib/i18n/hotel-locale';
 
 interface RoomDetailPageProps {
   params: Promise<{ tenant: string; id: string }>;
@@ -16,22 +23,30 @@ interface RoomDetailPageProps {
 
 export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
   const { tenant, id } = await params;
-  const hotel = await getHotelBySlug(tenant);
+  const [rawHotel, headerList, cookieStore] = await Promise.all([
+    getHotelBySlug(tenant),
+    headers(),
+    cookies(),
+  ]);
 
-  if (!hotel || hotel.status !== 'active') {
+  if (!rawHotel || rawHotel.status !== 'active') {
     notFound();
   }
 
-  const hotelRooms = await getRooms(hotel.id);
+  const locale = parseHotelLocale(cookieStore.get(HOTEL_LOCALE_COOKIE)?.value);
+  const hotel = localizeHotel(rawHotel, locale);
+  const ui = getHotelUiText(locale);
+
+  const hotelRooms = localizeRooms(await getRooms(hotel.id), locale);
+  const fallbackRoom = hotelRooms.length === 0 ? await getRoomById(id) : null;
   const room =
     hotelRooms.find((r) => String(r.id) === String(id)) ||
-    (hotelRooms.length === 0 ? await getRoomById(id) : null);
+    (fallbackRoom ? localizeRooms([fallbackRoom], locale)[0] : null);
   if (!room) {
     notFound();
   }
 
   // Compute tenantPrefix for internal navigation links
-  const headerList = await headers();
   const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
   const tenantPrefix = resolveTenantPrefix(rawHost, tenant);
 
@@ -47,7 +62,7 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
             className="inline-flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase text-slate-400 hover:text-accent transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-            Back to Accommodations
+            {ui.sections.backToRooms}
           </Link>
         </div>
 
@@ -62,7 +77,6 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
               <h1 className="text-3xl md:text-5xl font-light tracking-wide text-primary font-hotel capitalize">
                 {room.name}
               </h1>
-              {/* Price text removed per user request */}
               <div className="w-16 h-[1px] bg-accent/60" />
             </div>
 
@@ -72,13 +86,10 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
             {/* Room Description */}
             <div className="space-y-4 pt-4">
               <h3 className="text-lg font-bold tracking-widest uppercase text-primary/80 font-sans">
-                The Experience
+                {ui.sections.theExperience}
               </h3>
               <p className="text-sm leading-relaxed text-slate-650 dark:text-slate-400">
                 {room.description}
-              </p>
-              <p className="text-sm leading-relaxed text-slate-650 dark:text-slate-400">
-                Designed for absolute serenity, our suites offer a seamless blend of luxury aesthetics and modern performance. Features include custom designer furnishings, ambient acoustic panels, premium climate control systems, and a fully stocked wellness bar.
               </p>
             </div>
 
@@ -87,24 +98,24 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
               <div className="flex flex-col items-center gap-1">
                 <Maximize2 className="w-5 h-5 text-accent" />
                 <span className="font-bold text-primary mt-1">{room.room_size} m²</span>
-                <span className="text-[9px] text-slate-450">Room Size</span>
+                <span className="text-[9px] text-slate-450">{ui.sections.roomSize}</span>
               </div>
               <div className="flex flex-col items-center gap-1">
                 <Users className="w-5 h-5 text-accent" />
-                <span className="font-bold text-primary mt-1">Up to {room.max_guests} Guests</span>
-                <span className="text-[9px] text-slate-450">Capacity</span>
+                <span className="font-bold text-primary mt-1">{ui.sections.upToGuests(room.max_guests)}</span>
+                <span className="text-[9px] text-slate-450">{ui.sections.capacity}</span>
               </div>
               <div className="flex flex-col items-center gap-1">
                 <BedDouble className="w-5 h-5 text-accent" />
                 <span className="font-bold text-primary mt-1">{room.bed_type}</span>
-                <span className="text-[9px] text-slate-450">Bedding Config</span>
+                <span className="text-[9px] text-slate-450">{ui.sections.beddingConfig}</span>
               </div>
             </div>
 
             {/* Amenities Checklist */}
             <div className="space-y-4">
               <h3 className="text-lg font-bold tracking-widest uppercase text-primary/80 font-sans">
-                Premium Amenities
+                {ui.sections.premiumAmenities}
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {room.amenities.map((amenity) => (
@@ -133,17 +144,21 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
 
             {/* Standard Help Prompt */}
             <div className="p-6 bg-white dark:bg-slate-950 rounded-hotel border border-slate-150/40 dark:border-slate-900 text-left space-y-3 shadow-sm">
-              <h4 className="text-xs font-bold tracking-widest uppercase text-primary font-sans">Need Assistance?</h4>
+              <h4 className="text-xs font-bold tracking-widest uppercase text-primary font-sans">
+                {locale === 'th' ? 'ต้องการความช่วยเหลือ?' : 'Need Assistance?'}
+              </h4>
               <p className="text-[11px] text-slate-500 dark:text-slate-405 leading-relaxed">
-                Our reservation specialists are available 24 hours a day to assist with custom packages, private transfers, or special requests.
+                {locale === 'th'
+                  ? 'ทีมงานของโรงแรมพร้อมดูแลและให้ข้อมูลเพิ่มเติมเกี่ยวกับการสำรองห้องพักและคำขอพิเศษตลอดเวลาครับ'
+                  : 'Our reservation specialists are available to assist with group stays, transfers, or special requests.'}
               </p>
-              <a 
-                href="/contact" 
+              <Link 
+                href={`${tenantPrefix}/contact`} 
                 className="text-[10px] font-bold text-accent tracking-widest uppercase hover:underline flex items-center gap-1"
               >
-                Contact Concierge
+                {ui.nav.contact}
                 <ArrowRight className="w-3 h-3" />
-              </a>
+              </Link>
             </div>
 
           </div>

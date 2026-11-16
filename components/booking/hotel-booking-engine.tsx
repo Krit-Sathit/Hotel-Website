@@ -42,6 +42,8 @@ import {
   Minus,
 } from 'lucide-react';
 import { SwipeablePhotoSlider, SwipeableLightbox } from '@/components/ui/swipeable-photo-slider';
+import { useHotelLocale } from '@/components/hotel-locale-provider';
+import { translateAmenityLabel, translateBedType } from '@/lib/i18n/hotel-locale';
 
 interface RatePlanOption {
   id: number;
@@ -214,6 +216,8 @@ export default function HotelBookingEngine({
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'promptpay'>('card');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const { locale } = useHotelLocale();
+  const isTh = locale === 'th';
 
   const nights = useMemo(() => {
     const d1 = new Date(checkIn);
@@ -532,14 +536,14 @@ export default function HotelBookingEngine({
         >
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
             <div className="text-xs font-semibold text-slate-700 shrink-0 lg:mr-1">
-              Change Your Stay
+              {isTh ? 'เปลี่ยนวันเข้าพัก' : 'Change Your Stay'}
             </div>
 
             {/* Check-in */}
             <div className="relative flex-1 flex items-center gap-2.5 border border-slate-200 rounded-xl px-3.5 py-2 cursor-pointer hover:border-slate-300 transition-colors bg-white">
               <CalendarDays className="h-4 w-4 text-slate-400 shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-[10px] text-slate-400 leading-tight">Check-in</div>
+                <div className="text-[10px] text-slate-400 leading-tight">{isTh ? 'วันเช็คอิน' : 'Check-in'}</div>
                 <div className="text-xs font-semibold text-slate-800 truncate">
                   {formatDisplayDate(checkIn)}
                 </div>
@@ -562,14 +566,14 @@ export default function HotelBookingEngine({
 
             {/* Nights indicator */}
             <div className="text-center text-[11px] text-slate-400 font-medium shrink-0 px-1">
-              {nights} {nights === 1 ? 'night' : 'nights'}
+              {isTh ? `${nights} คืน` : `${nights} ${nights === 1 ? 'night' : 'nights'}`}
             </div>
 
             {/* Check-out */}
             <div className="relative flex-1 flex items-center gap-2.5 border border-slate-200 rounded-xl px-3.5 py-2 cursor-pointer hover:border-slate-300 transition-colors bg-white">
               <CalendarDays className="h-4 w-4 text-slate-400 shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-[10px] text-slate-400 leading-tight">Check-out</div>
+                <div className="text-[10px] text-slate-400 leading-tight">{isTh ? 'วันเช็คเอาท์' : 'Check-out'}</div>
                 <div className="text-xs font-semibold text-slate-800 truncate">
                   {formatDisplayDate(checkOut)}
                 </div>
@@ -604,9 +608,9 @@ export default function HotelBookingEngine({
                 <div className="flex items-center gap-2.5">
                   <Users className="h-4 w-4 text-slate-400 shrink-0" />
                   <div>
-                    <div className="text-[10px] text-slate-400 leading-tight">Guests</div>
+                    <div className="text-[10px] text-slate-400 leading-tight">{isTh ? 'ผู้เข้าพัก' : 'Guests'}</div>
                     <div className="text-xs font-semibold text-slate-800">
-                      {adults + children} {adults + children === 1 ? 'guest' : 'guests'}
+                      {isTh ? `${adults + children} ท่าน` : `${adults + children} ${adults + children === 1 ? 'guest' : 'guests'}`}
                     </div>
                   </div>
                 </div>
@@ -620,7 +624,7 @@ export default function HotelBookingEngine({
               {guestDropdownOpen && (
                 <div className="absolute right-0 left-0 lg:w-64 mt-2 bg-white rounded-xl border border-slate-200 shadow-xl p-4 z-30 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-700">Adults</span>
+                    <span className="text-xs font-medium text-slate-700">{isTh ? 'ผู้ใหญ่' : 'Adults'}</span>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -640,7 +644,7 @@ export default function HotelBookingEngine({
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-700">Children</span>
+                    <span className="text-xs font-medium text-slate-700">{isTh ? 'เด็ก' : 'Children'}</span>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -662,7 +666,7 @@ export default function HotelBookingEngine({
                   <div className="pt-2 border-t border-slate-100">
                     <input
                       type="text"
-                      placeholder="Promo Code (optional)"
+                      placeholder={isTh ? 'รหัสโปรโมชั่น (ถ้ามี)' : 'Promo Code (optional)'}
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}
                       className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-slate-400"
@@ -678,7 +682,7 @@ export default function HotelBookingEngine({
               className="bg-[#0f172a] hover:bg-slate-800 text-white font-semibold text-xs px-5 py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors shrink-0 cursor-pointer"
             >
               <Search className="h-3.5 w-3.5" />
-              Search Availability
+              {isTh ? 'ค้นหาห้องว่าง' : 'Search Availability'}
             </button>
           </div>
 
@@ -702,18 +706,26 @@ export default function HotelBookingEngine({
         {/* STEP 1: ROOM TYPES & RATE PLANS (Exact UI from Screenshot 2) */}
         {step === 'rooms' && (
           <div>
-            <h2 className="text-xl font-serif font-bold text-slate-900 mb-5">Room Types</h2>
+            <h2 className="text-xl font-serif font-bold text-slate-900 mb-5">
+              {isTh ? 'เลือกประเภทห้องพัก' : 'Room Types'}
+            </h2>
 
             {loading ? (
               <div className="bg-white rounded-2xl border border-slate-200 p-16 flex flex-col items-center justify-center gap-3">
                 <Loader2 className="h-7 w-7 animate-spin text-slate-700" />
-                <p className="text-xs text-slate-500">Checking real-time room availability & rates...</p>
+                <p className="text-xs text-slate-500">
+                  {isTh ? 'กำลังตรวจสอบห้องว่างและราคาพิเศษแบบเรียลไทม์...' : 'Checking real-time room availability & rates...'}
+                </p>
               </div>
             ) : roomTypes.length === 0 ? (
               <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
                 <BedDouble className="h-10 w-10 text-slate-300 mx-auto mb-2" />
-                <p className="text-slate-600 font-medium">No rooms available for the selected dates.</p>
-                <p className="text-xs text-slate-400 mt-1">Please try selecting different check-in or check-out dates.</p>
+                <p className="text-slate-600 font-medium">
+                  {isTh ? 'ไม่มีห้องว่างสำหรับวันที่เลือก' : 'No rooms available for the selected dates.'}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  {isTh ? 'กรุณาลองเปลี่ยนวันเช็คอินหรือเช็คเอาท์ใหม่อีกครั้ง' : 'Please try selecting different check-in or check-out dates.'}
+                </p>
               </div>
             ) : (
               <div className="space-y-5">
@@ -730,6 +742,7 @@ export default function HotelBookingEngine({
                   const visibleAmenities = isAmenitiesExpanded ? amenities : amenities.slice(0, 6);
                   const hiddenCount = Math.max(0, amenities.length - 6);
                   const isUnavailable = room.isClosed || room.available === 0;
+                  const displayRoomName = isTh ? room.name || room.nameEn || '' : room.nameEn || room.name || '';
 
                   return (
                     <div
@@ -744,7 +757,7 @@ export default function HotelBookingEngine({
                           {mainPhoto ? (
                             <SwipeablePhotoSlider
                               photos={roomPhotos}
-                              alt={room.nameEn || room.name}
+                              alt={displayRoomName}
                               className="w-full h-full"
                               arrowsMode="desktop-hover"
                               showCounter={roomPhotos.length > 1}
@@ -764,22 +777,22 @@ export default function HotelBookingEngine({
                             <div className="flex items-start justify-between gap-2">
                               <div>
                                 <h3 className="text-lg font-serif font-bold text-slate-900">
-                                  {room.nameEn || room.name}
+                                  {displayRoomName}
                                 </h3>
                                 <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-slate-500">
                                   {room.bedType && (
                                     <span className="flex items-center gap-1 capitalize">
-                                      <BedDouble className="h-3.5 w-3.5" /> {room.bedType}
+                                      <BedDouble className="h-3.5 w-3.5" /> {translateBedType(room.bedType, locale)}
                                     </span>
                                   )}
                                   {room.maxOccupancy && (
                                     <span className="flex items-center gap-1">
-                                      <Users className="h-3.5 w-3.5" /> {room.maxOccupancy} guests
+                                      <Users className="h-3.5 w-3.5" /> {isTh ? `สูงสุด ${room.maxOccupancy} ท่าน` : `${room.maxOccupancy} guests`}
                                     </span>
                                   )}
                                   {room.sizeSqm && Number(room.sizeSqm) > 0 && (
                                     <span className="flex items-center gap-1">
-                                      <Maximize2 className="h-3.5 w-3.5" /> {room.sizeSqm} sqm
+                                      <Maximize2 className="h-3.5 w-3.5" /> {room.sizeSqm} {isTh ? 'ตร.ม.' : 'sqm'}
                                     </span>
                                   )}
                                 </div>
@@ -787,7 +800,7 @@ export default function HotelBookingEngine({
 
                               {isUnavailable && (
                                 <span className="text-xs bg-red-50 text-red-600 px-2.5 py-1 rounded-full font-medium">
-                                  Unavailable
+                                  {isTh ? 'ห้องเต็ม' : 'Unavailable'}
                                 </span>
                               )}
                             </div>
@@ -801,7 +814,7 @@ export default function HotelBookingEngine({
                                     className="inline-flex items-center gap-1 text-[11px] bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md"
                                   >
                                     {getAmenityIcon(a)}
-                                    {a}
+                                    {translateAmenityLabel(a, locale)}
                                   </span>
                                 ))}
                                 {hiddenCount > 0 && (
@@ -815,7 +828,7 @@ export default function HotelBookingEngine({
                                     }
                                     className="text-[11px] text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded-md font-medium transition-colors cursor-pointer"
                                   >
-                                    {isAmenitiesExpanded ? 'Show less' : `+${hiddenCount}`}
+                                    {isAmenitiesExpanded ? (isTh ? 'ย่อลง' : 'Show less') : `+${hiddenCount}`}
                                   </button>
                                 )}
                               </div>
@@ -834,7 +847,9 @@ export default function HotelBookingEngine({
                                 const otherUsed = getRoomQtyUsed(room.id, selectionKey);
                                 const maxForPlan = Math.max(0, (room.available ?? 5) - otherUsed);
 
-                                const rawPlanTitle = plan.nameEn || plan.name || '';
+                                const rawPlanTitle = isTh
+                                  ? plan.name || plan.nameEn || ''
+                                  : plan.nameEn || plan.name || '';
                                 const cleanPlanTitle =
                                   rawPlanTitle
                                     .replace(/\s*[-–—]?\s*non[\s-]?refundable\s*/gi, '')
@@ -845,6 +860,9 @@ export default function HotelBookingEngine({
                                   /non[\s-]?refundable/i.test(`${plan.name || ''} ${plan.nameEn || ''}`);
                                 const refundDays = Number(cancelPolicy?.refundDays ?? 14) || 14;
                                 const deadlineDateStr = formatDeadlineBeforeCheckIn(checkIn, refundDays);
+                                const displayPromoName = isTh
+                                  ? plan.promoName || plan.promoNameEn
+                                  : plan.promoNameEn || plan.promoName;
 
                                 return (
                                   <div
@@ -868,9 +886,9 @@ export default function HotelBookingEngine({
                                         )}
                                       </div>
 
-                                      {(plan.promoNameEn || plan.promoName) && (
+                                      {displayPromoName && (
                                         <p className="text-xs text-orange-600 font-medium mt-0.5">
-                                          {plan.promoNameEn || plan.promoName}
+                                          {displayPromoName}
                                         </p>
                                       )}
 
@@ -882,10 +900,16 @@ export default function HotelBookingEngine({
                                         }`}
                                       >
                                         {isNonRefundable
-                                          ? 'Non-Refundable'
+                                          ? isTh
+                                            ? 'ไม่สามารถคืนเงินได้'
+                                            : 'Non-Refundable'
                                           : deadlineDateStr
-                                            ? `Free cancellation before ${deadlineDateStr}`
-                                            : 'Free cancellation'}
+                                            ? isTh
+                                              ? `ยกเลิกฟรีก่อนวันที่ ${deadlineDateStr}`
+                                              : `Free cancellation before ${deadlineDateStr}`
+                                            : isTh
+                                              ? 'ยกเลิกการจองฟรี'
+                                              : 'Free cancellation'}
                                       </p>
                                     </div>
 
@@ -902,7 +926,7 @@ export default function HotelBookingEngine({
                                             {formatPrice(Number(plan.price))}
                                           </span>
                                           <span className="text-xs text-slate-400 ml-0.5">
-                                            /night
+                                            {isTh ? '/คืน' : '/night'}
                                           </span>
                                         </div>
                                       </div>
@@ -938,7 +962,7 @@ export default function HotelBookingEngine({
                                               { length: maxForPlan + 1 },
                                               (_, i) => (
                                                 <option key={i} value={i}>
-                                                  {i} {i === 1 ? 'room' : 'rooms'}
+                                                  {isTh ? `${i} ห้อง` : `${i} ${i === 1 ? 'room' : 'rooms'}`}
                                                 </option>
                                               )
                                             )}
@@ -969,7 +993,7 @@ export default function HotelBookingEngine({
                                               }}
                                               className="ml-1 bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-semibold h-8 px-3 rounded-lg inline-flex items-center gap-1 transition-colors cursor-pointer"
                                             >
-                                              Proceed
+                                              {isTh ? 'จองต่อ' : 'Proceed'}
                                               <ArrowRight className="h-3 w-3" />
                                             </button>
                                           )}
@@ -1000,7 +1024,7 @@ export default function HotelBookingEngine({
               className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Room Selection
+              {isTh ? 'กลับไปเลือกห้องพัก' : 'Back to Room Selection'}
             </button>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -1010,10 +1034,10 @@ export default function HotelBookingEngine({
                 {addOns.length > 0 && (
                   <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
                     <h3 className="text-base font-serif font-bold text-slate-900 mb-1">
-                      Enhance Your Stay (Optional Add-ons)
+                      {isTh ? 'บริการเสริมเพิ่มเติม (ไม่บังคับ)' : 'Enhance Your Stay (Optional Add-ons)'}
                     </h3>
                     <p className="text-xs text-slate-500 mb-4">
-                      Select any extra services you would like to include with your reservation.
+                      {isTh ? 'เลือกบริการเสริมที่ต้องการเพิ่มในการจองครั้งนี้' : 'Select any extra services you would like to include with your reservation.'}
                     </p>
                     <div className="divide-y divide-slate-100">
                       {addOns.map((addon) => {
@@ -1025,11 +1049,11 @@ export default function HotelBookingEngine({
                           >
                             <div>
                               <div className="text-sm font-medium text-slate-900">
-                                {addon.nameEn || addon.name}
+                                {isTh ? addon.name || addon.nameEn : addon.nameEn || addon.name}
                               </div>
                               {(addon.descriptionEn || addon.description) && (
                                 <p className="text-xs text-slate-500">
-                                  {addon.descriptionEn || addon.description}
+                                  {isTh ? addon.description || addon.descriptionEn : addon.descriptionEn || addon.description}
                                 </p>
                               )}
                               <div className="text-xs font-semibold text-slate-700 mt-0.5">
@@ -1074,37 +1098,37 @@ export default function HotelBookingEngine({
                 <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
                   <div>
                     <h3 className="text-base font-serif font-bold text-slate-900">
-                      Guest Information
+                      {isTh ? 'ข้อมูลผู้เข้าพัก' : 'Guest Information'}
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Please enter the primary guest details for your reservation at {hotelName}.
+                      {isTh ? `กรุณากรอกข้อมูลผู้เข้าพักหลักสำหรับการสำรองห้องพักที่ ${hotelName}` : `Please enter the primary guest details for your reservation at ${hotelName}.`}
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                        First Name <span className="text-red-500">*</span>
+                        {isTh ? 'ชื่อจริง' : 'First Name'} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         required
                         value={guestFirstName}
                         onChange={(e) => setGuestFirstName(e.target.value)}
-                        placeholder="John"
+                        placeholder={isTh ? 'ชื่อ' : 'John'}
                         className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:outline-none focus:border-slate-900"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                        Last Name <span className="text-red-500">*</span>
+                        {isTh ? 'นามสกุล' : 'Last Name'} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         required
                         value={guestLastName}
                         onChange={(e) => setGuestLastName(e.target.value)}
-                        placeholder="Doe"
+                        placeholder={isTh ? 'นามสกุล' : 'Doe'}
                         className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:outline-none focus:border-slate-900"
                       />
                     </div>
@@ -1113,23 +1137,23 @@ export default function HotelBookingEngine({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                        Email Address <span className="text-red-500">*</span>
+                        {isTh ? 'อีเมล' : 'Email Address'} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="email"
                         required
                         value={guestEmail}
                         onChange={(e) => setGuestEmail(e.target.value)}
-                        placeholder="john@example.com"
+                        placeholder="name@example.com"
                         className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:outline-none focus:border-slate-900"
                       />
                       <p className="text-[11px] text-slate-400 mt-1">
-                        Instant booking confirmation will be sent to this email.
+                        {isTh ? 'ใบยืนยันการจองจะถูกส่งไปยังอีเมลนี้ทันที' : 'Instant booking confirmation will be sent to this email.'}
                       </p>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                        Phone Number <span className="text-red-500">*</span>
+                        {isTh ? 'เบอร์โทรศัพท์' : 'Phone Number'} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="tel"
@@ -1144,13 +1168,13 @@ export default function HotelBookingEngine({
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Special Requests (Optional)
+                      {isTh ? 'คำขอพิเศษ (ไม่บังคับ)' : 'Special Requests (Optional)'}
                     </label>
                     <textarea
                       rows={3}
                       value={specialRequests}
                       onChange={(e) => setSpecialRequests(e.target.value)}
-                      placeholder="Early check-in, high floor, airport transfer inquiry, dietary needs..."
+                      placeholder={isTh ? 'เช่น ขอเช็คอินก่อนเวลา, ห้องชั้นสูง, เตียงเสริม...' : 'Early check-in, high floor, airport transfer inquiry, dietary needs...'}
                       className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:outline-none focus:border-slate-900"
                     />
                   </div>
@@ -1159,7 +1183,7 @@ export default function HotelBookingEngine({
                 {/* Payment Method Card */}
                 <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
                   <h3 className="text-base font-serif font-bold text-slate-900">
-                    Select Payment Method
+                    {isTh ? 'เลือกช่องทางชำระเงิน' : 'Select Payment Method'}
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1175,7 +1199,7 @@ export default function HotelBookingEngine({
                       <CreditCard className="h-5 w-5 text-slate-800 shrink-0 mt-0.5" />
                       <div>
                         <div className="text-sm font-semibold text-slate-900">
-                          Credit / Debit Card
+                          {isTh ? 'บัตรเครดิต / เดบิต' : 'Credit / Debit Card'}
                         </div>
                         <div className="text-xs text-slate-500 mt-0.5">
                           Visa, Mastercard, JCB, AMEX
@@ -1198,7 +1222,7 @@ export default function HotelBookingEngine({
                           PromptPay QR Code
                         </div>
                         <div className="text-xs text-slate-500 mt-0.5">
-                          Scan QR with any Thai banking app
+                          {isTh ? 'สแกนจ่ายด้วยแอปธนาคารทุกธนาคาร' : 'Scan QR with any Thai banking app'}
                         </div>
                       </div>
                     </button>
@@ -1259,32 +1283,34 @@ export default function HotelBookingEngine({
               {/* Right Column: Booking Summary */}
               <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm lg:sticky lg:top-24 space-y-4">
                 <h3 className="text-base font-serif font-bold text-slate-900">
-                  Booking Summary
+                  {isTh ? 'สรุปรายการจอง' : 'Booking Summary'}
                 </h3>
 
                 <div className="text-xs space-y-2 pb-4 border-b border-slate-100">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Hotel</span>
+                    <span className="text-slate-500">{isTh ? 'ที่พัก' : 'Hotel'}</span>
                     <span className="font-semibold text-slate-900">{hotelName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Check-in</span>
+                    <span className="text-slate-500">{isTh ? 'เช็คอิน' : 'Check-in'}</span>
                     <span className="font-medium text-slate-800">{formatDisplayDate(checkIn)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Check-out</span>
+                    <span className="text-slate-500">{isTh ? 'เช็คเอาท์' : 'Check-out'}</span>
                     <span className="font-medium text-slate-800">{formatDisplayDate(checkOut)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Duration</span>
+                    <span className="text-slate-500">{isTh ? 'จำนวนคืน' : 'Duration'}</span>
                     <span className="font-medium text-slate-800">
-                      {nights} {nights === 1 ? 'night' : 'nights'}
+                      {isTh ? `${nights} คืน` : `${nights} ${nights === 1 ? 'night' : 'nights'}`}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Guests</span>
+                    <span className="text-slate-500">{isTh ? 'ผู้เข้าพัก' : 'Guests'}</span>
                     <span className="font-medium text-slate-800">
-                      {adults} Adults{children > 0 ? `, ${children} Children` : ''}
+                      {isTh
+                        ? `ผู้ใหญ่ ${adults} ท่าน${children > 0 ? `, เด็ก ${children} ท่าน` : ''}`
+                        : `${adults} Adults${children > 0 ? `, ${children} Children` : ''}`}
                     </span>
                   </div>
                 </div>
@@ -1418,24 +1444,24 @@ export default function HotelBookingEngine({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedRooms({})}
-                  className="text-xs text-slate-500 hover:text-slate-800 px-3 py-2 rounded-lg border border-slate-200 cursor-pointer"
-                >
-                  Clear
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep('checkout');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-semibold px-5 py-3 rounded-xl inline-flex items-center gap-2 transition-colors cursor-pointer"
-                >
-                  Next: Guest Info
-                  <ArrowRight className="h-4 w-4" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRooms({})}
+                    className="text-xs text-slate-500 hover:text-slate-800 px-3 py-2 rounded-lg border border-slate-200 cursor-pointer"
+                  >
+                    {isTh ? 'ล้างค่า' : 'Clear'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep('checkout');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-semibold px-5 py-3 rounded-xl inline-flex items-center gap-2 transition-colors cursor-pointer"
+                  >
+                    {isTh ? 'ถัดไป: กรอกข้อมูลผู้เข้าพัก' : 'Next: Guest Info'}
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
               </div>
             </div>
           </div>

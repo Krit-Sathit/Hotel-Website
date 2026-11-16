@@ -62,6 +62,7 @@ export interface Hotel {
   flowstay_id?: number;
   line_id?: string;
   name: string;
+  name_th?: string;
   slug: string;
   custom_domain: string | null;
   status: 'active' | 'suspended' | 'draft';
@@ -70,6 +71,9 @@ export interface Hotel {
   email: string;
   phone: string;
   address: string;
+  address_th?: string;
+  description?: string;
+  description_th?: string;
   google_map_url: string;
   social_links: {
     facebook: string;
@@ -90,8 +94,11 @@ export interface HeroSlide {
   image_url: string;
   video_url?: string;
   headline: string;
+  headline_th?: string;
   subheadline: string;
+  subheadline_th?: string;
   button_text: string;
+  button_text_th?: string;
   button_link: string;
   overlay_color: string;
   overlay_opacity: number;
@@ -111,9 +118,12 @@ export interface Room {
   id: string;
   hotel_id: string;
   name: string;
+  name_th?: string;
   description: string;
+  description_th?: string;
   gallery: string[];
   amenities: string[];
+  amenities_th?: string[];
   max_guests: number;
   room_size: number;
   bed_type: string;
@@ -121,6 +131,7 @@ export interface Room {
   original_price?: number;
   discount_pct?: number;
   promo_name?: string;
+  promo_name_th?: string;
   book_now_url?: string;
   sort_order: number;
 }
@@ -129,12 +140,15 @@ export interface Promotion {
   id: string;
   hotel_id: string;
   title: string;
+  title_th?: string;
   description: string;
+  description_th?: string;
   image_url: string;
   start_date: string;
   end_date: string;
   promo_code?: string;
   cta_text: string;
+  cta_text_th?: string;
   cta_link: string;
   is_active: boolean;
 }
@@ -1158,7 +1172,7 @@ const fetchCachedFlowStayBundleRemote = unstable_cache(
 
     return normalizeFlowStayBundleUrls(data);
   },
-  ['flowstay-website-bundle-v3'],
+  ['flowstay-website-bundle-v4'],
   { revalidate: 180, tags: ['hotel-content'] }
 );
 
@@ -1482,7 +1496,14 @@ export async function getHomepageSections(hotelId: string): Promise<HomepageSect
           byType.set(sec.section_type, sec);
         }
         for (const sec of sbSections) {
-          byType.set(sec.section_type, sec);
+          const existing = byType.get(sec.section_type);
+          byType.set(sec.section_type, {
+            ...sec,
+            content:
+              existing?.content && typeof existing.content === 'object'
+                ? { ...existing.content, ...(sec.content || {}) }
+                : sec.content,
+          });
         }
         return Array.from(byType.values()).sort(
           (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)

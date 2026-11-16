@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import {
   getHotelBySlug,
   getHeroSlides,
@@ -16,6 +16,15 @@ import HotelTemplateHome from '@/components/templates/hotel-template-home';
 import { HOTEL_WEBSITE_TEMPLATES } from '@/lib/hotel-templates';
 import { getBookingEngineUrl, resolveTenantPrefix } from '@/lib/booking-engine';
 import { resolveHotelSeo } from '@/lib/hotel-seo-highlights';
+import {
+  HOTEL_LOCALE_COOKIE,
+  parseHotelLocale,
+  localizeHotel,
+  localizeSlides,
+  localizeSections,
+  localizeRooms,
+  localizePromotions,
+} from '@/lib/i18n/hotel-locale';
 
 interface TenantPageProps {
   params: Promise<{ tenant: string }>;
@@ -66,25 +75,37 @@ export async function generateMetadata({
 }
 
 export default async function TenantPage({ params, searchParams }: TenantPageProps) {
-  const [{ tenant }, query] = await Promise.all([params, searchParams]);
-  const hotel = await getHotelBySlug(tenant);
+  const [{ tenant }, query, cookieStore, headerList] = await Promise.all([
+    params,
+    searchParams,
+    cookies(),
+    headers(),
+  ]);
+  const rawHotel = await getHotelBySlug(tenant);
 
-  if (!hotel || hotel.status !== 'active') {
+  if (!rawHotel || rawHotel.status !== 'active') {
     notFound();
   }
 
-  const headerList = await headers();
+  const locale = parseHotelLocale(cookieStore.get(HOTEL_LOCALE_COOKIE)?.value);
+  const hotel = localizeHotel(rawHotel, locale);
+
   const rawHost = headerList.get('x-forwarded-host') || headerList.get('host') || '';
   const tenantPrefix = resolveTenantPrefix(rawHost, tenant);
   const bookingUrl = getBookingEngineUrl(hotel.slug, tenantPrefix);
 
-  const [slides, dbSections, rooms, promotions, gallery] = await Promise.all([
+  const [rawSlides, rawSections, rawRooms, rawPromotions, gallery] = await Promise.all([
     getHeroSlides(hotel.id),
     getHomepageSections(hotel.id),
     getRooms(hotel.id),
     getPromotions(hotel.id),
     getGalleryPhotos(hotel.id),
   ]);
+
+  const slides = localizeSlides(rawSlides, locale);
+  const dbSections = localizeSections(rawSections, rawHotel, locale);
+  const rooms = localizeRooms(rawRooms, locale);
+  const promotions = localizePromotions(rawPromotions, locale);
 
   // Support live preview query override (?preview_template=<id>&pc=...&sc=...&ac=...&bg=...&tc=...)
   const previewTpl = query?.preview_template

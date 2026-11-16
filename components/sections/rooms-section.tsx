@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Room } from '@/lib/db/mock-data';
 import { SwipeablePhotoSlider, SwipeableLightbox } from '@/components/ui/swipeable-photo-slider';
+import { useHotelLocale } from '@/components/hotel-locale-provider';
 
 interface RoomsSectionProps {
   rooms: Room[];
@@ -29,6 +30,7 @@ export default function RoomsSection({
   tenantPrefix = '',
   bookingUrl,
 }: RoomsSectionProps) {
+  const { ui } = useHotelLocale();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
   const [lightboxIdx, setLightboxIdx] = useState(0);
@@ -49,14 +51,14 @@ export default function RoomsSection({
         {/* SECTION HEADER */}
         <div className="text-center max-w-xl mx-auto space-y-3">
           <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-accent">
-            Bespoke Sanctuaries
+            {ui.sections.accommodationsEyebrow}
           </p>
           <h2 className="text-3xl md:text-5xl font-light tracking-wide font-hotel capitalize">
-            Our Accommodations
+            {ui.sections.accommodationsTitle}
           </h2>
           <div className="w-12 h-[1px] bg-accent/60 mx-auto" />
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Immerse yourself in complete comfort and luxury crafted down to the finest detail.
+            {ui.sections.accommodationsSubtitle}
           </p>
         </div>
 
@@ -105,7 +107,7 @@ export default function RoomsSection({
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Users className="w-4 h-4 text-accent flex-shrink-0" />
-                      Max {room.max_guests} Guests
+                      {ui.sections.maxGuests(room.max_guests)}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <BedDouble className="w-4 h-4 text-accent flex-shrink-0" />
@@ -120,7 +122,7 @@ export default function RoomsSection({
                         <div className="space-y-0.5 text-left">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-                              Lowest Direct Rate
+                              {ui.badges.lowestDirectRate}
                             </span>
                             {room.discount_pct && room.discount_pct > 0 && (
                               <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 text-[10px] font-bold">
@@ -137,7 +139,7 @@ export default function RoomsSection({
                             <span className="text-xl font-bold text-primary">
                               ฿{Number(room.price ?? 0).toLocaleString()}
                             </span>
-                            <span className="text-xs text-slate-400">/ night</span>
+                            <span className="text-xs text-slate-400">{ui.badges.perNight}</span>
                           </div>
                         </div>
                       ) : (
@@ -145,7 +147,7 @@ export default function RoomsSection({
                           href={`${tenantPrefix}/rooms/${room.id}`}
                           className="text-xs font-bold tracking-widest uppercase text-slate-400 hover:text-accent transition-colors flex items-center gap-1 group/btn"
                         >
-                          Explore Suite
+                          {ui.cta.viewDetails}
                           <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
                         </Link>
                       )}
@@ -157,14 +159,14 @@ export default function RoomsSection({
                           href={`${tenantPrefix}/rooms/${room.id}`}
                           className="text-[11px] font-bold tracking-wider uppercase text-slate-500 hover:text-accent transition-colors"
                         >
-                          Details
+                          {ui.cta.viewDetails}
                         </Link>
                       )}
                       <Link
                         href={`${bookingUrl}${bookingUrl.includes('?') ? '&' : '?'}roomTypeId=${encodeURIComponent(room.id)}`}
                         className="bg-primary hover:bg-primary/95 text-white font-semibold text-[10px] md:text-xs tracking-[0.15em] uppercase py-3 px-6 rounded-hotel transition-all shadow-sm flex items-center gap-1.5 whitespace-nowrap"
                       >
-                        Reserve
+                        {ui.cta.reserve}
                       </Link>
                     </div>
                   </div>
