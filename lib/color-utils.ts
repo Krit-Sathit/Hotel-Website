@@ -17,6 +17,17 @@ export interface ColorPalettePreset {
  */
 export const COLOR_PALETTE_PRESETS: ColorPalettePreset[] = [
   {
+    id: 'metadee-crimson',
+    nameTh: 'เมทาดี แดงคริมสัน & ดำออบซิเดียน',
+    nameEn: 'Metadee Crimson & Obsidian',
+    primary_color: '#861626',
+    secondary_color: '#000000',
+    accent_color: '#961111',
+    background_color: '#FFFFFF',
+    text_color: '#111111',
+    dark_mode: false,
+  },
+  {
     id: 'rosewood-jade',
     nameTh: 'โรสวูด ไอวอรี่ & เขียวเจด',
     nameEn: 'Rosewood Ivory & Forest Jade',

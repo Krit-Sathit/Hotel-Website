@@ -26,7 +26,8 @@ export type HeroLayoutVariant =
   | 'triptych-panels'
   | 'bento-stack'
   | 'indigo-story-hero'
-  | 'rosewood-cinema-tabs';
+  | 'rosewood-cinema-tabs'
+  | 'metadee-escape-hero';
 
 export type RoomsLayoutVariant =
   | 'grid-2'
@@ -40,7 +41,8 @@ export type RoomsLayoutVariant =
   | 'portrait-posters'
   | 'rate-table-pro'
   | 'indigo-boutique-suites'
-  | 'rosewood-portrait-residences';
+  | 'rosewood-portrait-residences'
+  | 'metadee-square-deals';
 
 export type AboutLayoutVariant =
   | 'overlapping-photos'
@@ -50,7 +52,8 @@ export type AboutLayoutVariant =
   | 'split-sticky'
   | 'minimal-zen'
   | 'indigo-coastal-story'
-  | 'rosewood-sense-of-place';
+  | 'rosewood-sense-of-place'
+  | 'metadee-editorial-chapters';
 
 export type ShellStyleVariant =
   | 'standard'
@@ -58,7 +61,8 @@ export type ShellStyleVariant =
   | 'floating-pill-nav'
   | 'card-stack-canvas'
   | 'indigo-boutique'
-  | 'rosewood-heritage';
+  | 'rosewood-heritage'
+  | 'metadee-concept';
 
 export interface HotelWebsiteTemplate {
   id: string;
@@ -654,6 +658,43 @@ export const HOTEL_WEBSITE_TEMPLATES: HotelWebsiteTemplate[] = [
       font_family: 'Cormorant Garamond',
       dark_mode: false,
       header_layout: 'centered',
+      footer_layout: 'luxury',
+      animation_style: 'fade',
+    },
+  },
+  {
+    id: 'metadee-concept',
+    number: 19,
+    name: 'Metadee Concept Resort — Crimson & Editorial Chapters',
+    nameTh: 'แบบที่ 19: เมทาดี คอนเซ็ปต์ พาดหัวใหญ่ 2 ฟอนต์ & แถบไกด์นำทาง (Metadee Style)',
+    layoutBadge: 'YOUR ESCAPE Hero + YOUR GUIDE Bar + 01–04 Chapters',
+    category: 'resort',
+    categoryLabel: 'รีสอร์ท & พูลวิลล่า',
+    tagline:
+      'ดีไซน์คอนเซ็ปต์รีสอร์ทสุดเฉียบสไตล์ Metadee Phuket พาดหัวใหญ่ 2 ฟอนต์ (YOUR ESCAPE. / Your way.) กล่องจองห้องพักสีขาวลอยตัว แถบนำทางสีดำ YOUR GUIDE ↓ พร้อมปุ่มแดงคริมสัน และบทเรื่องราว 01–04 สลับพื้นขาว-ดำสุดเท่',
+    features: [
+      'พาดหัวใหญ่ 2 ฟอนต์ + ปุ่มคู่ & กล่องจองลอยตัว',
+      'แถบดำ YOUR GUIDE ↓ + ป้ายเลขบท 01–04 สีคริมสัน',
+      'การ์ดห้องพัก 1:1 สไลด์รูปได้ + ฟุตเตอร์ MORE THAN A STAY',
+    ],
+    shellStyle: 'metadee-concept',
+    heroLayout: 'metadee-escape-hero',
+    aboutLayout: 'metadee-editorial-chapters',
+    roomsLayout: 'metadee-square-deals',
+    fallbackHeroImage:
+      'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1600&q=80',
+    theme: {
+      template_id: 'metadee-concept',
+      primary_color: '#861626',
+      secondary_color: '#000000',
+      accent_color: '#961111',
+      background_color: '#FFFFFF',
+      text_color: '#111111',
+      button_style: 'square',
+      border_radius: '2px',
+      font_family: 'Oswald',
+      dark_mode: false,
+      header_layout: 'luxury',
       footer_layout: 'luxury',
       animation_style: 'fade',
     },

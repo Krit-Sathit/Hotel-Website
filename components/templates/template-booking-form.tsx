@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Calendar, Users, Tag, ArrowRight, Sparkles } from 'lucide-react';
+import { Calendar, Users, Tag, ArrowRight, Sparkles, ChevronRight } from 'lucide-react';
 import type { HotelTheme } from '@/lib/db/mock-data';
 import { deriveSurfacePalette, mixHex, withAlpha } from '@/lib/color-utils';
 import { isHostelProperty } from '@/lib/booking-engine';
@@ -13,7 +13,8 @@ export type BookingFormVariant =
   | 'floating-glass'
   | 'vertical-card'
   | 'minimal-line'
-  | 'dark-command';
+  | 'dark-command'
+  | 'metadee-dock';
 
 interface TemplateBookingFormProps {
   hotelId: string;
@@ -545,6 +546,135 @@ export default function TemplateBookingForm({
           <ArrowRight className="w-3.5 h-3.5 shrink-0" />
         </button>
       </form>
+    );
+  }
+
+  // 4B. METADEE FLOATING / DOCKED WHITE BOOKING ENGINE CARD (#19 Metadee Concept)
+  if (variant === 'metadee-dock') {
+    const formatMetadeeDate = (iso: string) => {
+      try {
+        const d = new Date(`${iso}T00:00:00`);
+        const mon = d
+          .toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', { month: 'short' })
+          .toUpperCase();
+        return {
+          month: mon,
+          dayYear: `${String(d.getDate()).padStart(2, '0')} ${d.getFullYear()}`,
+        };
+      } catch {
+        return { month: '', dayYear: iso };
+      }
+    };
+    const inDisp = formatMetadeeDate(checkIn);
+    const outDisp = formatMetadeeDate(checkOut);
+    const bookRed = theme.accent_color || palette.primary;
+
+    return (
+      <div className="max-w-4xl mx-auto px-3 @3xl:px-0">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full bg-white text-neutral-900 shadow-[0_14px_40px_rgba(0,0,0,0.22)] border border-black/10 px-4 py-3.5 @3xl:px-7 @3xl:py-4 flex flex-col @3xl:flex-row items-stretch @3xl:items-center justify-between gap-3.5 @3xl:gap-5"
+          style={{ borderRadius: '4px' }}
+        >
+          {/* CHECK-IN > CHECK-OUT */}
+          <div className="flex items-center justify-center @3xl:justify-start gap-2.5 @3xl:gap-4 shrink-0">
+            <label className="relative text-center cursor-pointer group px-1">
+              <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-800">
+                {ui.bookingForm.checkIn}
+              </span>
+              <span className="block text-[11px] font-medium uppercase text-neutral-500 leading-tight mt-0.5">
+                {inDisp.month}
+              </span>
+              <span className="block text-sm @3xl:text-base font-semibold tracking-tight text-neutral-900 leading-tight">
+                {inDisp.dayYear}
+              </span>
+              <input
+                type="date"
+                value={checkIn}
+                onChange={(e) => handleCheckInChange(e.target.value)}
+                aria-label={ui.bookingForm.checkIn}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              />
+            </label>
+
+            <ChevronRight className="w-6 h-6 text-neutral-400 stroke-[1.25] shrink-0" />
+
+            <label className="relative text-center cursor-pointer group px-1">
+              <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-800">
+                {ui.bookingForm.checkOut}
+              </span>
+              <span className="block text-[11px] font-medium uppercase text-neutral-500 leading-tight mt-0.5">
+                {outDisp.month}
+              </span>
+              <span className="block text-sm @3xl:text-base font-semibold tracking-tight text-neutral-900 leading-tight">
+                {outDisp.dayYear}
+              </span>
+              <input
+                type="date"
+                value={checkOut}
+                min={checkIn}
+                onChange={(e) => setCheckOut(e.target.value)}
+                aria-label={ui.bookingForm.checkOut}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              />
+            </label>
+          </div>
+
+          {/* OCCUPANCY PILLS */}
+          <div className="flex flex-col items-center justify-center shrink-0 border-y @3xl:border-y-0 @3xl:border-x border-neutral-200 py-2 @3xl:py-0 @3xl:px-5">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-neutral-600 mb-1">
+              {locale === 'th' ? 'ผู้เข้าพัก' : 'OCCUPANCY'}
+            </span>
+            <div className="flex items-center gap-2">
+              <label className="inline-flex items-center gap-1.5 bg-neutral-100 hover:bg-neutral-200/80 px-2.5 py-1 rounded text-xs font-bold text-neutral-800 cursor-pointer">
+                <Users className="w-3.5 h-3.5 text-neutral-600" />
+                <select
+                  value={adults}
+                  onChange={(e) => setAdults(e.target.value)}
+                  aria-label={ui.bookingForm.guests}
+                  className="bg-transparent font-bold outline-none cursor-pointer text-neutral-900"
+                >
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                </select>
+              </label>
+              <span className="inline-flex items-center gap-1 bg-neutral-100 px-2.5 py-1 rounded text-xs font-semibold text-neutral-600">
+                <span className="text-[11px]">✦</span>
+                <span>0</span>
+              </span>
+            </div>
+          </div>
+
+          {/* PROMOTIONAL CODE */}
+          <label className="flex-1 min-w-[130px] flex flex-col items-center @3xl:items-center justify-end">
+            <span className="text-[11px] font-semibold text-neutral-700">
+              {locale === 'th' ? 'รหัสโปรโมชั่น' : 'Promotional code'}
+            </span>
+            <input
+              type="text"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              placeholder=""
+              className="w-full text-center text-xs font-semibold text-neutral-900 bg-transparent border-b pb-1 pt-1 outline-none"
+              style={{ borderColor: withAlpha(bookRed, 0.65) }}
+            />
+          </label>
+
+          {/* SOLID CRIMSON BOOK BUTTON */}
+          <button
+            type="submit"
+            className="px-6 py-3.5 text-xs font-bold uppercase tracking-[0.16em] text-white shrink-0 cursor-pointer transition-opacity hover:opacity-90 shadow-sm"
+            style={{
+              backgroundColor: bookRed,
+              borderRadius: '4px',
+            }}
+          >
+            {ui.cta.book}
+          </button>
+        </form>
+      </div>
     );
   }
 

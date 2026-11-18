@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Phone,
   Mail,
@@ -12,6 +12,12 @@ import {
   BedDouble,
   Check,
   ArrowRight,
+  ArrowUpRight,
+  ArrowDown,
+  ArrowUp,
+  Play,
+  Pause,
+  UserCircle2,
   X,
   Grid,
   ShieldCheck,
@@ -109,6 +115,8 @@ export default function HotelTemplateHome({
   const [slideIdx, setSlideIdx] = useState(0);
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [rosewoodTabIdx, setRosewoodTabIdx] = useState(0);
+  const [metadeeAutoPlay, setMetadeeAutoPlay] = useState(false);
+  const [metadeeFeatureTab, setMetadeeFeatureTab] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
@@ -179,6 +187,14 @@ export default function HotelTemplateHome({
   }, [gallery, slides, rooms, heroPhotos]);
 
   const currentHeroImg = heroPhotos[slideIdx % heroPhotos.length] || template.fallbackHeroImage;
+
+  useEffect(() => {
+    if (!metadeeAutoPlay || heroPhotos.length <= 1) return;
+    const timer = setInterval(() => {
+      setSlideIdx((prev) => (prev + 1) % heroPhotos.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [metadeeAutoPlay, heroPhotos.length]);
 
   const aboutData = useMemo(() => {
     const found = sections.find((s) => s.section_type === 'about' && s.is_enabled);
@@ -503,6 +519,167 @@ export default function HotelTemplateHome({
     template.heroLayout === 'triptych-panels';
 
   const renderTopHeader = () => {
+    // -2. Metadee Concept Resort Header (#19: Obsidian Top Bar + Square Outlined Menu + Sticky "YOUR GUIDE ↓" Bar with Crimson Pill)
+    if (template.shellStyle === 'metadee-concept') {
+      const darkBarBg = isDarkColor(secondaryColor) ? secondaryColor : '#000000';
+      const guideLinks = [
+        { label: locale === 'th' ? 'ดีลห้องพัก' : 'Deals', href: '#rooms', active: true },
+        { label: locale === 'th' ? 'ประสบการณ์' : 'Experiences', href: '#metadee-experiences' },
+        { label: locale === 'th' ? 'ห้องพัก & สวีท' : 'Rooms & Suites', href: isPreview ? '#rooms' : `${tenantPrefix}/rooms` },
+        { label: locale === 'th' ? 'แกลเลอรี' : 'Gallery', href: isPreview ? '#gallery' : `${tenantPrefix}/gallery` },
+        { label: locale === 'th' ? 'ทำเลที่ตั้ง' : 'Location & Access', href: isPreview ? '#location' : `${tenantPrefix}/contact` },
+        {
+          label: locale === 'th' ? 'สิทธิพิเศษจองตรง' : 'Direct Booking Perks',
+          href: '#metadee-perks',
+          pill: true,
+        },
+        { label: locale === 'th' ? 'เรื่องราวของเรา' : 'Our Story', href: '#metadee-story' },
+      ];
+
+      return (
+        <>
+          {/* TIER 1: STICKY OBSIDIAN BRAND BAR (Metadee Top Bar) */}
+          <header
+            className="sticky top-0 z-40 w-full border-b transition-colors"
+            style={{
+              backgroundColor: darkBarBg,
+              color: '#FFFFFF',
+              borderColor: 'rgba(255,255,255,0.16)',
+            }}
+          >
+            <div className="max-w-7xl mx-auto px-4 @3xl:px-8 py-3 @3xl:py-3.5 flex items-center justify-between gap-4">
+              {/* Left Stacked Concept Hotel Emblem */}
+              <a
+                href={isPreview ? '#top' : tenantPrefix || '/'}
+                className="flex items-center gap-3 text-left min-w-0 group"
+              >
+                {hotel.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={cleanImg(hotel.logo_url)}
+                    alt={hotel.name}
+                    className="w-9 h-9 @3xl:w-11 @3xl:h-11 object-contain bg-white/95 p-1 rounded-xs shrink-0"
+                  />
+                ) : (
+                  <div
+                    className="w-9 h-9 @3xl:w-10 @3xl:h-10 border border-white/75 flex items-center justify-center text-sm font-bold tracking-wider shrink-0"
+                    style={{ fontFamily: "'Oswald', sans-serif" }}
+                  >
+                    {(hotel.name || 'M').slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+                <div className="flex flex-col leading-none min-w-0">
+                  <span
+                    className="text-base @3xl:text-xl font-bold uppercase tracking-[0.14em] truncate text-white"
+                    style={{ fontFamily: "'Oswald', sans-serif" }}
+                  >
+                    {hotel.name}
+                  </span>
+                  <span className="text-[8px] @3xl:text-[9px] uppercase tracking-[0.28em] text-white/70 mt-1 font-sans">
+                    {locale === 'th' ? 'เว็บไซต์ทางการ' : 'CONCEPT HOTEL'}
+                  </span>
+                </div>
+              </a>
+
+              {/* Right BECOME A MEMBER | BOOK NOW + Language + Square White-Bordered Menu Button */}
+              <div className="flex items-center gap-2.5 @3xl:gap-4 shrink-0">
+                {!isPreview && (
+                  <LanguageSwitcher color="#FFFFFF" borderColor="rgba(255,255,255,0.28)" compact />
+                )}
+
+                <a
+                  href="#metadee-perks"
+                  className="hidden @3xl:inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-white hover:opacity-80 transition-opacity"
+                  style={{ fontFamily: "'Oswald', sans-serif" }}
+                >
+                  <span>{locale === 'th' ? 'สิทธิพิเศษสมาชิก' : 'BECOME A MEMBER'}</span>
+                  <UserCircle2 className="w-5 h-5 text-white" />
+                </a>
+
+                <span className="hidden @3xl:inline-block h-4 w-px bg-white/40" />
+
+                <a
+                  href={getReserveHref()}
+                  className="text-xs font-semibold uppercase tracking-[0.14em] text-white hover:opacity-80 transition-opacity px-1"
+                  style={{ fontFamily: "'Oswald', sans-serif" }}
+                >
+                  {ui.cta.bookNow}
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen((p) => !p)}
+                  aria-label="Toggle Menu"
+                  className="w-10 h-10 @3xl:w-11 @3xl:h-11 border border-white/85 flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors cursor-pointer"
+                >
+                  {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Full-Width Dark Menu Drawer (Works on BOTH Mobile & Desktop when square menu button clicked!) */}
+            {mobileMenuOpen && (
+              <div
+                className="border-t px-6 py-6 shadow-2xl"
+                style={{
+                  backgroundColor: darkBarBg,
+                  borderColor: 'rgba(255,255,255,0.16)',
+                  color: '#FFFFFF',
+                }}
+              >
+                <div className="max-w-7xl mx-auto grid grid-cols-1 @3xl:grid-cols-12 gap-6 items-start text-left">
+                  <nav className="@3xl:col-span-8 grid grid-cols-1 @xl:grid-cols-2 gap-x-8 gap-y-2">
+                    {navLinks.map((l, idx) => (
+                      <a
+                        key={l.label}
+                        href={l.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="py-2.5 border-b border-white/15 flex items-center justify-between group"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <span
+                            className="px-1.5 py-0.5 text-[10px] font-bold text-white"
+                            style={{ backgroundColor: primaryColor }}
+                          >
+                            0{idx + 1}
+                          </span>
+                          <span
+                            className="text-sm @3xl:text-base font-semibold uppercase tracking-[0.12em]"
+                            style={{ fontFamily: "'Oswald', sans-serif" }}
+                          >
+                            {l.label}
+                          </span>
+                        </span>
+                        <ArrowUpRight className="w-4 h-4 text-white/70 group-hover:text-white" />
+                      </a>
+                    ))}
+                  </nav>
+
+                  <div className="@3xl:col-span-4 space-y-3 text-xs text-white/80">
+                    {hotel.address && <p className="leading-relaxed">{hotel.address}</p>}
+                    {hotel.phone && (
+                      <a href={isPreview ? undefined : `tel:${hotel.phone}`} className="block font-semibold text-white">
+                        Tel: {hotel.phone}
+                      </a>
+                    )}
+                    <a
+                      href={getReserveHref()}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="inline-flex items-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-[0.16em] text-white mt-1"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      <span>{ui.cta.bookDirectBestRate}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+          </header>
+        </>
+      );
+    }
+
     // -1. Rosewood Heritage 2-Tier Ivory Header (#18: Global Brand Bar + Sticky Serif Sub-Nav + Forest Jade RESERVE Button)
     if (template.shellStyle === 'rosewood-heritage') {
       const nameWords = (hotel.name || 'Luxury Sanctuary').trim().split(/\s+/);
@@ -2070,6 +2247,250 @@ export default function HotelTemplateHome({
           </section>
         );
 
+      // #19 METADEE CONCEPT RESORT ESCAPE HERO (Dual-Font Giant Headline + Dual CTAs + 01/08 Square Controls + Floating White Booking Bar + Sticky "YOUR GUIDE ↓" Bar)
+      case 'metadee-escape-hero': {
+        const darkBarBg = isDarkColor(secondaryColor) ? secondaryColor : '#000000';
+        const activeSlide = slides.length > 0 ? slides[slideIdx % slides.length] : null;
+        const customSlideTitle =
+          activeSlide?.headline &&
+          activeSlide.headline.trim() &&
+          activeSlide.headline.trim().toLowerCase() !== hotel.name.trim().toLowerCase()
+            ? activeSlide.headline.trim()
+            : '';
+        const heroLine1 =
+          customSlideTitle || (locale === 'th' ? 'พักผ่อนในแบบคุณ' : 'YOUR ESCAPE.');
+        const heroLine2 = locale === 'th' ? `${hotel.name}` : 'Your way.';
+        const slideCurrentStr = String((slideIdx % heroPhotos.length) + 1).padStart(2, '0');
+        const slideTotalStr = String(heroPhotos.length).padStart(2, '0');
+
+        const guideLinks = [
+          { label: locale === 'th' ? 'ดีลห้องพัก' : 'Deals', href: '#rooms', active: true },
+          { label: locale === 'th' ? 'ประสบการณ์' : 'Experiences', href: '#metadee-experiences' },
+          { label: locale === 'th' ? 'ห้องพัก & สวีท' : 'Rooms & Suites', href: isPreview ? '#rooms' : `${tenantPrefix}/rooms` },
+          { label: locale === 'th' ? 'แกลเลอรี' : 'Gallery', href: isPreview ? '#gallery' : `${tenantPrefix}/gallery` },
+          { label: locale === 'th' ? 'ทำเลและการเดินทาง' : 'Location & Access', href: isPreview ? '#location' : `${tenantPrefix}/contact` },
+          {
+            label: locale === 'th' ? 'สิทธิพิเศษจองตรง' : 'Direct Booking Perks',
+            href: '#metadee-perks',
+            pill: true,
+          },
+          { label: locale === 'th' ? 'เรื่องราวของเรา' : 'Our Story', href: '#metadee-story' },
+        ];
+
+        return (
+          <div>
+            {/* PART 1: FULL-BLEED CONCEPT HERO + GIANT STACKED CONDENSED/ITALIC HEADLINE */}
+            <section className="relative w-full min-h-[480px] @3xl:min-h-[650px] overflow-hidden bg-black flex flex-col justify-between">
+              <div className="absolute inset-0">
+                <SwipeablePhotoSlider
+                  photos={heroPhotos}
+                  alt={hotel.name}
+                  className="w-full h-full"
+                  controlledIndex={slideIdx}
+                  onIndexChange={setSlideIdx}
+                  arrowsMode="none"
+                  showCounter={false}
+                  onTapPhoto={(idx) => openLightbox(heroPhotos, idx, hotel.name)}
+                />
+              </div>
+
+              {/* Directional Editorial Scrim for Crisp Left Typography */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    'linear-gradient(90deg, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.36) 52%, rgba(0,0,0,0.18) 100%), linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.65) 100%)',
+                }}
+              />
+
+              {/* Main Left-Aligned Editorial Headline Block */}
+              <div className="relative z-10 max-w-7xl w-full mx-auto px-5 @3xl:px-10 pt-12 @3xl:pt-24 pb-8 text-left pointer-events-none">
+                <div
+                  className="pl-4 @3xl:pl-6 border-l-4 space-y-4 @3xl:space-y-5 max-w-3xl"
+                  style={{ borderColor: primaryColor }}
+                >
+                  <h1 className="leading-[0.94] text-white drop-shadow-md">
+                    <span
+                      className="block text-5xl @xl:text-6xl @3xl:text-[86px] @5xl:text-[104px] font-bold uppercase tracking-[-0.02em]"
+                      style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
+                    >
+                      {heroLine1}
+                    </span>
+                    <em
+                      className="block text-4xl @xl:text-5xl @3xl:text-[76px] @5xl:text-[92px] italic font-normal tracking-[-0.03em] mt-1"
+                      style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                    >
+                      {heroLine2}
+                    </em>
+                  </h1>
+
+                  <div className="space-y-0.5 text-sm @3xl:text-lg text-white/95 font-medium drop-shadow-xs max-w-xl">
+                    <p>
+                      {locale === 'th'
+                        ? `สัมผัสเอกลักษณ์แห่งการพักผ่อนที่ ${hotel.name}`
+                        : `One destination. Signature comfort at ${hotel.name}.`}
+                    </p>
+                    <p className="text-white/85">
+                      {locale === 'th'
+                        ? 'พื้นที่กว้างขวางเป็นส่วนตัว พร้อมการันตีราคาดีที่สุดเมื่อจองตรง'
+                        : 'A little more room to be yourself — best rate guaranteed direct.'}
+                    </p>
+                  </div>
+
+                  {/* Dual Metadee Action Buttons */}
+                  <div className="pt-2 flex flex-wrap items-center gap-3 @3xl:gap-4 pointer-events-auto">
+                    <a
+                      href="#metadee-guide"
+                      className="px-6 @3xl:px-7 py-3.5 text-xs font-bold uppercase tracking-[0.14em] text-white inline-flex items-center gap-3 transition-opacity hover:opacity-90 shadow-md"
+                      style={{
+                        backgroundColor: primaryColor,
+                        fontFamily: "'Oswald', sans-serif",
+                      }}
+                    >
+                      <span>
+                        {locale === 'th'
+                          ? `สำรวจ ${hotel.name}`
+                          : `EXPLORE ${hotel.name.toUpperCase()}`}
+                      </span>
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => openLightbox(galleryPhotosPool, 0, hotel.name)}
+                      className="px-6 @3xl:px-7 py-3.5 text-xs font-bold uppercase tracking-[0.14em] text-white border border-white/85 bg-black/20 hover:bg-white hover:text-black transition-colors inline-flex items-center gap-3 cursor-pointer backdrop-blur-2xs"
+                      style={{ fontFamily: "'Oswald', sans-serif" }}
+                    >
+                      <span>{locale === 'th' ? 'ภาพบรรยากาศที่พัก' : 'PHOTO GUIDE'}</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Hero Hairline Rule + Right Square Slide Controls (01/08 + Play) */}
+              <div className="relative z-10 max-w-7xl w-full mx-auto px-5 @3xl:px-10 pb-8 @3xl:pb-12">
+                <div className="border-t border-white/40 pt-4 flex items-center justify-between gap-4">
+                  <span className="hidden @3xl:inline-block text-xs uppercase tracking-[0.18em] text-white/75 font-sans">
+                    {aboutData.badge}
+                  </span>
+                  <div className="ml-auto flex items-center gap-2 pointer-events-auto">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSlideIdx((prev) => (prev - 1 + heroPhotos.length) % heroPhotos.length)
+                      }
+                      aria-label="Previous slide"
+                      className="w-10 h-10 @3xl:w-11 @3xl:h-11 border border-white/70 text-white hover:bg-white hover:text-black flex items-center justify-center transition-colors cursor-pointer bg-black/25"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span
+                      className="px-2.5 text-xs @3xl:text-sm font-semibold tracking-[0.14em] text-white"
+                      style={{ fontFamily: "'Oswald', sans-serif" }}
+                    >
+                      {slideCurrentStr}/{slideTotalStr}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSlideIdx((prev) => (prev + 1) % heroPhotos.length)}
+                      aria-label="Next slide"
+                      className="w-10 h-10 @3xl:w-11 @3xl:h-11 border border-white/70 text-white hover:bg-white hover:text-black flex items-center justify-center transition-colors cursor-pointer bg-black/25"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMetadeeAutoPlay((p) => !p)}
+                      aria-label="Toggle slideshow"
+                      className="w-10 h-10 @3xl:w-11 @3xl:h-11 border border-white/70 text-white hover:bg-white hover:text-black flex items-center justify-center transition-colors cursor-pointer bg-black/25"
+                    >
+                      {metadeeAutoPlay ? (
+                        <Pause className="w-3.5 h-3.5 fill-current" />
+                      ) : (
+                        <Play className="w-3.5 h-3.5 fill-current" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* PART 2: BLACK ARRIVAL CAPTION BAR + FLOATING WHITE BOOKING CARD OVERLAPPING HERO */}
+            <div className="relative" style={{ backgroundColor: darkBarBg }}>
+              <div className="relative z-20 -mt-7 @3xl:-mt-11 pb-4 @3xl:pb-5">
+                <TemplateBookingForm
+                  hotelId={hotel.id}
+                  hotelName={hotel.name}
+                  bookingUrl={bookingUrl}
+                  theme={activeTheme}
+                  variant="metadee-dock"
+                  isPreview={isPreview}
+                />
+              </div>
+              <div className="max-w-7xl mx-auto px-5 @3xl:px-10 pb-3.5 flex flex-wrap items-center justify-between gap-2 text-xs text-white/85">
+                <span className="font-medium tracking-wide">
+                  {hotel.address || hotel.name} &mdash;{' '}
+                  {locale === 'th' ? 'ห้องพัก สวีท และสิทธิพิเศษจองตรง' : 'Rooms, suites & direct privileges'}
+                </span>
+                {hotel.phone && (
+                  <span className="text-white/65 text-[11px]">Tel: {hotel.phone}</span>
+                )}
+              </div>
+            </div>
+
+            {/* PART 3: SIGNATURE DARK "YOUR GUIDE ↓" SUB-NAVIGATION BAR WITH CRIMSON PILL */}
+            <div
+              id="metadee-guide"
+              className="w-full border-y overflow-x-auto"
+              style={{
+                backgroundColor: darkBarBg,
+                borderColor: 'rgba(255,255,255,0.22)',
+              }}
+            >
+              <div className="max-w-7xl mx-auto px-5 @3xl:px-10 py-3 flex items-center gap-5 @3xl:gap-7 whitespace-nowrap">
+                <span
+                  className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/85 inline-flex items-center gap-1 shrink-0"
+                  style={{ fontFamily: "'Oswald', sans-serif" }}
+                >
+                  <span>{locale === 'th' ? 'คู่มือนำทาง' : 'YOUR GUIDE'}</span>
+                  <ArrowDown className="w-3 h-3" />
+                </span>
+
+                <nav className="flex items-center gap-5 @3xl:gap-6">
+                  {guideLinks.map((item) =>
+                    item.pill ? (
+                      <a
+                        key={item.label}
+                        href={item.href}
+                        className="px-4 py-1.5 text-xs @3xl:text-sm font-semibold tracking-wide text-white transition-opacity hover:opacity-90"
+                        style={{
+                          backgroundColor: primaryColor,
+                          fontFamily: "'Oswald', sans-serif",
+                        }}
+                      >
+                        {item.label}
+                      </a>
+                    ) : (
+                      <a
+                        key={item.label}
+                        href={item.href}
+                        className={`py-1 text-xs @3xl:text-sm font-medium tracking-wide text-white hover:opacity-80 transition-opacity ${
+                          item.active ? 'border-b-2 border-white font-semibold' : 'text-white/90'
+                        }`}
+                        style={{ fontFamily: "'Oswald', sans-serif" }}
+                      >
+                        {item.label}
+                      </a>
+                    )
+                  )}
+                </nav>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       // #18 ROSEWOOD CINEMATIC TABBED HERO (Full-Bleed Atmospheric Photo + Wide-Tracked Sans Eyebrow + Poetic Serif + Solid Dark DISCOVER CTA)
       case 'rosewood-cinema-tabs': {
         const activeSlideNum = (slideIdx % heroPhotos.length) + 1;
@@ -2296,28 +2717,87 @@ export default function HotelTemplateHome({
           }
         >
           {/* Section Heading */}
-          <div
-            className={`space-y-2 ${
-              template.roomsLayout === 'zen-minimal-list' ||
-              template.roomsLayout === 'sidebar-sticky-list' ||
-              template.roomsLayout === 'rate-table-pro'
-                ? 'text-left'
-                : 'text-center max-w-2xl mx-auto'
-            }`}
-          >
-            <span
-              className="text-[10px] @3xl:text-xs font-bold uppercase tracking-[0.25em] block"
-              style={{ color: accentColor }}
+          {template.roomsLayout === 'metadee-square-deals' ? (
+            <div className="space-y-6 pt-2">
+              <div className="flex items-center justify-end gap-2.5">
+                <span
+                  className="px-2 py-0.5 text-[11px] font-bold text-white"
+                  style={{ backgroundColor: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                >
+                  01
+                </span>
+                <span
+                  className="text-xs font-semibold uppercase tracking-[0.18em]"
+                  style={{ color: textColor, fontFamily: "'Oswald', sans-serif" }}
+                >
+                  {locale === 'th' ? 'ดีลห้องพักราคาพิเศษ' : 'ROOM DEALS'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 @3xl:grid-cols-12 gap-6 @3xl:gap-10 items-end">
+                <p
+                  className="order-2 @3xl:order-1 @3xl:col-span-4 text-sm @3xl:text-base leading-relaxed text-left"
+                  style={{ color: mutedText }}
+                >
+                  {locale === 'th'
+                    ? `ดีลห้องพักราคาพิเศษสำหรับการพักผ่อนครั้งถัดไปที่ ${hotel.name} เลือกรูปแบบห้องพักที่ตรงใจคุณพร้อมการันตีราคาดีที่สุดเมื่อจองตรง`
+                    : `More holiday deals for your next escape at ${hotel.name}. Explore our curated room collections, then choose the stay that feels like you.`}
+                </p>
+
+                <div className="order-1 @3xl:order-2 @3xl:col-span-8 text-left @3xl:text-right leading-[0.94]">
+                  <h2 className="inline-block">
+                    <span
+                      className="block text-4xl @xl:text-5xl @3xl:text-[72px] @5xl:text-[86px] font-bold uppercase tracking-[-0.02em]"
+                      style={{ color: textColor, fontFamily: "'Oswald', Impact, sans-serif" }}
+                    >
+                      {locale === 'th' ? 'เลือกห้องพัก' : 'MAKE ROOM'}
+                    </span>
+                    <span className="block mt-1">
+                      <span
+                        className="text-4xl @xl:text-5xl @3xl:text-[72px] @5xl:text-[86px] font-bold uppercase tracking-[-0.02em] mr-3"
+                        style={{ color: textColor, fontFamily: "'Oswald', Impact, sans-serif" }}
+                      >
+                        {locale === 'th' ? 'พร้อม' : 'FOR'}
+                      </span>
+                      <em
+                        className="text-4xl @xl:text-5xl @3xl:text-[68px] @5xl:text-[82px] italic font-normal tracking-[-0.03em] transition-colors"
+                        style={{
+                          fontFamily: "'Playfair Display', Georgia, serif",
+                          color: isDark ? accentColor : 'transparent',
+                          WebkitTextStroke: isDark ? undefined : `1.25px ${textColor}`,
+                        }}
+                      >
+                        {locale === 'th' ? 'ดีลสุดคุ้ม.' : 'more deals.'}
+                      </em>
+                    </span>
+                  </h2>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`space-y-2 ${
+                template.roomsLayout === 'zen-minimal-list' ||
+                template.roomsLayout === 'sidebar-sticky-list' ||
+                template.roomsLayout === 'rate-table-pro'
+                  ? 'text-left'
+                  : 'text-center max-w-2xl mx-auto'
+              }`}
             >
-              {ui.sections.accommodationsEyebrow}
-            </span>
-            <h2
-              className="text-xl @3xl:text-4xl font-bold tracking-wide"
-              style={{ color: textColor, fontFamily: fontStack }}
-            >
-              {locale === 'th' ? `เลือกห้องพักที่ ${hotel.name}` : `Choose Your Stay at ${hotel.name}`}
-            </h2>
-          </div>
+              <span
+                className="text-[10px] @3xl:text-xs font-bold uppercase tracking-[0.25em] block"
+                style={{ color: accentColor }}
+              >
+                {ui.sections.accommodationsEyebrow}
+              </span>
+              <h2
+                className="text-xl @3xl:text-4xl font-bold tracking-wide"
+                style={{ color: textColor, fontFamily: fontStack }}
+              >
+                {locale === 'th' ? `เลือกห้องพักที่ ${hotel.name}` : `Choose Your Stay at ${hotel.name}`}
+              </h2>
+            </div>
+          )}
 
           {/* LAYOUT A: ZIG-ZAG ALTERNATING HORIZONTAL SHOWCASE (#02 & #08) */}
           {template.roomsLayout === 'zigzag-horizontal' && (
@@ -3205,6 +3685,179 @@ export default function HotelTemplateHome({
               })}
             </div>
           )}
+
+          {/* LAYOUT M: METADEE CONCEPT PANORAMA TOUR + 3-COL 1:1 SQUARE ROOM DEAL CARDS (#19) */}
+          {template.roomsLayout === 'metadee-square-deals' && (() => {
+            const featuredRoom = rooms[0];
+            const featuredPool = [
+              ...(featuredRoom?.gallery || []).map(cleanImg).filter(Boolean),
+              ...galleryPhotosPool,
+            ].filter(Boolean);
+            const tourTabs = [
+              { label: locale === 'th' ? 'ห้องนอน' : 'Bedroom', idx: 0 },
+              { label: locale === 'th' ? 'ห้องน้ำ & สิ่งอำนวยความสะดวก' : 'Bathroom', idx: 1 },
+              { label: locale === 'th' ? 'ระเบียง & วิว' : 'Terrace', idx: 2 },
+            ];
+            const activeTourImg =
+              featuredPool[metadeeFeatureTab % Math.max(featuredPool.length, 1)] || currentHeroImg;
+
+            return (
+              <div className="space-y-10 @3xl:space-y-14">
+                {/* Featured Room Widescreen Showcase Frame (Matches Screenshot 2!) */}
+                <div className="space-y-2.5">
+                  <div className="relative w-full aspect-[16/10] @3xl:aspect-[21/9] overflow-hidden bg-neutral-900 group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={activeTourImg}
+                      alt={featuredRoom?.name || hotel.name}
+                      onClick={() => openLightbox(featuredPool, metadeeFeatureTab, featuredRoom?.name || hotel.name)}
+                      className="w-full h-full object-cover transition-all duration-700 cursor-pointer group-hover:scale-[1.02]"
+                    />
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background:
+                          'linear-gradient(180deg, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.06) 40%, rgba(0,0,0,0.45) 100%)',
+                      }}
+                    />
+
+                    {/* Top Overlay Bar: Left Brand Crest + Right Bedroom / Bathroom / Terrace / Book Now */}
+                    <div className="absolute top-0 inset-x-0 p-4 @3xl:p-7 flex flex-wrap items-center justify-between gap-4">
+                      <div className="text-left text-white drop-shadow-xs">
+                        <span
+                          className="block text-sm @3xl:text-lg font-bold uppercase tracking-[0.16em]"
+                          style={{ fontFamily: "'Oswald', sans-serif" }}
+                        >
+                          {hotel.name}
+                        </span>
+                        <span className="block text-[9px] uppercase tracking-[0.26em] text-white/80">
+                          {featuredRoom?.name || 'SIGNATURE SUITE'}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-4 @3xl:gap-7 text-xs @3xl:text-sm font-semibold text-white">
+                        {tourTabs.map((t) => {
+                          const isCurr = metadeeFeatureTab === t.idx;
+                          return (
+                            <button
+                              key={t.label}
+                              type="button"
+                              onClick={() => setMetadeeFeatureTab(t.idx)}
+                              className={`cursor-pointer transition-opacity hover:opacity-100 pb-0.5 ${
+                                isCurr ? 'border-b-2 border-white opacity-100' : 'opacity-80'
+                              }`}
+                              style={{ fontFamily: "'Oswald', sans-serif" }}
+                            >
+                              {t.label}
+                            </button>
+                          );
+                        })}
+                        <a
+                          href={getReserveHref(featuredRoom?.id)}
+                          className="border-b-2 border-white pb-0.5 hover:opacity-80"
+                          style={{ fontFamily: "'Oswald', sans-serif" }}
+                        >
+                          {ui.cta.bookNow}
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Bottom-Right Photo Tour Trigger */}
+                    <button
+                      type="button"
+                      onClick={() => openLightbox(featuredPool, metadeeFeatureTab, featuredRoom?.name || hotel.name)}
+                      className="absolute bottom-4 right-4 px-4 py-2 bg-black/75 hover:bg-black text-white text-[11px] font-bold uppercase tracking-[0.16em] flex items-center gap-2 cursor-pointer backdrop-blur-xs"
+                      style={{ fontFamily: "'Oswald', sans-serif" }}
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>{locale === 'th' ? 'ดูภาพมุมกว้างทั้งหมด' : 'PHOTO TOUR'}</span>
+                    </button>
+                  </div>
+
+                  <p
+                    className="text-[11px] font-semibold uppercase tracking-[0.18em] text-left"
+                    style={{ color: mutedText, fontFamily: "'Oswald', sans-serif" }}
+                  >
+                    {locale === 'th' ? 'ไฮไลต์ห้องพักแนะนำ' : 'FEATURED SHOWCASE'} &middot;{' '}
+                    {(featuredRoom?.name || hotel.name).toUpperCase()}
+                  </p>
+                </div>
+
+                {/* 3-Column 1:1 Square Room Cards with Built-in Swipeable Carousel */}
+                <div className="grid grid-cols-1 @xl:grid-cols-2 @5xl:grid-cols-3 gap-7 @3xl:gap-9">
+                  {rooms.map((room, idx) => {
+                    const photos = (room.gallery || []).map(cleanImg).filter(Boolean);
+                    const cover = photos[0] || currentHeroImg;
+                    const roomPhotos = photos.length ? photos : [cover];
+                    return (
+                      <div key={room.id} className="flex flex-col text-left group space-y-4">
+                        <div className="aspect-square w-full overflow-hidden relative bg-neutral-200 border" style={{ borderColor: cardBorder }}>
+                          <SwipeablePhotoSlider
+                            photos={roomPhotos}
+                            alt={room.name}
+                            className="w-full h-full"
+                            arrowsMode="always"
+                            showCounter={roomPhotos.length > 1}
+                            counterPositionClass="bottom-3 left-3"
+                            onTapPhoto={(pIdx) => openLightbox(roomPhotos, pIdx, room.name)}
+                          />
+                          {(room.discount_pct ?? 0) > 0 && (
+                            <span
+                              className="absolute top-3 right-3 z-10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-white pointer-events-none"
+                              style={{ backgroundColor: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                            >
+                              -{room.discount_pct}%
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="space-y-2.5 flex-1 flex flex-col justify-between">
+                          <div className="space-y-1.5">
+                            <span
+                              className="text-[11px] font-semibold uppercase tracking-[0.16em] block"
+                              style={{ color: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                            >
+                              0{idx + 1} &middot; {room.room_size} M² &middot; {ui.sections.maxGuests(room.max_guests)} &middot; {room.bed_type}
+                            </span>
+
+                            <a
+                              href={getReserveHref(room.id)}
+                              className="inline-flex items-center gap-2 text-xl @3xl:text-2xl font-bold uppercase tracking-tight hover:opacity-75 transition-opacity"
+                              style={{ color: textColor, fontFamily: "'Oswald', sans-serif" }}
+                            >
+                              <span>{room.name}</span>
+                              <ArrowUpRight className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
+                            </a>
+
+                            <p className="text-xs @3xl:text-sm leading-relaxed line-clamp-3" style={{ color: mutedText }}>
+                              {room.description}
+                            </p>
+                          </div>
+
+                          <div
+                            className="pt-3.5 border-t flex flex-wrap items-end justify-between gap-3"
+                            style={{ borderColor: cardBorder }}
+                          >
+                            {renderRoomPrice(room)}
+                            <a
+                              href={getReserveHref(room.id)}
+                              className="px-5 py-2.5 text-xs font-bold uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90 whitespace-nowrap"
+                              style={{
+                                backgroundColor: primaryColor,
+                                fontFamily: "'Oswald', sans-serif",
+                              }}
+                            >
+                              {ui.cta.bookNow}
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </section>
     );
@@ -3289,6 +3942,380 @@ export default function HotelTemplateHome({
         </div>
       );
     };
+
+    // #19 METADEE CONCEPT RESORT — ALTERNATING DARK/LIGHT CHAPTERS (02 EXPERIENCES + 03 OUR STORY + 04 PERKS + CRIMSON FINALE)
+    if (template.aboutLayout === 'metadee-editorial-chapters') {
+      const darkChapterBg = isDarkColor(secondaryColor) ? secondaryColor : '#000000';
+      const expCards = facilitiesData.slice(0, 6).map((item: any, idx: number) => ({
+        title: item.title,
+        desc: item.desc,
+        image:
+          galleryPhotosPool[(idx + 1) % Math.max(galleryPhotosPool.length, 1)] ||
+          heroPhotos[idx % heroPhotos.length] ||
+          aboutData.primaryImage,
+      }));
+
+      const perksList = [
+        {
+          eyebrow: locale === 'th' ? 'สิทธิพิเศษทุกการจองตรง' : 'FOR EVERY DIRECT GUEST',
+          mark: 'BEST',
+          title: locale === 'th' ? 'การันตีราคาดีที่สุดเสมอ' : 'Best Direct Rate Guaranteed.',
+          desc:
+            locale === 'th'
+              ? `รับราคาห้องพักและโปรโมชั่นพิเศษสุดเมื่อสำรองห้องพักโดยตรงผ่านเว็บไซต์ทางการของ ${hotel.name}`
+              : `Enjoy exclusive official rates and seasonal offers when reserving directly with ${hotel.name}.`,
+          cta: locale === 'th' ? 'เช็คราคาห้องว่าง' : 'Check Live Rates',
+          href: getReserveHref(),
+        },
+        {
+          eyebrow: locale === 'th' ? 'ยืนยันห้องพักทันที' : 'LIVE CHANNEL MANAGER',
+          mark: '100%',
+          title: locale === 'th' ? 'เช็คห้องว่างจริง ยืนยันทันที' : 'Real-Time Availability. Instant Confirm.',
+          desc:
+            locale === 'th'
+              ? 'เชื่อมต่อตารางห้องว่างและราคาแบบเรียลไทม์ ชำระเงินปลอดภัยพร้อมรับใบยืนยันการจองทันที'
+              : 'Synced directly with our live room inventory for immediate reservation confirmation.',
+          cta: locale === 'th' ? 'จองห้องพักทันที' : 'Book Direct Now',
+          href: getReserveHref(),
+        },
+        {
+          eyebrow: locale === 'th' ? 'ดูแลอย่างอบอุ่น' : 'PERSONALIZED HOSPITALITY',
+          mark: 'VIP',
+          title: locale === 'th' ? 'ทีมงานที่พักดูแลโดยตรง' : 'Direct Concierge & Local Care.',
+          desc:
+            locale === 'th'
+              ? 'พูดคุยหรือแจ้งคำขอพิเศษกับทีมงานของโรงแรมได้โดยตรง เพื่อการพักผ่อนที่สมบูรณ์แบบที่สุด'
+              : 'Speak directly with our on-property team for tailored room preferences and local tips.',
+          cta: locale === 'th' ? 'ติดต่อที่พัก' : 'Talk To Our Team',
+          href: isPreview ? '#contact' : `${tenantPrefix}/contact`,
+        },
+      ];
+
+      return (
+        <>
+          {/* CHAPTER 02: DARK OBSIDIAN "RESORT EXPERIENCES" (SET YOUR OWN rhythm.) */}
+          <section
+            id="metadee-experiences"
+            className="w-full py-14 @3xl:py-24 px-5 @3xl:px-10 border-t"
+            style={{
+              backgroundColor: darkChapterBg,
+              color: '#FFFFFF',
+              borderColor: 'rgba(255,255,255,0.2)',
+            }}
+          >
+            <div className="max-w-7xl mx-auto space-y-10 @3xl:space-y-14">
+              <div className="space-y-5">
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className="px-2 py-0.5 text-[11px] font-bold text-white"
+                    style={{ backgroundColor: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                  >
+                    02
+                  </span>
+                  <span
+                    className="text-xs font-semibold uppercase tracking-[0.18em] text-white/85"
+                    style={{ fontFamily: "'Oswald', sans-serif" }}
+                  >
+                    {locale === 'th' ? 'สิ่งอำนวยความสะดวก & ประสบการณ์' : 'RESORT EXPERIENCES'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 @3xl:grid-cols-12 gap-6 @3xl:gap-10 items-end text-left">
+                  <div className="@3xl:col-span-8 leading-[0.95]">
+                    <h2>
+                      <span
+                        className="block text-4xl @xl:text-5xl @3xl:text-[72px] font-bold uppercase tracking-[-0.02em] text-white"
+                        style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
+                      >
+                        {locale === 'th' ? 'ออกแบบวันพักผ่อน' : 'SET YOUR OWN'}
+                      </span>
+                      <em
+                        className="block text-4xl @xl:text-5xl @3xl:text-[68px] italic font-normal tracking-[-0.03em] mt-1"
+                        style={{
+                          fontFamily: "'Playfair Display', Georgia, serif",
+                          color: 'transparent',
+                          WebkitTextStroke: '1.2px #FFFFFF',
+                        }}
+                      >
+                        {locale === 'th' ? 'ในจังหวะของคุณ.' : 'rhythm.'}
+                      </em>
+                    </h2>
+                  </div>
+
+                  <p className="@3xl:col-span-4 text-sm @3xl:text-base text-white/80 leading-relaxed">
+                    {locale === 'th'
+                      ? `เติมเต็มทุกช่วงเวลาแห่งการพักผ่อนที่ ${hotel.name} ด้วยสิ่งอำนวยความสะดวกและมุมพักผ่อนที่คัดสรรมาอย่างลงตัว`
+                      : `Every day at ${hotel.name} moves at the pace you choose — curated spaces, thoughtful facilities, and effortless comfort.`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Square Experience Photo Strip */}
+              <div className="grid grid-cols-2 @3xl:grid-cols-4 gap-4 @3xl:gap-6">
+                {expCards.slice(0, 4).map((card: any, idx: number) => (
+                  <div
+                    key={idx}
+                    onClick={() => openLightbox(galleryPhotosPool, idx, card.title)}
+                    className="group cursor-pointer text-left space-y-3"
+                  >
+                    <div className="aspect-square w-full overflow-hidden bg-neutral-900 border border-white/15">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={card.image}
+                        alt={card.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <h3
+                        className="text-base @3xl:text-lg font-bold uppercase tracking-wide text-white flex items-center justify-between gap-2"
+                        style={{ fontFamily: "'Oswald', sans-serif" }}
+                      >
+                        <span>{card.title}</span>
+                        <ArrowUpRight className="w-4 h-4 shrink-0" style={{ color: primaryColor }} />
+                      </h3>
+                      <p className="text-xs text-white/70 leading-relaxed line-clamp-2">{card.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* CHAPTER 03: LIGHT EDITORIAL "OUR STORY" WITH FORMATTED MULTI-PARAGRAPH NARRATIVE */}
+          <section
+            id="metadee-story"
+            className="w-full py-14 @3xl:py-24 px-5 @3xl:px-10 border-t"
+            style={{ backgroundColor: bgColor, borderColor: cardBorder }}
+          >
+            <div className="max-w-7xl mx-auto space-y-10 @3xl:space-y-14">
+              {/* Decorative Geometric Crimson & Ink Accent Strip */}
+              <div className="flex items-center gap-3">
+                <div className="h-1.5 w-16" style={{ backgroundColor: primaryColor }} />
+                <div className="h-px flex-1" style={{ backgroundColor: cardBorder }} />
+                <span
+                  className="px-2 py-0.5 text-[11px] font-bold text-white"
+                  style={{ backgroundColor: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                >
+                  03
+                </span>
+                <span
+                  className="text-xs font-semibold uppercase tracking-[0.18em]"
+                  style={{ color: textColor, fontFamily: "'Oswald', sans-serif" }}
+                >
+                  {locale === 'th' ? 'เรื่องราวของที่พัก' : 'OUR STORY'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 @5xl:grid-cols-12 gap-8 @3xl:gap-12 items-start text-left">
+                {/* Left 16:10 Visual Story Frame + Secondary Photo */}
+                <div className="@5xl:col-span-6 space-y-4">
+                  <div
+                    onClick={() => openLightbox([aboutData.primaryImage, ...galleryPhotosPool], 0, hotel.name)}
+                    className="relative aspect-[16/10] w-full overflow-hidden bg-neutral-900 cursor-pointer group border"
+                    style={{ borderColor: cardBorder }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={aboutData.primaryImage}
+                      alt={hotel.name}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent flex items-end p-5">
+                      <span
+                        className="px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-white inline-flex items-center gap-2"
+                        style={{ backgroundColor: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                      >
+                        <Play className="w-3 h-3 fill-current" />
+                        <span>{locale === 'th' ? 'ชมภาพเรื่องราวของที่พัก' : 'EXPLORE OUR STORY IN PHOTOS'}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {aboutData.highlights.length > 0 && renderHighlightsStrip()}
+                </div>
+
+                {/* Right Editorial Heading + Preserved Multi-Paragraph Story */}
+                <div className="@5xl:col-span-6 space-y-5">
+                  <span
+                    className="text-[11px] font-bold uppercase tracking-[0.22em] block"
+                    style={{ color: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                  >
+                    {aboutData.badge}
+                  </span>
+
+                  <h2 className="leading-[0.98]">
+                    <span
+                      className="block text-3xl @3xl:text-5xl font-bold uppercase tracking-[-0.01em]"
+                      style={{ color: textColor, fontFamily: "'Oswald', Impact, sans-serif" }}
+                    >
+                      {aboutData.title}
+                    </span>
+                    <em
+                      className="block text-2xl @3xl:text-4xl italic font-normal mt-1.5"
+                      style={{ color: primaryColor, fontFamily: "'Playfair Display', Georgia, serif" }}
+                    >
+                      {locale === 'th' ? 'ยินดีต้อนรับด้วยความอบอุ่น.' : 'A warm welcome awaits.'}
+                    </em>
+                  </h2>
+
+                  {renderFormattedStory(
+                    aboutData.paragraphs,
+                    aboutData.description,
+                    'space-y-4 text-xs @3xl:text-[15px] leading-[1.85]',
+                    { color: mutedText }
+                  )}
+
+                  <div className="grid grid-cols-1 @xl:grid-cols-2 gap-3.5 pt-2">
+                    {aboutData.features.map((f: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className="p-4 border"
+                        style={{ borderColor: cardBorder, backgroundColor: cardBg }}
+                      >
+                        <h4
+                          className="text-xs font-bold uppercase tracking-[0.14em]"
+                          style={{ color: textColor, fontFamily: "'Oswald', sans-serif" }}
+                        >
+                          {f.title}
+                        </h4>
+                        <p className="text-xs mt-1 leading-relaxed" style={{ color: mutedText }}>
+                          {f.desc}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* CHAPTER 04: GUEST PERKS + FULL-BLEED CRIMSON FINALE BANNER */}
+          <section
+            id="metadee-perks"
+            className="w-full pt-14 @3xl:pt-20 border-t"
+            style={{ backgroundColor: bgColor, borderColor: cardBorder }}
+          >
+            <div className="max-w-7xl mx-auto px-5 @3xl:px-10 pb-14 @3xl:pb-20 space-y-10">
+              <div className="flex flex-col @3xl:flex-row @3xl:items-end justify-between gap-4 text-left">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <span
+                      className="px-2 py-0.5 text-[11px] font-bold text-white"
+                      style={{ backgroundColor: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                    >
+                      04
+                    </span>
+                    <span
+                      className="text-xs font-semibold uppercase tracking-[0.18em]"
+                      style={{ color: textColor, fontFamily: "'Oswald', sans-serif" }}
+                    >
+                      {locale === 'th' ? 'สิทธิพิเศษสำหรับผู้เข้าพัก' : 'GUEST PERKS'}
+                    </span>
+                  </div>
+                  <h2 className="leading-[0.95]">
+                    <span
+                      className="text-3xl @3xl:text-6xl font-bold uppercase tracking-[-0.02em] mr-3"
+                      style={{ color: textColor, fontFamily: "'Oswald', Impact, sans-serif" }}
+                    >
+                      {locale === 'th' ? 'สิทธิพิเศษเหนือกว่า.' : 'MORE TO ENJOY.'}
+                    </span>
+                    <em
+                      className="text-3xl @3xl:text-5xl italic font-normal"
+                      style={{ color: primaryColor, fontFamily: "'Playfair Display', Georgia, serif" }}
+                    >
+                      {locale === 'th' ? 'เพื่อคุณโดยเฉพาะ.' : 'Just for you.'}
+                    </em>
+                  </h2>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 @3xl:grid-cols-3 gap-6">
+                {perksList.map((perk, idx) => (
+                  <div
+                    key={idx}
+                    className="border p-6 @3xl:p-8 flex flex-col justify-between text-left space-y-5"
+                    style={{ borderColor: withAlpha(textColor, 0.2), backgroundColor: cardBg }}
+                  >
+                    <div className="space-y-3">
+                      <span
+                        className="text-4xl @3xl:text-5xl font-bold block tracking-tight"
+                        style={{ color: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                      >
+                        {perk.mark}
+                      </span>
+                      <span
+                        className="text-[10px] font-bold uppercase tracking-[0.2em] block"
+                        style={{ color: mutedText }}
+                      >
+                        {perk.eyebrow}
+                      </span>
+                      <h3
+                        className="text-xl @3xl:text-2xl font-bold uppercase leading-snug"
+                        style={{ color: textColor, fontFamily: "'Oswald', sans-serif" }}
+                      >
+                        {perk.title}
+                      </h3>
+                      <p className="text-xs @3xl:text-sm leading-relaxed" style={{ color: mutedText }}>
+                        {perk.desc}
+                      </p>
+                    </div>
+                    <a
+                      href={perk.href}
+                      className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] underline underline-offset-4 hover:opacity-75"
+                      style={{ color: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                    >
+                      <span>{perk.cta}</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* FULL-BLEED CRIMSON FINALE BANNER (MAKE IT METADEE.) */}
+            <div
+              className="w-full py-12 @3xl:py-16 px-5 @3xl:px-10 text-white"
+              style={{ backgroundColor: primaryColor }}
+            >
+              <div className="max-w-7xl mx-auto flex flex-col @3xl:flex-row items-start @3xl:items-center justify-between gap-6 text-left">
+                <div className="space-y-1.5">
+                  <span className="text-xs uppercase tracking-[0.22em] text-white/85 block">
+                    {locale === 'th' ? 'เริ่มต้นทริปพักผ่อนครั้งใหม่ของคุณที่นี่' : 'Your next chapter starts here'}
+                  </span>
+                  <h3
+                    className="text-3xl @3xl:text-5xl font-bold uppercase tracking-tight"
+                    style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
+                  >
+                    {locale === 'th' ? `จองตรงกับ ${hotel.name}` : `MAKE IT ${hotel.name.toUpperCase()}.`}
+                  </h3>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  <a
+                    href={getReserveHref()}
+                    className="px-7 py-3.5 bg-white text-xs font-bold uppercase tracking-[0.18em] inline-flex items-center gap-2 hover:opacity-90 transition-opacity shadow-md"
+                    style={{ color: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                  >
+                    <span>{locale === 'th' ? 'สำรองห้องพักตอนนี้' : 'PLAN YOUR STAY'}</span>
+                    <ArrowUp className="w-3.5 h-3.5" />
+                  </a>
+                  <a
+                    href={isPreview ? '#contact' : `${tenantPrefix}/contact`}
+                    className="text-xs font-semibold underline underline-offset-4 text-white/95 hover:text-white inline-flex items-center gap-1"
+                  >
+                    <span>{locale === 'th' ? 'สอบถามข้อมูลเพิ่มเติม' : 'Questions before you book? Talk to us'}</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      );
+    }
 
     // #18 ROSEWOOD "SENSE OF PLACE / WHAT'S ON" 3-COL PORTRAIT OVERVIEW + FULL-WIDTH TABBED CAROUSEL
     if (template.aboutLayout === 'rosewood-sense-of-place') {
@@ -4119,6 +5146,109 @@ export default function HotelTemplateHome({
   const footerText = isDark ? textColor : primaryText;
 
   const renderFooter = () => {
+    // #19 METADEE CONCEPT WHITE OUTLINED "MORE THAN A STAY" FOOTER
+    if (template.id === 'metadee-concept') {
+      const mdFooterBg = isDark ? subtleSurface : '#FFFFFF';
+      const mdFooterInk = isDark ? textColor : '#111111';
+      const mdBorder = withAlpha(mdFooterInk, 0.15);
+
+      return (
+        <footer
+          className="pt-12 @3xl:pt-20 pb-12 px-5 @3xl:px-10 border-t"
+          style={{
+            backgroundColor: mdFooterBg,
+            color: mdFooterInk,
+            borderColor: mdBorder,
+          }}
+        >
+          <div className="max-w-7xl mx-auto space-y-10 @3xl:space-y-14">
+            {/* Giant Centered Outlined Display Banner ("MORE THAN A STAY") */}
+            <div className="text-center border-b pb-8 @3xl:pb-12" style={{ borderColor: mdBorder }}>
+              <span
+                className="block text-4xl @xl:text-6xl @3xl:text-[84px] font-bold uppercase tracking-[0.04em] leading-none select-none"
+                style={{
+                  fontFamily: "'Oswald', Impact, sans-serif",
+                  color: 'transparent',
+                  WebkitTextStroke: `1.35px ${mdFooterInk}`,
+                }}
+              >
+                {locale === 'th' ? 'มากกว่าแค่การพักผ่อน' : 'MORE THAN A STAY'}
+              </span>
+            </div>
+
+            {/* 3-Column Metadee Directory */}
+            <div className="grid grid-cols-1 @3xl:grid-cols-3 gap-8 items-start text-left">
+              <div className="space-y-2">
+                <h4
+                  className="text-xs font-bold uppercase tracking-[0.2em]"
+                  style={{ color: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                >
+                  {locale === 'th' ? 'ที่อยู่โรงแรม' : 'ADDRESS'}
+                </h4>
+                <p className="text-sm leading-relaxed" style={{ color: mutedText }}>
+                  {hotel.address || hotel.name}
+                </p>
+              </div>
+
+              <div className="space-y-4 @3xl:text-center">
+                <h4
+                  className="text-base @3xl:text-lg font-bold uppercase tracking-[0.16em]"
+                  style={{ fontFamily: "'Oswald', sans-serif", color: mdFooterInk }}
+                >
+                  {hotel.name}
+                </h4>
+                <a
+                  href={bookingUrl}
+                  className="inline-block px-7 py-3 text-xs font-bold uppercase tracking-[0.18em] text-white hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                >
+                  {ui.badges.bestRateGuaranteed}
+                </a>
+                <div className="flex flex-wrap @3xl:justify-center gap-4 pt-1 text-xs font-semibold uppercase tracking-wider">
+                  {navLinks.map((l) => (
+                    <a
+                      key={l.label}
+                      href={l.href}
+                      className="underline underline-offset-4 hover:opacity-70"
+                    >
+                      {l.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2 @3xl:text-right">
+                <h4
+                  className="text-xs font-bold uppercase tracking-[0.2em]"
+                  style={{ color: primaryColor, fontFamily: "'Oswald', sans-serif" }}
+                >
+                  {locale === 'th' ? 'ติดต่อสำรองห้องพัก' : 'RESERVATIONS'}
+                </h4>
+                {hotel.phone && (
+                  <a href={`tel:${hotel.phone}`} className="block text-sm font-semibold hover:opacity-75">
+                    {hotel.phone}
+                  </a>
+                )}
+                {hotel.email && (
+                  <a href={`mailto:${hotel.email}`} className="block text-sm hover:opacity-75 break-all" style={{ color: mutedText }}>
+                    {hotel.email}
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div
+              className="pt-6 border-t flex flex-col @xl:flex-row justify-between items-center gap-2 text-[11px] uppercase tracking-[0.14em] opacity-65"
+              style={{ borderColor: mdBorder }}
+            >
+              <span>&copy; {new Date().getFullYear()} {hotel.name}. {ui.badges.allRightsReserved}</span>
+              <span>{ui.badges.officialWebsite}</span>
+            </div>
+          </div>
+        </footer>
+      );
+    }
+
     // #18 ROSEWOOD HERITAGE IVORY / ALABASTER ULTRA-LUXURY FOOTER
     if (template.id === 'rosewood-sanctuary') {
       const rwFooterBg = isDark ? subtleSurface : bgColor;
@@ -4329,7 +5459,10 @@ export default function HotelTemplateHome({
     );
   };
 
-  const roomsFirst = template.id === 'booking-first' || template.id === 'bento-mosaic';
+  const roomsFirst =
+    template.id === 'booking-first' ||
+    template.id === 'bento-mosaic' ||
+    template.id === 'metadee-concept';
 
   const mainBody = (
     <>
@@ -4439,6 +5572,12 @@ export default function HotelTemplateHome({
         fontFamily: fontStack,
       }}
     >
+      {template.id === 'metadee-concept' && (
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap"
+        />
+      )}
       {template.shellStyle === 'left-sidebar' ? (
         <div className="flex flex-col @5xl:flex-row min-h-screen">
           {/* MOBILE STICKY HEADER FOR #08 (< @5xl) */}

@@ -75,6 +75,68 @@ function LayoutBlueprintThumbnail({
   const line = isDark ? 'rgba(255,255,255,0.2)' : '#cbd5e1';
   const block = isDark ? '#1e293b' : '#f1f5f9';
 
+  // #19 METADEE CONCEPT RESORT (Obsidian Bar + YOUR ESCAPE Hero + Floating White Booking Bar + YOUR GUIDE Bar + 01 Square Cards)
+  if (template.heroLayout === 'metadee-escape-hero') {
+    const darkBar = isDarkColor(theme.secondary_color) ? theme.secondary_color : '#000000';
+    return (
+      <div className="h-36 w-full flex flex-col overflow-hidden" style={{ backgroundColor: bg }}>
+        {/* Obsidian Top Bar + Square Outlined Menu */}
+        <div
+          className="h-3.5 px-2 flex items-center justify-between"
+          style={{ backgroundColor: darkBar }}
+        >
+          <span className="h-1.5 w-10 bg-white/95" />
+          <div className="flex items-center gap-1">
+            <span className="h-1 w-6 bg-white/75" />
+            <span className="w-2.5 h-2.5 border border-white/85" />
+          </div>
+        </div>
+        {/* Full-Bleed Hero with Left Crimson Bar, Stacked Headline & Floating White Booking Card */}
+        <div className="relative h-15 w-full overflow-hidden">
+          <img src={p0} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent p-2 flex flex-col justify-center">
+            <div className="pl-1.5 border-l-2 space-y-0.5" style={{ borderColor: theme.primary_color }}>
+              <span className="block h-2 w-18 bg-white" />
+              <span className="block h-1.5 w-14 bg-white/90" />
+              <div className="flex gap-1 pt-0.5">
+                <span className="h-2 w-8" style={{ backgroundColor: theme.primary_color }} />
+                <span className="h-2 w-7 border border-white/80" />
+              </div>
+            </div>
+          </div>
+          {/* Floating White Booking Card */}
+          <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-3/5 h-2.5 bg-white shadow-sm px-1 flex items-center justify-between">
+            <span className="h-1 w-8 bg-slate-300" />
+            <span className="h-1.5 w-4" style={{ backgroundColor: theme.accent_color || theme.primary_color }} />
+          </div>
+        </div>
+        {/* Dark "YOUR GUIDE ↓" Bar with Crimson Pill */}
+        <div
+          className="h-3 px-2 flex items-center gap-1.5"
+          style={{ backgroundColor: darkBar }}
+        >
+          <span className="h-1 w-5 bg-white/85" />
+          <span className="h-1 w-4 bg-white/60" />
+          <span className="h-2 w-7" style={{ backgroundColor: theme.primary_color }} />
+        </div>
+        {/* Chapter 01 + 3 Square Room Cards */}
+        <div className="px-2.5 py-1.5 flex-1 flex flex-col justify-between overflow-hidden">
+          <div className="flex items-center justify-end gap-1">
+            <span className="h-1.5 w-2" style={{ backgroundColor: theme.primary_color }} />
+            <span className="h-1.5 w-14" style={{ backgroundColor: theme.text_color }} />
+          </div>
+          <div className="grid grid-cols-3 gap-1.5 flex-1 pt-1 overflow-hidden">
+            {[p0, p1, p2].map((u, i) => (
+              <div key={i} className="overflow-hidden border" style={{ borderColor: line }}>
+                <img src={u} alt="" className="w-full h-full object-cover" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // #18 ROSEWOOD HERITAGE 2-TIER IVORY HEADER + PORTRAIT SANCTUARY CARDS
   if (template.heroLayout === 'rosewood-cinema-tabs') {
     return (
@@ -1160,6 +1222,7 @@ export default function ThemePage() {
               className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-slate-800"
             >
               <option value="Inter">Inter (คลีน)</option>
+              <option value="Oswald">Oswald (Metadee คอนเซ็ปต์)</option>
               <option value="Plus Jakarta Sans">Plus Jakarta</option>
               <option value="Outfit">Outfit (โมเดิร์น)</option>
               <option value="DM Sans">DM Sans</option>
