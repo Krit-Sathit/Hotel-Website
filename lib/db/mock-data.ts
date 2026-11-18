@@ -955,7 +955,7 @@ async function applyHotelThemeOverride(hotel: Hotel): Promise<Hotel> {
     };
   }
 
-  const nextAddress = override.address?.trim() || hotel.address;
+  const nextAddress = hotel.address?.trim() || override.address?.trim() || '';
   const nextMapUrl = normalizeMapEmbedUrl(
     override.google_map_url?.trim() || hotel.google_map_url,
     nextAddress
@@ -981,9 +981,9 @@ async function applyHotelThemeOverride(hotel: Hotel): Promise<Hotel> {
 
   return {
     ...hotel,
-    name: override.name?.trim() || hotel.name,
-    email: override.email?.trim() || hotel.email,
-    phone: override.phone?.trim() || hotel.phone,
+    name: hotel.name?.trim() || override.name?.trim() || hotel.name,
+    email: hotel.email?.trim() || override.email?.trim() || '',
+    phone: hotel.phone?.trim() || override.phone?.trim() || '',
     address: nextAddress,
     google_map_url: nextMapUrl,
     custom_domain:
@@ -1172,7 +1172,7 @@ const fetchCachedFlowStayBundleRemote = unstable_cache(
 
     return normalizeFlowStayBundleUrls(data);
   },
-  ['flowstay-website-bundle-v4'],
+  ['flowstay-website-bundle-v5'],
   { revalidate: 180, tags: ['hotel-content'] }
 );
 
